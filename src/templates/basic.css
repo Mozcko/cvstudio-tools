@@ -1,0 +1,106 @@
+/* Tu CSS original, ajustado para no romper el editor (scope) */
+.cv-preview-content {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    line-height: 1.4;
+    color: #333;
+    background-color: #fff;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1cm; /* Padding visual en pantalla */
+}
+
+/* Ajustes para impresión */
+@media print {
+    @page {
+        margin: 0cm 1cm 1cm 1cm;
+    }
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    .cv-preview-content {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+    }
+}
+
+.cv-preview-content h1 {
+    font-size: 1.2em;
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 5px;
+    margin-top: 20px;
+}
+
+.cv-preview-content h2 {
+    font-size: 1em;
+    color: #3498db;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 5px;
+    margin-top: 15px;
+}
+
+.cv-preview-content h3 {
+    font-size: 1em;
+    color: #2980b9;
+    margin-top: 20px;
+}
+
+.cv-preview-content p, .cv-preview-content ul {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.cv-preview-content ul {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.cv-preview-content li {
+    margin-bottom: 5px;
+}
+
+.cv-preview-content a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.cv-preview-content strong {
+    font-weight: bold;
+}
+
+.cv-preview-content em {
+    font-style: italic;
+}
+
+.cv-preview-content hr {
+    border: 0;
+    height: 1px;
+    background: #ccc;
+    margin: 15px 0;
+}
+
+.cv-preview-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 5px;
+}
+
+.cv-preview-content table + ul {
+    margin-top: 10px;
+}
+
+.cv-preview-content td {
+    padding: 1px 0;
+    vertical-align: top;
+}
+
+.cv-preview-content td:first-child {
+    text-align: left;
+    padding-right: 15px;
+}
+
+.cv-preview-content td:last-child {
+    text-align: right;
+}
