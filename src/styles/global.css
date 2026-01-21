@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+@theme {
+  /* Definimos nuestros colores personalizados aquí */
+  /* Usamos nombres semánticos para que sea fácil cambiar el "look" después */
+  
+  --color-app-bg: #0f172a;       /* Slate 900 - Fondo principal */
+  --color-panel-bg: #1e293b;     /* Slate 800 - Fondo de paneles/editor */
+  --color-panel-border: #334155; /* Slate 700 - Bordes */
+  
+  --color-text-main: #f8fafc;    /* Slate 50 - Texto principal */
+  --color-text-muted: #94a3b8;   /* Slate 400 - Texto secundario */
+  
+  --color-accent: #3b82f6;       /* Blue 500 - Acciones principales */
+  --color-accent-hover: #2563eb; /* Blue 600 - Hover acciones */
+  
+  --color-danger: #ef4444;       /* Red 500 - Acciones destructivas */
+  --color-danger-bg: #450a0a;    /* Red 950 - Fondo botones danger */
+}
+
+/* Estilos base para garantizar el reset */
+@layer base {
+  body {
+    background-color: var(--color-app-bg);
+    color: var(--color-text-main);
+  }
+}
+
+/* Reglas de impresión globales (se mantienen igual) */
+@media print {
+    body > *:not(main) { display: none; }
+    @page { margin: 0; }
+    body { 
+        margin: 0; 
+        background-color: white; /* Al imprimir, el fondo debe ser blanco */
+        color: black;
+    }
+}
+
+/* Ajustes finos para el editor de código */
+code[class*="language-"],
+pre[class*="language-"] {
+    text-shadow: none !important; /* Quita sombras raras en texto */
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace !important;
+}
+
+/* Scrollbar personalizada para que se vea moderna */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #1e293b; 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #475569; 
+    border-radius: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #64748b; 
+}
