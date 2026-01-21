@@ -1,10 +1,36 @@
-import type { CVData } from '../types/cv';
+import type { CVData, SkillItem } from '../types/cv';
 
-export const generateMarkdown = (data: CVData): string => {
-  const { personal, experience, education } = data;
+const formatDate = (dateString: string | null, isCurrent: boolean, lang: 'es' | 'en'): string => {
+  if (isCurrent) return lang === 'es' ? 'Presente' : 'Present';
+  if (!dateString) return '';
+  const [year, month] = dateString.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1);
+  return new Intl.DateTimeFormat(lang, { month: 'short', year: 'numeric' }).format(date);
+};
 
-  // Generamos las tablas de experiencia dinámicamente
-  const experienceSection = experience.map(exp => `
+// Helper para generar lista de items (SkillItem)
+const generateCategoryList = (items: SkillItem[]): string => {
+  if (!Array.isArray(items)) return ""; 
+  return items.map(item => `- **${item.category}:** ${item.items}`).join('\n');
+};
+
+// NUEVO: Helper para generar lista de bullets simples (Experience)
+const generateBulletList = (items: string[]): string => {
+    if (!Array.isArray(items)) return "";
+    return items.map(item => `- ${item}`).join('\n');
+}
+
+export const generateMarkdown = (data: CVData, lang: 'es' | 'en' = 'en'): string => {
+  const { personal, experience, education, skills, certifications } = data;
+
+  const experienceSection = experience.map(exp => {
+    const start = formatDate(exp.startDate, false, lang);
+    const end = formatDate(exp.endDate, exp.isCurrent, lang);
+    
+    // Generamos los bullets aquí
+    const descriptionBullets = generateBulletList(exp.description);
+
+    return `
 <table>
   <tr>
     <td><strong>${exp.company}</strong></td>
@@ -12,19 +38,39 @@ export const generateMarkdown = (data: CVData): string => {
   </tr>
   <tr>
     <td><em>${exp.location}</em></td>
-    <td><em>${exp.date}</em></td>
+    <td><em>${start} - ${end}</em></td>
   </tr>
 </table>
 
-${exp.description}
-`).join('\n');
+${descriptionBullets}
+`;
+  }).join('\n');
 
-  // Generamos la sección de educación
-  const educationSection = education.map(edu => `
+  const educationSection = education.map(edu => {
+    const start = formatDate(edu.startDate, false, lang);
+    const end = formatDate(edu.endDate, edu.isCurrent, lang);
+    return `
 **${edu.degree}**
 <br>
-*${edu.institution} | ${edu.date}*
-`).join('\n<br>\n');
+*${edu.institution} | ${start} - ${end}*
+`;
+  }).join('\n<br>\n');
+
+  const titles = lang === 'es' ? {
+    exp: "Experiencia Profesional",
+    skills: "Habilidades Técnicas",
+    edu: "Educación",
+    certs: "Certificaciones",
+    lang: "Idiomas",
+    int: "Intereses"
+  } : {
+    exp: "Professional Experience",
+    skills: "Technical Skills",
+    edu: "Education",
+    certs: "Certifications",
+    lang: "Languages",
+    int: "Interests"
+  };
 
   return `
 # ${personal.name}
@@ -35,24 +81,24 @@ ${exp.description}
 
 ${personal.summary}
 
-## Professional Experience
+## ${titles.exp}
 
 ${experienceSection}
 
-## Technical Skills
+## ${titles.skills}
 
-${data.skills}
+${generateCategoryList(skills)}
 
-## Education
+## ${titles.edu}
 
 ${educationSection}
 
-## Certifications
+## ${titles.certs}
 
-${data.certifications}
+${generateCategoryList(certifications)}
 
-**Languages:** ${data.languages}
+**${titles.lang}:** ${data.languages}
 <br>
-**Interests:** ${data.interests}
+**${titles.int}:** ${data.interests}
 `.trim();
 };

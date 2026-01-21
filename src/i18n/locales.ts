@@ -11,32 +11,67 @@ export const locales = {
     sections: {
       personal: "Información Personal",
       experience: "Experiencia Laboral",
-      skills: "Habilidades y Otros",
+      edu: "Educación",
+      skills: "Habilidades y Certificaciones",
     },
     labels: {
+      // Personal
       fullName: "Nombre Completo",
       role: "Rol / Título",
       email: "Email",
       phone: "Teléfono",
       city: "Ciudad",
-      linkedin: "LinkedIn URL",
-      github: "GitHub URL",
-      portfolio: "Portfolio URL",
+      network: "Red / Sitio (ej. LinkedIn)",
+      url: "Enlace / URL",
       summary: "Resumen Profesional",
+      
+      // Experiencia
       company: "Empresa",
       location: "Ubicación",
-      dates: "Fechas",
-      description: "Descripción (Bullets)",
-      techSkills: "Skills Técnicos",
+      startDate: "Fecha Inicio",
+      endDate: "Fecha Fin",
+      currentWork: "Actualmente trabajo aquí",
+      description: "Responsabilidades / Logros",
+      
+      // Educación
+      institution: "Institución / Universidad",
+      degree: "Título / Grado",
+      currentStudy: "Actualmente estudio aquí",
+
+      // Listas Dinámicas (Skills/Certs)
+      category: "Categoría (ej. Cloud)",
+      itemsList: "Elementos (ej. Azure, AWS)",
+      techSkills: "Habilidades Técnicas",
       certifications: "Certificaciones",
+
+      // Otros
       languages: "Idiomas",
       interests: "Intereses",
     },
     actions: {
       add: "+ Agregar",
       delete: "Eliminar",
-      confirmDelete: "¿Eliminar esta experiencia?",
-      confirmReset: "¿Estás seguro de reiniciar al CV por defecto? Perderás los cambios actuales."
+      confirmDelete: "¿Eliminar esta entrada?",
+      confirmReset: "¿Estás seguro de reiniciar al CV por defecto? Perderás los cambios actuales.",
+      addItem: "+ Añadir Elemento",
+      addBullet: "+ Añadir Punto",
+      addLink: "+ Añadir Enlace"
+    },
+    ai: {
+      button: "Herramientas IA",
+      processing: "Procesando...",
+      overlayText: "Generando mejoras con IA...",
+      dropdown: {
+        enhance: "✨ Mejorar Redacción",
+        optimize: "🎯 Optimizar para Oferta",
+        translate: "🌐 Traducir (ES/EN)",
+        poweredBy: "Potenciado por Gemini / GPT"
+      },
+      alerts: {
+        enhance: "✨ IA: He mejorado la redacción de tu perfil profesional.",
+        translate: "🌐 IA: He traducido los campos principales.",
+        optimize: "🎯 IA: He ajustado las keywords para coincidir con el puesto."
+      }
     }
   },
   en: {
@@ -51,35 +86,69 @@ export const locales = {
     sections: {
       personal: "Personal Information",
       experience: "Work Experience",
-      skills: "Skills & Others",
+      edu: "Education",
+      skills: "Skills & Certifications",
     },
     labels: {
+      // Personal
       fullName: "Full Name",
       role: "Role / Title",
       email: "Email",
       phone: "Phone",
       city: "City/Location",
-      linkedin: "LinkedIn URL",
-      github: "GitHub URL",
-      portfolio: "Portfolio URL",
+      network: "Network / Site (e.g. LinkedIn)",
+      url: "Link / URL",
       summary: "Professional Summary",
+
+      // Experience
       company: "Company",
       location: "Location",
-      dates: "Dates",
-      description: "Description (Bullets)",
+      startDate: "Start Date",
+      endDate: "End Date",
+      currentWork: "I currently work here",
+      description: "Responsibilities / Achievements",
+
+      // Education
+      institution: "Institution / University",
+      degree: "Degree / Major",
+      currentStudy: "I currently study here",
+
+      // Dynamic Lists (Skills/Certs)
+      category: "Category (e.g. Cloud)",
+      itemsList: "Items (e.g. Azure, AWS)",
       techSkills: "Technical Skills",
       certifications: "Certifications",
+
+      // Others
       languages: "Languages",
       interests: "Interests",
     },
     actions: {
       add: "+ Add",
       delete: "Delete",
-      confirmDelete: "Delete this experience entry?",
-      confirmReset: "Are you sure you want to reset to default? You will lose current changes."
+      confirmDelete: "Delete this entry?",
+      confirmReset: "Are you sure you want to reset to default? You will lose current changes.",
+      addItem: "+ Add Item",
+      addBullet: "+ Add Bullet",
+      addLink: "+ Add Link"
+    },
+    ai: {
+      button: "AI Tools",
+      processing: "Processing...",
+      overlayText: "Generating improvements with AI...",
+      dropdown: {
+        enhance: "✨ Enhance Writing",
+        optimize: "🎯 Optimize for Job Post",
+        translate: "🌐 Translate (ES/EN)",
+        poweredBy: "Powered by Gemini / GPT"
+      },
+      alerts: {
+        enhance: "✨ AI: I have improved your professional summary.",
+        translate: "🌐 AI: I have translated the main fields.",
+        optimize: "🎯 AI: I have adjusted keywords to match the job post."
+      }
     }
   }
 };
 
-// Tipo derivado para usar en los componentes
 export type Translation = typeof locales.es;

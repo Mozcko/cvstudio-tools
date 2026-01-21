@@ -9,7 +9,7 @@ export default function useTranslation() {
   const t: Translation = locales[lang];
 
   const toggleLang = () => {
-    setLang((current) => (current === 'es' ? 'en' : 'es'));
+    setLang(lang === 'es' ? 'en' : 'es');
   };
 
   return { t, lang, toggleLang, setLang };

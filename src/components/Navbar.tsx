@@ -43,18 +43,18 @@ export default function Navbar({
             >
                 {/* Fondo deslizante (indicador activo) */}
                 <div 
-                    className={`absolute w-[28px] h-[28px] bg-slate-600 rounded-full shadow-md transition-all duration-300 ease-out transform ${
-                        lang === 'en' ? 'translate-x-[34px]' : 'translate-x-0'
+                    className={`absolute w-7 h-7 bg-slate-600 rounded-full shadow-md transition-all duration-300 ease-out transform ${
+                        lang === 'en' ? 'translate-x-8.5' : 'translate-x-0'
                     }`}
                 ></div>
 
                 {/* Bandera México */}
-                <div className={`relative z-10 w-[34px] h-[28px] flex items-center justify-center text-lg transition-opacity duration-300 ${lang === 'es' ? 'opacity-100' : 'opacity-40 grayscale'}`}>
+                <div className={`relative z-10 w-8.5 h-7 flex items-center justify-center text-lg transition-opacity duration-300 ${lang === 'es' ? 'opacity-100' : 'opacity-40 grayscale'}`}>
                     🇲🇽
                 </div>
 
                 {/* Bandera USA */}
-                <div className={`relative z-10 w-[34px] h-[28px] flex items-center justify-center text-lg transition-opacity duration-300 ${lang === 'en' ? 'opacity-100' : 'opacity-40 grayscale'}`}>
+                <div className={`relative z-10 w-8.5 h-7 flex items-center justify-center text-lg transition-opacity duration-300 ${lang === 'en' ? 'opacity-100' : 'opacity-40 grayscale'}`}>
                     🇺🇸
                 </div>
             </button>
