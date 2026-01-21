@@ -7,14 +7,13 @@ import { initialCVData, type CVData } from '../types/cv';
 import { generateMarkdown } from '../utils/markdownGenerator';
 import CVForm from './CVForm';
 import Navbar from './Navbar'; 
+import { themes, getThemeById } from '../templates'; 
 
+// --- Imports del Editor de Código ---
 import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-markdown'; 
 import 'prismjs/themes/prism-tomorrow.css'; 
-
-// @ts-ignore
-import defaultCssFile from '../templates/basic.css?raw';
 
 export default function CVBuilder() {
   const { t, lang, toggleLang } = useTranslation();
@@ -23,14 +22,12 @@ export default function CVBuilder() {
   const [rawData, setRawData] = useLocalStorage<CVData>('cv-data', initialCVData);
   
   // 2. VALIDAR SCHEMA (ANTI-CRASH)
-  // Verifica si los datos guardados coinciden con la nueva estructura (Arrays). 
-  // Si no (son strings viejos o undefined), usa la data por defecto.
+  // Detecta si los datos guardados son de una versión vieja (strings en lugar de arrays)
   const cvData = useMemo(() => {
     const isOldSchema = 
         !Array.isArray(rawData.skills) || 
         !Array.isArray(rawData.certifications) ||
         !Array.isArray(rawData.personal?.socials) ||
-        // Verifica si la descripción de la primera experiencia es un string (viejo)
         (rawData.experience.length > 0 && typeof rawData.experience[0].description === 'string');
 
     if (isOldSchema) {
@@ -40,8 +37,7 @@ export default function CVBuilder() {
     return rawData;
   }, [rawData]);
 
-  // 3. GUARDAR FIX
-  // Si detectamos que la data estaba corrupta (cvData != rawData), sobrescribimos el storage.
+  // Si detectamos datos corruptos/viejos, actualizamos el storage
   useEffect(() => {
       if (cvData !== rawData) {
           setRawData(initialCVData);
@@ -49,26 +45,40 @@ export default function CVBuilder() {
   }, [cvData, rawData, setRawData]);
 
 
-  const [markdown, setMarkdown] = useState<string>('');
-  const [currentStyles, setCurrentStyles] = useLocalStorage<string>('cv-styles', defaultCssFile);
+  // 3. GESTIÓN DE TEMAS
+  const [activeThemeId, setActiveThemeId] = useLocalStorage<string>('cv-theme-id', 'basic');
+  const [customCSS, setCustomCSS] = useLocalStorage<string>('cv-custom-css', themes[0].css);
 
+  // 4. ESTADOS UI
+  const [markdown, setMarkdown] = useState<string>('');
   const [editMode, setEditMode] = useState<'form' | 'code'>('form');
   const [isMounted, setIsMounted] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
 
+  // Inicialización
   useEffect(() => {
     setIsMounted(true);
     setMarkdown(generateMarkdown(cvData, lang));
+    
+    // Asegurar que haya un CSS cargado. Si no hay (o si el ID guardado no coincide con el CSS actual), recargamos
+    if (!customCSS) {
+        setCustomCSS(getThemeById(activeThemeId).css);
+    }
   }, []);
 
+  // Sincronización Markdown (Data + Idioma)
   useEffect(() => {
     if (editMode === 'form') {
         setMarkdown(generateMarkdown(cvData, lang));
     }
   }, [cvData, editMode, lang]);
 
-  const handleDataChange = (newData: CVData) => {
-      setRawData(newData);
+  // HANDLERS
+  const handleDataChange = (newData: CVData) => setRawData(newData);
+  
+  const handleThemeChange = (theme: any) => {
+      setActiveThemeId(theme.id);
+      setCustomCSS(theme.css);
   };
 
   const handlePrint = () => window.print();
@@ -76,7 +86,8 @@ export default function CVBuilder() {
   const handleReset = () => {
     if(confirm(t.actions.confirmReset)){
         setRawData(initialCVData);
-        setCurrentStyles(defaultCssFile);
+        // Resetear al tema por defecto
+        handleThemeChange(themes[0]);
         setEditMode('form');
     }
   }
@@ -100,11 +111,11 @@ export default function CVBuilder() {
             if (lang === 'es') {
                 newData.personal.role = "Data Analyst";
                 newData.personal.city = "Mexico City, Mexico";
-                newData.experience[0].role = "Systems Engineer Trainee";
+                if(newData.experience[0]) newData.experience[0].role = "Systems Engineer Trainee";
             } else {
                 newData.personal.role = "Analista de Datos";
                 newData.personal.city = "CDMX, México";
-                newData.experience[0].role = "Ingeniero de Sistemas Trainee";
+                if(newData.experience[0]) newData.experience[0].role = "Ingeniero de Sistemas Trainee";
             }
             alert(t.ai.alerts.translate);
         }
@@ -121,7 +132,7 @@ export default function CVBuilder() {
     Prism.highlight(code, Prism.languages.markdown, 'markdown')
   );
 
-  if (!isMounted) return <div className="flex h-screen items-center justify-center bg-[#0f172a] text-slate-400">Cargando...</div>;
+  if (!isMounted) return <div className="flex h-screen items-center justify-center bg-app-bg text-slate-400">Cargando...</div>;
 
   return (
     <div className="flex flex-col h-screen bg-app-bg font-sans text-text-main">
@@ -136,12 +147,16 @@ export default function CVBuilder() {
         onPrint={handlePrint}
         isAiProcessing={isAiProcessing}
         onAiAction={handleAiAction}
+        currentTheme={activeThemeId}
+        onThemeChange={handleThemeChange}
       />
 
       <main className="flex-1 flex overflow-hidden">
         
+        {/* PANEL IZQUIERDO: EDITOR */}
         <section className="w-1/2 flex flex-col border-r border-panel-border bg-panel-bg print:hidden overflow-hidden transition-all relative">
           
+          {/* Overlay de Carga (IA) */}
           {isAiProcessing && (
               <div className="absolute inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center text-purple-300">
                   <svg className="animate-spin h-8 w-8 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -153,10 +168,12 @@ export default function CVBuilder() {
           )}
 
           {editMode === 'form' ? (
+              // MODO VISUAL
               <div className="overflow-y-auto custom-scrollbar h-full">
                   <CVForm data={cvData} onChange={handleDataChange} t={t} />
               </div>
           ) : (
+              // MODO CÓDIGO
               <div className="relative h-full flex flex-col bg-[#1d1f21]">
                   <div className="bg-yellow-500/10 text-yellow-500 text-xs py-2 px-4 text-center border-b border-yellow-500/20 shrink-0 font-medium">
                       {t.header.editorWarning}
@@ -181,11 +198,14 @@ export default function CVBuilder() {
           )}
         </section>
 
+        {/* PANEL DERECHO: PREVIEW */}
         <section className="w-1/2 bg-app-bg overflow-y-auto print:w-full print:bg-white print:overflow-visible custom-scrollbar relative flex items-start justify-center">
            
-           <style>{currentStyles}</style>
+           {/* Inyección de CSS dinámico */}
+           <style>{customCSS}</style>
 
            <div className="py-12 px-8 print:p-0 transition-transform duration-300">
+               {/* Hoja A4 Simulada */}
                <div className="bg-white text-slate-900 shadow-2xl min-h-[29.7cm] w-[21cm] print:shadow-none print:w-full relative">
                  <div className="cv-preview-content p-[1cm] print:p-0 h-full">
                     <ReactMarkdown rehypePlugins={[rehypeRaw]}>

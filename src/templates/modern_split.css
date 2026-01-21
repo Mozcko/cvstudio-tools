@@ -1,0 +1,69 @@
+/* Estilo Moderno con separación visual */
+.cv-preview-content {
+    font-family: 'Roboto', 'Segoe UI', sans-serif;
+    color: #334155;
+    line-height: 1.5;
+}
+
+/* Header con fondo o borde distintivo */
+.cv-preview-content h1 {
+    font-size: 2.5em;
+    font-weight: 900;
+    color: #1e293b;
+    letter-spacing: -1px;
+    margin-bottom: 0;
+}
+
+.cv-preview-content p:first-of-type {
+    font-size: 0.95em;
+    color: #64748b;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 4px solid #2563eb; /* Borde azul grueso */
+}
+
+/* TÍTULOS: El truco para "dividir" la info. 
+   Hacemos que el título sea grande y de color, separando secciones claramente. */
+.cv-preview-content h2 {
+    font-size: 1.1em;
+    color: #2563eb;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.cv-preview-content h2::before {
+    content: "■"; /* Un pequeño adorno visual */
+    margin-right: 10px;
+    font-size: 0.8em;
+    color: #93c5fd;
+}
+
+.cv-preview-content table {
+    margin-top: 0.5rem;
+}
+
+/* Negritas más oscuras */
+.cv-preview-content strong {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.cv-preview-content td:first-child {
+    color: #0f172a;
+    font-size: 1.05em;
+}
+
+.cv-preview-content td:last-child {
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Bullets personalizados */
+.cv-preview-content li::marker {
+    color: #2563eb;
+}

@@ -1,4 +1,4 @@
-import type { CVData, SkillItem } from '../types/cv';
+import type { CVData, SkillItem, SocialLink } from '../types/cv';
 
 const formatDate = (dateString: string | null, isCurrent: boolean, lang: 'es' | 'en'): string => {
   if (isCurrent) return lang === 'es' ? 'Presente' : 'Present';
@@ -14,20 +14,30 @@ const generateCategoryList = (items: SkillItem[]): string => {
   return items.map(item => `- **${item.category}:** ${item.items}`).join('\n');
 };
 
-// NUEVO: Helper para generar lista de bullets simples (Experience)
+// Helper para generar lista de bullets simples (Experience)
 const generateBulletList = (items: string[]): string => {
     if (!Array.isArray(items)) return "";
     return items.map(item => `- ${item}`).join('\n');
 }
 
+// NUEVO: Helper para generar enlaces sociales dinámicos
+// Soluciona el error de 'platform' vs 'network' y la limitación de links fijos
+const generateSocialLinks = (socials: SocialLink[]): string => {
+    if (!Array.isArray(socials)) return "";
+    // Genera: **[LinkedIn](url)** | **[GitHub](url)** ...
+    return socials.map(link => `**[${link.network}](${link.url})**`).join(' | ');
+}
+
 export const generateMarkdown = (data: CVData, lang: 'es' | 'en' = 'en'): string => {
   const { personal, experience, education, skills, certifications } = data;
+
+  // Generamos la línea de contactos usando la función dinámica
+  const socialLinksLine = generateSocialLinks(personal.socials);
 
   const experienceSection = experience.map(exp => {
     const start = formatDate(exp.startDate, false, lang);
     const end = formatDate(exp.endDate, exp.isCurrent, lang);
     
-    // Generamos los bullets aquí
     const descriptionBullets = generateBulletList(exp.description);
 
     return `
@@ -77,7 +87,7 @@ ${descriptionBullets}
 
 **${personal.city}** | **${personal.email}** | **${personal.phone}**
 <br>
-**[LinkedIn](${personal.linkedin})** | **[GitHub](${personal.github})** | **[Portfolio](${personal.portfolio})**
+${socialLinksLine}
 
 ${personal.summary}
 
