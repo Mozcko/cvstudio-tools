@@ -1,6 +1,6 @@
 import React from 'react';
-import type { CVData, Experience, Education, SkillItem, SocialLink } from '../types/cv';
-import type { Translation } from '../i18n/locales';
+import type { CVData, Experience, Education, SkillItem, SocialLink } from '../../types/cv';
+import type { Translation } from '../../i18n/locales';
 
 interface Props {
   data: CVData;

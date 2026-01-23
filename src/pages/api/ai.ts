@@ -1,18 +1,18 @@
-import type { APIRoute } from 'astro';
-import OpenAI from 'openai';
+import type { APIRoute } from "astro";
+import OpenAI from "openai";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   const deepseek = new OpenAI({
-    baseURL: 'https://api.deepseek.com',
+    baseURL: "https://api.deepseek.com",
     apiKey: import.meta.env.DEEPSEEK_API_KEY,
   });
 
   try {
     const body = await request.json();
     const { action, cvData, jobDescription, lang } = body;
-    const targetLang = lang === 'es' ? 'Español' : 'Inglés';
+    const targetLang = lang === "es" ? "Español" : "Inglés";
 
     // --- SYSTEM PROMPT (El "Cerebro") ---
     const systemPrompt = `
@@ -34,7 +34,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // --- PROMPTS ESPECÍFICOS ---
 
-    if (action === 'enhance') {
+    if (action === "enhance") {
       userPrompt = `
         Toma este JSON de un CV y mejora PROFUNDAMENTE la redacción de TODO el contenido al idioma ${targetLang}.
 
@@ -47,8 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
         JSON DEL CV:
         ${JSON.stringify(cvData)}
       `;
-    } 
-    else if (action === 'translate') {
+    } else if (action === "translate") {
       userPrompt = `
         Traduce TODO el contenido textual de este CV al ${targetLang}.
         
@@ -62,13 +61,12 @@ export const POST: APIRoute = async ({ request }) => {
         
         QUÉ NO TRADUCIR:
         - Nombres propios (Personas, Empresas, Universidades).
-        - Nombres de tecnologías universales (Python, SQL, Azure).
+        - Nombres de tecnologías universales (Python, SQL, Azure, Cloud, etc).
 
         JSON DEL CV:
         ${JSON.stringify(cvData)}
       `;
-    }
-    else if (action === 'optimize') {
+    } else if (action === "optimize") {
       userPrompt = `
         Actúa como un sistema ATS (Applicant Tracking System) inteligente.
         Optimiza este CV para asegurar que pase los filtros para la siguiente Descripción de Trabajo.
@@ -86,18 +84,38 @@ export const POST: APIRoute = async ({ request }) => {
         JSON DEL CV:
         ${JSON.stringify(cvData)}
       `;
+    } else if (action === "evaluate_match") {
+      userPrompt = `
+        Actúa como un Reclutador Senior Técnico.
+        Tu tarea es evaluar si este candidato encaja en la vacante proporcionada.
+
+        VACANTE:
+        "${jobDescription}"
+
+        CANDIDATO (CV Data):
+        ${JSON.stringify(cvData)}
+
+        SALIDA REQUERIDA (JSON):
+        {
+            "matchScore": number (0-100),
+            "summary": "Breve explicación de 2-10 líneas",
+            "pros": ["Punto fuerte 1", "Punto fuerte 2", ...],
+            "cons": ["Falta X habilidad", "Experiencia insuficiente en Y", ...],
+            "recommendation": "Entrevistar" | "Descartar" | "Mantener en reserva"
+        }
+      `;
     }
 
     // --- LLAMADA A LA API ---
     const completion = await deepseek.chat.completions.create({
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        { role: "user", content: userPrompt },
       ],
       model: "deepseek-chat",
       temperature: 1.1, // Subimos un poco la creatividad para que reescriba mejor
       max_tokens: 4000, // Aseguramos espacio suficiente para todo el JSON
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     });
 
     const result = completion.choices[0].message.content;
@@ -108,14 +126,16 @@ export const POST: APIRoute = async ({ request }) => {
 
     return new Response(JSON.stringify(jsonResponse), {
       status: 200,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
-
   } catch (error) {
     console.error("AI Error:", error);
-    return new Response(JSON.stringify({ error: "Error procesando IA", details: String(error) }), { 
+    return new Response(
+      JSON.stringify({ error: "Error procesando IA", details: String(error) }),
+      {
         status: 500,
-        headers: { "Content-Type": "application/json" }
-    });
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 };

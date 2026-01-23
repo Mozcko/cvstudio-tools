@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Translation } from '../i18n/locales';
+import type { Translation } from '../../i18n/locales';
 
 interface AIToolsProps {
   t: Translation;

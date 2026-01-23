@@ -1,0 +1,8 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import CVBuilder from '../../components/editor/CVBuilder'; // Ajusta la ruta a tu nueva carpeta
+---
+
+<AppLayout title="Editor - CVStudio">
+    <CVBuilder client:only="react" />
+</AppLayout>

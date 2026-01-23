@@ -1,0 +1,66 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import SiteHeader from '../../components/ui/SiteHeader';
+
+// NOTA: Aquí agregaremos lógica de servidor para proteger la ruta
+// Por ahora, si no hay usuario, el cliente (React) debería redirigir.
+---
+
+<AppLayout title="Mis Currículums - CVStudio">
+    <SiteHeader client:load />
+    
+    <main class="container mx-auto px-4 pt-24 pb-12">
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-white mb-2">Mis Currículums</h1>
+                <p class="text-slate-400">Gestiona y edita tus documentos.</p>
+            </div>
+            <a 
+                href="/app/editor" 
+                class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                    <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                </svg>
+                Crear Nuevo
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            {/* CV Card Example */}
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 hover:border-slate-500 transition-all group cursor-pointer relative overflow-hidden">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold">
+                        CV
+                    </div>
+                    <div class="px-2 py-1 rounded text-xs bg-green-900/50 text-green-300 border border-green-800">
+                        Borrador
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-1">Full Stack Developer</h3>
+                <p class="text-sm text-slate-500 mb-6">Actualizado hace 2 días</p>
+                
+                <div class="flex gap-2">
+                    <a href="/app/editor" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm font-medium text-center transition-colors">
+                        Editar
+                    </a>
+                    <button class="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors" title="Descargar">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            {/* Empty State Card */}
+            <a href="/app/editor" class="border-2 border-dashed border-slate-700 rounded-xl p-5 flex flex-col items-center justify-center text-slate-500 hover:text-blue-400 hover:border-blue-500/50 hover:bg-slate-800/50 transition-all h-full min-h-50">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 mb-3 opacity-50">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span class="font-bold">Crear nuevo CV</span>
+            </a>
+
+        </div>
+    </main>
+</AppLayout>

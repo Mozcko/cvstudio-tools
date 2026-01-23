@@ -1,5 +1,5 @@
 import React from 'react';
-import { themes, type CvTheme } from '../templates';
+import { themes, type CvTheme } from '../../templates';
 
 interface Props {
     currentTheme: string;

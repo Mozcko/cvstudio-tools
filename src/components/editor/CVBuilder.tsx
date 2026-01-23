@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import useLocalStorage from '../hooks/useLocalStorage';
-import useTranslation from '../hooks/useTranslation';
-import { initialCVData, type CVData } from '../types/cv';
-import { generateMarkdown } from '../utils/markdownGenerator';
+import useLocalStorage from '../../hooks/useLocalStorage';
+import useTranslation from '../../hooks/useTranslation';
+import { initialCVData, type CVData } from '../../types/cv';
+import { generateMarkdown } from '../../utils/markdownGenerator';
 import CVForm from './CVForm';
-import Navbar from './Navbar'; 
-import { themes, getThemeById } from '../templates'; 
+import Navbar from './EditorToolbar'; 
+import { themes, getThemeById } from '../../templates'; 
 
 // --- Imports del Editor de Código ---
 import Editor from 'react-simple-code-editor';
