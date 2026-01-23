@@ -52,82 +52,95 @@ export interface CVData {
 
 export const initialCVData: CVData = {
   personal: {
-    name: "Joaquín Eduardo Ramos Farfán",
-    role: "Data Analyst",
-    email: "joaquin.ramosff@gmail.com",
-    phone: "5559336056",
-    city: "CDMX, Mexico",
-    summary: "Data Analyst with data engineering experience using **Azure (Databricks, Data Factory)**, SQL and Python. Focused on transforming complex data into clear, actionable business strategies.",
+    name: "John Doe",
+    role: "Software Engineer",
+    email: "email@example.com",
+    phone: "+1 234 567 890",
+    city: "New York, USA",
+    summary: "Software Engineer with experience in **Cloud Computing**, **Data Analysis**, and **Full Stack Development**. Passionate about building scalable solutions and optimizing workflows.",
     socials: [
-        { id: "1", network: "LinkedIn", username: "Joaquín Ramos", url: "https://linkedin.com/in/..." },
-        { id: "2", network: "GitHub", username: "Mozcko", url: "https://github.com/Mozcko" },
-        { id: "3", network: "Portfolio", username: "joaquinramos.dev", url: "https://joaquinramos.dev" }
+        { id: "1", network: "LinkedIn", username: "johndoe", url: "https://linkedin.com/in/johndoe" },
+        { id: "2", network: "GitHub", username: "johndoe", url: "https://github.com/johndoe" },
+        { id: "3", network: "Portfolio", username: "johndoe.dev", url: "https://johndoe.dev" }
     ]
   },
   experience: [
     {
       id: "1",
-      company: "Infosys",
-      role: "Systems Engineer Trainee",
-      location: "CDMX (On-Site)",
-      startDate: "2025-01",
+      company: "Tech Company Inc.",
+      role: "Senior Developer",
+      location: "New York, NY (Remote)",
+      startDate: "2023-01",
       endDate: null,
       isCurrent: true,
       description: [ // <--- CAMBIO: Lista de bullets
-        "Develop and optimize data pipelines using **Azure Data Factory** for ETL/ELT processes.",
-        "Ensure data quality and integrity across multiple environments."
+        "Led the migration of legacy systems to a microservices architecture, improving scalability by 40%.",
+        "Mentored junior developers and conducted code reviews to ensure high-quality standards."
       ]
     },
+    {
+      id: "2",
+      company: "Startup Solutions",
+      role: "Junior Software Engineer",
+      location: "San Francisco, CA (Hybrid)",
+      startDate: "2020-06",
+      endDate: "2022-12",
+      isCurrent: false,
+      description: [
+        "Developed and maintained RESTful APIs using Node.js and Express.",
+        "Collaborated with the product team to implement new features based on user feedback."
+      ]
+    }
   ],
   // Datos iniciales estructurados
   skills: [
     {
       id: "1",
-      category: "Cloud & Big Data",
-      items: "Azure Databricks, Azure Data Factory, Azure Ecosystem",
+      category: "Languages",
+      items: "JavaScript, TypeScript, Python, Java",
     },
     {
       id: "2",
-      category: "Languages",
+      category: "Frameworks",
       items:
-        "Python (Pandas, Scikit-learn), SQL (Advanced), Java, C#, JavaScript",
+        "React, Next.js, Node.js, Django",
     },
-    { id: "3", category: "Databases", items: "SQL, MongoDB" },
-    { id: "4", category: "Operating Systems", items: "Linux, Windows" },
+    { id: "3", category: "Cloud & DevOps", items: "AWS, Docker, Kubernetes, CI/CD" },
+    { id: "4", category: "Databases", items: "PostgreSQL, MongoDB, Redis" },
   ],
   education: [
     {
       id: "1",
-      degree: "Master's in Analytics and Business Intelligence",
-      institution: "Universidad Tecnológica de México",
-      startDate: "2024-09",
-      endDate: null,
-      isCurrent: true,
+      degree: "Master of Computer Science",
+      institution: "State University",
+      startDate: "2018-09",
+      endDate: "2020-06",
+      isCurrent: false,
     },
     {
       id: "2",
-      degree: "Bachelor of Science in Computer Systems Engineering",
-      institution: "Universidad Tecnológica de México",
-      startDate: "2020-07",
-      endDate: "2024-08",
+      degree: "Bachelor of Science in Computer Engineering",
+      institution: "City College",
+      startDate: "2014-09",
+      endDate: "2018-06",
       isCurrent: false,
     },
   ],
   certifications: [
     {
       id: "1",
-      category: "Networking & Security",
+      category: "Cloud",
       items:
-        "CCNAv7 (Routing & Security Essentials), Cybersecurity Essentials (CISCO)",
+        "AWS Certified Solutions Architect",
     },
     {
       id: "2",
-      category: "Programming",
+      category: "Security",
       items:
-        "Python Core & Data Structures (SoloLearn), Database Management System (Infosys)",
+        "CompTIA Security+",
     },
   ],
-  languages: "Spanish (Native), English (B2-C1).",
+  languages: "English (Native), Spanish (Intermediate).",
   interests:
-    "Machine Learning, tech trends, cybersecurity, open source, travel, and the Scout community.",
+    "Open Source, AI Research, Hiking, Photography.",
 };

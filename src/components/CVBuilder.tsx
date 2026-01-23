@@ -54,16 +54,24 @@ export default function CVBuilder() {
   const [editMode, setEditMode] = useState<'form' | 'code'>('form');
   const [isMounted, setIsMounted] = useState(false);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
+  const [windowWidth, setWindowWidth] = useState(0);
 
   // Inicialización
   useEffect(() => {
     setIsMounted(true);
     setMarkdown(generateMarkdown(cvData, lang));
     
-    // Asegurar que haya un CSS cargado. Si no hay (o si el ID guardado no coincide con el CSS actual), recargamos
+    // Asegurar que haya un CSS cargado
     if (!customCSS) {
         setCustomCSS(getThemeById(activeThemeId).css);
     }
+
+    // Listener para ajustar la escala del CV en móviles
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Sincronización Markdown (Data + Idioma)
@@ -92,50 +100,85 @@ export default function CVBuilder() {
     }
   }
 
-  // --- MOCK AI LOGIC ---
+  // --- LOGICA DE INTELIGENCIA ARTIFICIAL (REAL) ---
   const handleAiAction = async (action: 'enhance' | 'optimize' | 'translate') => {
     setIsAiProcessing(true);
     
-    setTimeout(() => {
-        const newData = { ...cvData };
-
-        if (action === 'enhance') {
-            if (lang === 'en') {
-                newData.personal.summary = "Results-oriented Data Analyst with a proven track record in designing scalable ETL pipelines using Azure Data Factory. Expert in transforming raw data into actionable business intelligence using Python and SQL.";
-            } else {
-                newData.personal.summary = "Analista de Datos orientado a resultados con experiencia demostrada en el diseño de pipelines ETL escalables utilizando Azure Data Factory. Experto en transformar datos crudos en inteligencia de negocios accionable usando Python y SQL.";
+    try {
+        let jobDescription = "";
+        
+        // Si la acción es optimizar, necesitamos pedir la descripción del puesto
+        if (action === 'optimize') {
+            // Nota: Usamos 'as any' por si no has actualizado locales.ts aún, para que no rompa
+            const promptText = (t.ai as any).jobDescriptionPrompt || "Pega aquí la descripción del trabajo:";
+            jobDescription = prompt(promptText) || "";
+            
+            // Si el usuario cancela, detenemos todo
+            if (!jobDescription) {
+                setIsAiProcessing(false);
+                return;
             }
-            alert(t.ai.alerts.enhance);
-        } 
-        else if (action === 'translate') {
-            if (lang === 'es') {
-                newData.personal.role = "Data Analyst";
-                newData.personal.city = "Mexico City, Mexico";
-                if(newData.experience[0]) newData.experience[0].role = "Systems Engineer Trainee";
-            } else {
-                newData.personal.role = "Analista de Datos";
-                newData.personal.city = "CDMX, México";
-                if(newData.experience[0]) newData.experience[0].role = "Ingeniero de Sistemas Trainee";
-            }
-            alert(t.ai.alerts.translate);
-        }
-        else if (action === 'optimize') {
-            alert(t.ai.alerts.optimize);
         }
 
-        setRawData(newData);
+        // Llamada a nuestro Endpoint de Astro (que conecta con DeepSeek)
+        const response = await fetch('/api/ai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action,
+                cvData, // Enviamos el estado actual
+                lang,   // Enviamos el idioma actual ('es' o 'en')
+                jobDescription
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error en la API: ${response.statusText}`);
+        }
+
+        const newCvData = await response.json();
+
+        // Validamos que lo que nos devolvió la IA tenga sentido (mínimo que tenga la sección personal)
+        if (!newCvData || !newCvData.personal) {
+            throw new Error("La respuesta de la IA no tiene el formato esperado.");
+        }
+
+        // Actualizamos el estado con los datos mejorados por IA
+        setRawData(newCvData);
+        
+        // Mensaje de éxito
+        const successMsg = {
+            enhance: t.ai.alerts.enhance,
+            translate: t.ai.alerts.translate,
+            optimize: t.ai.alerts.optimize
+        }[action];
+        
+        alert(successMsg);
+
+    } catch (error) {
+        console.error("AI Action Error:", error);
+        alert("Hubo un error al procesar tu solicitud con IA. Por favor intenta de nuevo.");
+    } finally {
         setIsAiProcessing(false);
-    }, 1500);
+    }
   };
 
   const highlightCode = (code: string) => (
     Prism.highlight(code, Prism.languages.markdown, 'markdown')
   );
 
+  // Calcular escala dinámica para aprovechar el espacio en móvil
+  const calculateScale = () => {
+      if (windowWidth >= 1024 || windowWidth === 0) return 1;
+      // Ancho pantalla - 12px (margen mínimo) / Ancho A4 (794px)
+      return Math.min(1, (windowWidth - 12) / 794);
+  };
+  const scale = calculateScale();
+
   if (!isMounted) return <div className="flex h-screen items-center justify-center bg-app-bg text-slate-400">Cargando...</div>;
 
   return (
-    <div className="flex flex-col h-screen bg-app-bg font-sans text-text-main">
+    <div className="flex flex-col h-[100dvh] bg-app-bg font-sans text-text-main">
       
       <Navbar 
         t={t}
@@ -151,10 +194,14 @@ export default function CVBuilder() {
         onThemeChange={handleThemeChange}
       />
 
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         
         {/* PANEL IZQUIERDO: EDITOR */}
-        <section className="w-1/2 flex flex-col border-r border-panel-border bg-panel-bg print:hidden overflow-hidden transition-all relative">
+        <section className={`
+            w-full lg:w-5/12 xl:w-4/12 
+            flex flex-col border-r border-panel-border bg-panel-bg print:hidden overflow-hidden transition-all relative min-w-0
+            ${mobileTab === 'editor' ? 'flex-1' : 'hidden lg:flex'} lg:h-auto
+        `}>
           
           {/* Overlay de Carga (IA) */}
           {isAiProcessing && (
@@ -199,14 +246,28 @@ export default function CVBuilder() {
         </section>
 
         {/* PANEL DERECHO: PREVIEW */}
-        <section className="w-1/2 bg-app-bg overflow-y-auto print:w-full print:bg-white print:overflow-visible custom-scrollbar relative flex items-start justify-center">
+        <section className={`
+            w-full lg:w-7/12 xl:w-8/12 
+            bg-app-bg overflow-auto print:w-full print:bg-white print:overflow-visible custom-scrollbar relative flex items-start justify-center min-w-0
+            ${mobileTab === 'preview' ? 'flex-1' : 'hidden lg:flex'} lg:h-auto
+        `}>
            
            {/* Inyección de CSS dinámico */}
            <style>{customCSS}</style>
 
-           <div className="py-12 px-8 print:p-0 transition-transform duration-300">
+           <div className="py-6 md:py-12 w-full flex justify-center print:p-0">
                {/* Hoja A4 Simulada */}
-               <div className="bg-white text-slate-900 shadow-2xl min-h-[29.7cm] w-[21cm] print:shadow-none print:w-full relative">
+               <div 
+                    className="bg-white text-slate-900 shadow-2xl print:shadow-none !print:w-full !print:transform-none !print:mb-0 relative origin-top transition-transform duration-300"
+                    style={{ 
+                        width: '21cm',
+                        minHeight: '29.7cm',
+                        transform: `scale(${scale})`,
+                        marginBottom: scale === 1 ? 0 : `-${29.7 * (1 - scale)}cm`,
+                        marginLeft: scale === 1 ? 0 : `-${21 * (1 - scale) / 2}cm`,
+                        marginRight: scale === 1 ? 0 : `-${21 * (1 - scale) / 2}cm`
+                    }}
+               >
                  <div className="cv-preview-content p-[1cm] print:p-0 h-full">
                     <ReactMarkdown rehypePlugins={[rehypeRaw]}>
                         {markdown}
@@ -215,6 +276,25 @@ export default function CVBuilder() {
                </div>
            </div>
         </section>
+
+        {/* BARRA DE NAVEGACIÓN MÓVIL (SOLO VISIBLE EN PANTALLAS PEQUEÑAS) */}
+        <div className="lg:hidden bg-slate-800 border-t border-slate-700 flex text-xs font-bold z-50 shrink-0 safe-area-pb">
+            <button 
+                onClick={() => setMobileTab('editor')}
+                className={`flex-1 py-4 flex items-center justify-center gap-2 transition-colors ${mobileTab === 'editor' ? 'text-blue-400 bg-slate-700/50 border-t-2 border-blue-500' : 'text-slate-400 border-t-2 border-transparent'}`}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                <span>{t.header.editor}</span>
+            </button>
+            <div className="w-px bg-slate-700 my-2"></div>
+            <button 
+                onClick={() => setMobileTab('preview')}
+                className={`flex-1 py-4 flex items-center justify-center gap-2 transition-colors ${mobileTab === 'preview' ? 'text-blue-400 bg-slate-700/50 border-t-2 border-blue-500' : 'text-slate-400 border-t-2 border-transparent'}`}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                <span>{t.header.preview}</span>
+            </button>
+        </div>
 
       </main>
     </div>

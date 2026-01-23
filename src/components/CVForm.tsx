@@ -178,7 +178,7 @@ export default function CVForm({ data, onChange, t }: Props) {
     if (field === 'isCurrent' && value === true) newExp[index].endDate = null;
     onChange({ ...data, experience: newExp });
   };
-  const addExp = () => onChange({ ...data, experience: [...data.experience, { id: Date.now().toString(), company: 'Company', role: 'Role', location: 'Remote', startDate: '2024-01', endDate: null, isCurrent: true, description: ["Responsibility 1"] }] });
+  const addExp = () => onChange({ ...data, experience: [...data.experience, { id: Date.now().toString(), company: 'Company', role: 'Role', location: 'Remote', startDate: new Date().toISOString().slice(0, 7), endDate: null, isCurrent: true, description: ["Responsibility 1"] }] });
   const removeExp = (index: number) => { if(confirm(t.actions.confirmDelete)) onChange({ ...data, experience: data.experience.filter((_, i) => i !== index) }); };
 
   const updateEdu = (index: number, field: keyof Education, value: any) => {
@@ -188,12 +188,12 @@ export default function CVForm({ data, onChange, t }: Props) {
     if (field === 'isCurrent' && value === true) newEdu[index].endDate = null;
     onChange({ ...data, education: newEdu });
   };
-  const addEdu = () => onChange({ ...data, education: [...data.education, { id: Date.now().toString(), institution: 'University', degree: 'Degree', startDate: '2020-09', endDate: null, isCurrent: true }] });
+  const addEdu = () => onChange({ ...data, education: [...data.education, { id: Date.now().toString(), institution: 'University', degree: 'Degree', startDate: new Date().toISOString().slice(0, 7), endDate: null, isCurrent: true }] });
   const removeEdu = (index: number) => { if(confirm(t.actions.confirmDelete)) onChange({ ...data, education: data.education.filter((_, i) => i !== index) }); };
 
 
   return (
-    <div className="p-6 space-y-8 pb-20">
+    <div className="p-3 md:p-6 space-y-6 md:space-y-8 pb-24">
       
       {/* 1. SECCIÓN PERSONAL */}
       <section>
@@ -232,7 +232,7 @@ export default function CVForm({ data, onChange, t }: Props) {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                          <Input label={t.labels.location} value={exp.location} onChange={(v) => updateExp(idx, 'location', v)} />
-                         <div className="flex gap-2">
+                         <div className="grid grid-cols-2 gap-2">
                              <Input label={t.labels.startDate} type="month" value={exp.startDate} onChange={(v) => updateExp(idx, 'startDate', v)} />
                              <Input label={t.labels.endDate} type="month" value={exp.endDate || ''} onChange={(v) => updateExp(idx, 'endDate', v)} disabled={exp.isCurrent} />
                          </div>
@@ -266,7 +266,7 @@ export default function CVForm({ data, onChange, t }: Props) {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                          <div className="hidden md:block"></div>
-                         <div className="flex gap-2">
+                         <div className="grid grid-cols-2 gap-2">
                              <Input label={t.labels.startDate} type="month" value={edu.startDate} onChange={(v) => updateEdu(idx, 'startDate', v)} />
                              <Input label={t.labels.endDate} type="month" value={edu.endDate || ''} onChange={(v) => updateEdu(idx, 'endDate', v)} disabled={edu.isCurrent} />
                          </div>

@@ -7,6 +7,8 @@ export const locales = {
       visualEditor: "Editor Visual",
       codeEditor: "Código Markdown",
       editorWarning: "⚠️ Modo Avanzado: Los cambios directos al código no actualizan el formulario visual.",
+      preview: "Vista Previa",
+      editor: "Editor"
     },
     sections: {
       personal: "Información Personal",
@@ -71,7 +73,8 @@ export const locales = {
         enhance: "✨ IA: He mejorado la redacción de tu perfil profesional.",
         translate: "🌐 IA: He traducido los campos principales.",
         optimize: "🎯 IA: He ajustado las keywords para coincidir con el puesto."
-      }
+      },
+      jobDescriptionPrompt: "Pega aquí la descripción de la oferta de trabajo para optimizar tu CV:"
     }
   },
   en: {
@@ -82,6 +85,8 @@ export const locales = {
       visualEditor: "Visual Editor",
       codeEditor: "Markdown Code",
       editorWarning: "⚠️ Advanced Mode: Direct code changes do not update the visual form.",
+      preview: "Preview",
+      editor: "Editor"
     },
     sections: {
       personal: "Personal Information",
@@ -146,7 +151,8 @@ export const locales = {
         enhance: "✨ AI: I have improved your professional summary.",
         translate: "🌐 AI: I have translated the main fields.",
         optimize: "🎯 AI: I have adjusted keywords to match the job post."
-      }
+      },
+      jobDescriptionPrompt: "Paste the job description here to optimize your CV:"
     }
   }
 };

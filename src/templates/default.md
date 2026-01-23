@@ -1,63 +1,65 @@
-# Joaquín Eduardo Ramos Farfán
+# John Doe
 
-**CDMX, Mexico** | **joaquin.ramosff@gmail.com** | **5559336056**
+**City, Country** | **email@example.com** | **+1 234 567 890**
 <br>
-**[LinkedIn](https://www.linkedin.com/in/joaquin-eduardo-ramos-farfan-7048611b8)** | **[GitHub](https://github.com/Mozcko)** | **[Portfolio](https://joaquinramos.dev)**
+**[LinkedIn](https://linkedin.com/in/johndoe)** | **[GitHub](https://github.com/johndoe)** | **[Portfolio](https://johndoe.dev)**
 
-Data Analyst with data engineering experience using **Azure (Databricks, Data Factory)**, SQL and Python. Focused on transforming complex data into clear, actionable business strategies.
+Software Engineer with experience in **Cloud Computing**, **Data Analysis**, and **Full Stack Development**. Passionate about building scalable solutions and optimizing workflows.
 
 ## Professional Experience
 
 <table>
   <tr>
-    <td><strong>Infosys</strong></td>
-    <td><em>Systems Engineer Trainee</em></td>
+    <td><strong>Tech Company Inc.</strong></td>
+    <td><em>Senior Developer</em></td>
   </tr>
   <tr>
-    <td><em>CDMX (On-Site)</em></td>
-    <td><em>January 2025 - Present</em></td>
+    <td><em>New York, NY (Remote)</em></td>
+    <td><em>January 2023 - Present</em></td>
   </tr>
 </table>
 
-- Develop and optimize data pipelines using **Azure Data Factory** for ETL/ELT processes, ensuring data quality and integrity.
+- Led the migration of legacy systems to a microservices architecture, improving scalability by 40%.
+- Mentored junior developers and conducted code reviews to ensure high-quality standards.
 
 <table>
   <tr>
-    <td><strong>DHL Supply Chain México</strong></td>
-    <td><em>Reporting and Automation Intern</em></td>
+    <td><strong>Startup Solutions</strong></td>
+    <td><em>Junior Software Engineer</em></td>
   </tr>
   <tr>
-    <td><em>Cuautitlán, (Hybrid)</em></td>
-    <td><em>August 2022 - December 2024</em></td>
+    <td><em>San Francisco, CA (Hybrid)</em></td>
+    <td><em>June 2020 - December 2022</em></td>
   </tr>
 </table>
 
-- Automated data extraction and management processes using RPAs, reducing report generation times for 6 key nationwide sectors.
-- Collaborate on creating dashboards and reports to visualize results, facilitating the interpretation of complex data for stakeholders.
+- Developed and maintained RESTful APIs using Node.js and Express.
+- Collaborated with the product team to implement new features based on user feedback.
 
 ## Technical Skills
 
-- **Cloud & Big Data:** Azure Databricks, Azure Data Factory, Azure Ecosystem.
-- **Languages:** Python (Pandas, Scikit-learn), SQL (Advanced), Java, C#, JavaScript.
-- **Databases:** SQL, MongoDB.
+- **Languages:** JavaScript, TypeScript, Python, Java.
+- **Frameworks:** React, Next.js, Node.js, Django.
+- **Cloud & DevOps:** AWS, Docker, Kubernetes, CI/CD.
+- **Databases:** PostgreSQL, MongoDB, Redis.
 - **Operating Systems:** Linux, Windows.
 
 ## Education
 
-**Master's in Analytics and Business Intelligence**
+**Master of Computer Science**
 <br>
-*Universidad Tecnológica de México | September 2024 - Present*
+*State University | September 2018 - June 2020*
 
-**Bachelor of Science in Computer Systems Engineering**
+**Bachelor of Science in Computer Engineering**
 <br>
-*Universidad Tecnológica de México | July 2020 - August 2024*
+*City College | September 2014 - June 2018*
 
 ## Certifications
 
-- **Networking & Security:** CCNAv7 (Routing & Security Essentials), Cybersecurity Essentials (CISCO).
-- **Programming:** Python Core & Data Structures (SoloLearn), Database Management System (Infosys).
+- **Cloud:** AWS Certified Solutions Architect.
+- **Security:** CompTIA Security+.
 
 
-**Languages:** Spanish (Native), English (B2-C1).
+**Languages:** English (Native), Spanish (Intermediate).
 <br>
-**Interests:** Machine Learning, tech trends, cybersecurity, open source, travel, and the Scout community.
+**Interests:** Open Source, AI Research, Hiking, Photography.

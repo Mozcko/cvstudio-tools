@@ -36,10 +36,10 @@ export default function Navbar({
 }: NavbarProps) {
   
   return (
-    <header className="flex justify-between items-center px-4 py-3 bg-panel-bg border-b border-panel-border print:hidden z-10 shadow-sm relative">
+    <header className="flex justify-between items-center px-2 md:px-4 py-3 bg-panel-bg border-b border-panel-border print:hidden z-10 shadow-sm relative">
         
         {/* IZQUIERDA: Título + Banderas */}
-        <div className="flex items-center gap-4 lg:gap-6">
+        <div className="flex items-center gap-2 md:gap-4 lg:gap-6">
             <div className="flex items-center gap-2">
                  <div className="bg-blue-600 w-8 h-8 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 text-white">
@@ -70,12 +70,14 @@ export default function Navbar({
             />
 
             {/* AQUÍ ESTÁ EL NUEVO SELECTOR DE TEMAS */}
-            <ThemeSelector currentTheme={currentTheme} onSelect={onThemeChange} />
+            <div className="hidden md:block">
+                <ThemeSelector currentTheme={currentTheme} onSelect={onThemeChange} />
+            </div>
 
             <div className="h-6 w-px bg-slate-700 mx-1 hidden lg:block"></div>
 
             {/* Switch Visual/Code (Oculto en móviles muy pequeños si es necesario) */}
-            <div className="bg-slate-900/80 p-1 rounded-lg flex text-xs font-medium border border-slate-700 md:flex">
+            <div className="bg-slate-900/80 p-1 rounded-lg hidden md:flex text-xs font-medium border border-slate-700">
                 <button 
                     onClick={() => setEditMode('form')}
                     className={`px-3 py-1.5 rounded-md transition-all ${editMode === 'form' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
