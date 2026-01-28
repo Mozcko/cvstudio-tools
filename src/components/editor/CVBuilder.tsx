@@ -171,6 +171,8 @@ export default function CVBuilder() {
             target.style.fontWeight = computed.fontWeight;
             target.style.lineHeight = computed.lineHeight;
             target.style.textAlign = computed.textAlign;
+            target.style.textTransform = computed.textTransform;
+            target.style.letterSpacing = computed.letterSpacing;
             
             target.style.borderTopWidth = computed.borderTopWidth;
             target.style.borderTopStyle = computed.borderTopStyle;
@@ -185,8 +187,16 @@ export default function CVBuilder() {
             target.style.borderLeftStyle = computed.borderLeftStyle;
             target.style.borderLeftColor = resolveColor(computed.borderLeftColor);
 
-            target.style.padding = computed.padding;
-            target.style.margin = computed.margin;
+            target.style.paddingTop = computed.paddingTop;
+            target.style.paddingRight = computed.paddingRight;
+            target.style.paddingBottom = computed.paddingBottom;
+            target.style.paddingLeft = computed.paddingLeft;
+            
+            target.style.marginTop = computed.marginTop;
+            target.style.marginRight = computed.marginRight;
+            target.style.marginBottom = computed.marginBottom;
+            target.style.marginLeft = computed.marginLeft;
+            
             target.style.display = computed.display;
             
             target.style.width = computed.width;
@@ -201,6 +211,8 @@ export default function CVBuilder() {
             target.style.alignItems = computed.alignItems;
             target.style.flexGrow = computed.flexGrow;
             target.style.flexShrink = computed.flexShrink;
+            
+            target.style.boxShadow = computed.boxShadow;
             
             target.removeAttribute('class');
         };
@@ -222,7 +234,7 @@ export default function CVBuilder() {
             if (targetElements[i]) applyComputedStyles(el as HTMLElement, targetElements[i] as HTMLElement);
         });
 
-        clone.style.padding = '0';
+        clone.style.padding = '0 0 30px 0';
 
         const opt = {
             margin: 10, 
@@ -232,7 +244,8 @@ export default function CVBuilder() {
                 scale: mode === 'save' ? 2 : 1, 
                 useCORS: true, 
                 logging: false, 
-                windowWidth: 794 
+                windowWidth: 794,
+                scrollY: 0
             }, 
             jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
         };
@@ -340,7 +353,7 @@ export default function CVBuilder() {
   return (
     // ESTRUCTURA PRINCIPAL: Flex Column que ocupa exactamente el 100% del viewport
     // 'h-[100dvh]' es crucial para móviles. 'overflow-hidden' evita scroll global.
-    <div className="flex flex-col h-[100dvh] bg-app-bg font-sans text-text-main print:bg-white print:h-auto overflow-hidden">
+    <div className="flex flex-col h-dvh bg-app-bg font-sans text-text-main print:bg-white print:h-auto overflow-hidden">
       
       {/* 1. HEADER: Fijo arriba (no position:fixed, sino flex item) */}
       <div className="shrink-0 z-50 bg-panel-bg border-b border-panel-border">

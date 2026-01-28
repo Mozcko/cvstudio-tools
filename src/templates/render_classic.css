@@ -45,10 +45,14 @@
     font-size: 12pt;
     text-transform: uppercase;
     border-bottom: 1px solid #000;
+    padding-bottom: 8px;
     margin-top: 15px;
     margin-bottom: 8px;
     letter-spacing: 0.5px;
     font-weight: bold;
+    line-height: 1.5;
+    display: flex;
+    width: 100%;
 }
 
 /* Tablas muy compactas */
