@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -8,6 +8,7 @@ import { generateMarkdown } from '../../utils/markdownGenerator';
 import CVForm from './CVForm';
 import Navbar from './EditorToolbar'; 
 import { themes, getThemeById } from '../../templates'; 
+import { supabase } from '../../lib/supabase';
 
 // --- Imports del Editor de Código ---
 import Editor from 'react-simple-code-editor';
@@ -20,6 +21,8 @@ export default function CVBuilder() {
   
   // 1. OBTENER DATOS DEL STORAGE
   const [rawData, setRawData] = useLocalStorage<CVData>('cv-data', initialCVData);
+  const [resumeId, setResumeId] = useLocalStorage<string | null>('cv-resume-id', null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   
   // 2. VALIDAR SCHEMA (ANTI-CRASH)
   const cvData = useMemo(() => {
@@ -84,6 +87,35 @@ export default function CVBuilder() {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Cargar CV desde DB si el usuario está logueado y no tenemos ID local (Opcional: Sincronización básica)
+  useEffect(() => {
+    const initSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
+
+        // 1. Si hay un ID en la URL (viniendo del dashboard), cargamos ese CV
+        const params = new URLSearchParams(window.location.search);
+        const urlId = params.get('id');
+
+        if (urlId) {
+            setResumeId(urlId);
+            const { data } = await supabase.from('resumes').select('data, theme').eq('id', urlId).single();
+            if (data?.data) {
+                setRawData(data.data);
+                if (data.theme) setActiveThemeId(data.theme);
+            }
+        } else if (!resumeId) {
+            // 2. Si no hay ID ni en URL ni local, buscamos el último editado
+            const { data } = await supabase.from('resumes').select('id, data').eq('user_id', session.user.id).order('updated_at', { ascending: false }).limit(1).single();
+            if (data) {
+                setResumeId(data.id);
+                // Opcional: Podríamos cargar data aquí también si queremos forzar sync
+            }
+        }
+    };
+    initSession();
   }, []);
 
   // Sincronización Markdown (Data + Idioma)
@@ -284,6 +316,68 @@ export default function CVBuilder() {
     }
   }
 
+  // --- GUARDADO EN BASE DE DATOS ---
+  const handleSave = useCallback(async () => {
+    setSaveStatus('saving');
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+        alert("Debes iniciar sesión para guardar tu progreso en la nube.");
+        setSaveStatus('idle');
+        return;
+    }
+
+    const payload = {
+        user_id: user.id,
+        title: cvData.personal.role || 'Mi CV',
+        data: cvData,
+        language: lang,
+        theme: activeThemeId,
+        updated_at: new Date().toISOString()
+    };
+
+    try {
+        if (resumeId) {
+            // Actualizar existente
+            const { error } = await supabase.from('resumes').update(payload).eq('id', resumeId);
+            if (error) throw error;
+        } else {
+            // Crear nuevo
+            const { data, error } = await supabase.from('resumes').insert(payload).select().single();
+            if (error) throw error;
+            if (data) setResumeId(data.id);
+        }
+        setSaveStatus('saved');
+        
+        // Resetear estado a 'idle' después de unos segundos
+        setTimeout(() => setSaveStatus((prev) => prev === 'saved' ? 'idle' : prev), 3000);
+    } catch (error) {
+        console.error("Error saving CV:", error);
+        setSaveStatus('error');
+        alert("Error al guardar. Revisa tu conexión.");
+    }
+  }, [cvData, lang, activeThemeId, resumeId, setResumeId]);
+
+  // Atajo de teclado: Ctrl + S
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            handleSave();
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSave]);
+
+  // Auto-guardado (Debounce 3s) - Solo si ya existe un ID (ya se guardó una vez)
+  useEffect(() => {
+    if (!resumeId || saveStatus === 'saving' || saveStatus === 'error') return;
+    const timer = setTimeout(() => handleSave(), 3000);
+    return () => clearTimeout(timer);
+  }, [cvData, resumeId]); // handleSave cambia cuando cvData cambia, reiniciando el timer correctamente
+
   // --- LOGICA DE INTELIGENCIA ARTIFICIAL ---
   const handleAiAction = async (action: 'enhance' | 'optimize' | 'translate') => {
     setIsAiProcessing(true);
@@ -369,6 +463,8 @@ export default function CVBuilder() {
             onAiAction={handleAiAction}
             currentTheme={activeThemeId}
             onThemeChange={handleThemeChange}
+            onSave={handleSave}
+            saveStatus={saveStatus}
           />
       </div>
 

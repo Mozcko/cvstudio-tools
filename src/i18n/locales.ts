@@ -59,7 +59,10 @@ export const locales = {
       confirmReset: "¿Estás seguro de reiniciar al CV por defecto? Perderás los cambios actuales.",
       addItem: "+ Añadir Elemento",
       addBullet: "+ Añadir Punto",
-      addLink: "+ Añadir Enlace"
+      addLink: "+ Añadir Enlace",
+      save: "Guardar",
+      saving: "Guardando...",
+      saved: "Guardado"
     },
     ai: {
       button: "Herramientas IA",
@@ -139,7 +142,10 @@ export const locales = {
       confirmReset: "Are you sure you want to reset to default? You will lose current changes.",
       addItem: "+ Add Item",
       addBullet: "+ Add Bullet",
-      addLink: "+ Add Link"
+      addLink: "+ Add Link",
+      save: "Save",
+      saving: "Saving...",
+      saved: "Saved"
     },
     ai: {
       button: "AI Tools",
