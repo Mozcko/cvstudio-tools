@@ -3,7 +3,7 @@ import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-markdown'; 
 import 'prismjs/themes/prism-tomorrow.css'; 
-import CVForm from '../../CVForm';
+import CVForm from '../../CVForm/CVForm';
 import ThemeSelector from '../../ThemeSelector';
 import type { CVData } from '../../../../types/cv';
 import type { Translation } from '../../../../i18n/locales';
