@@ -43,7 +43,7 @@ export default function ThemeSelector({ currentTheme, onSelect }: Props) {
 
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl shadow-black/50 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top-right">
-                    <div className="p-1 max-h-[300px] overflow-y-auto custom-scrollbar">
+                    <div className="p-1 max-h-75 overflow-y-auto custom-scrollbar">
                         <div className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-700/50 mb-1">
                             Seleccionar Tema
                         </div>

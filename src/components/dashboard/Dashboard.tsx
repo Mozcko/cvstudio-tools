@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import { supabase } from '../../lib/supabase';
+import { generateMarkdown } from '../../utils/markdownGenerator';
+import { themes } from '../../templates';
 
 interface Resume {
     id: string;
@@ -8,7 +11,99 @@ interface Resume {
     updated_at: string;
     language: string;
     data: any;
+    theme: string;
 }
+
+const ResumeCard = ({ cv, onDelete }: { cv: Resume, onDelete: (id: string) => void }) => {
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const [scale, setScale] = React.useState(0.22);
+
+    React.useEffect(() => {
+        if (!containerRef.current) return;
+        
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const width = entry.contentRect.width;
+                // 210mm @ 96dpi ~= 793.7px
+                const A4_WIDTH_PX = 794; 
+                setScale(width / A4_WIDTH_PX);
+            }
+        });
+
+        resizeObserver.observe(containerRef.current);
+        return () => resizeObserver.disconnect();
+    }, []);
+
+    const theme = themes.find(t => t.id === cv.theme) || themes[0];
+    const scopedCss = theme.css.replace(/\.cv-preview-content/g, `#cv-preview-${cv.id} .cv-preview-content`);
+
+    const markdownContent = React.useMemo(() => {
+        try {
+            if (cv.data?.mode === 'markdown') {
+                return cv.data.markdown || '';
+            }
+            // Ensure arrays exist to prevent "map of undefined" errors in generateMarkdown
+            const safeData = {
+                ...(cv.data || {}),
+                experience: cv.data?.experience || [],
+                education: cv.data?.education || [],
+                skills: cv.data?.skills || [],
+                projects: cv.data?.projects || [],
+                languages: cv.data?.languages || [],
+                social: cv.data?.social || []
+            };
+            return generateMarkdown(safeData, cv.language as 'es' | 'en' || 'es');
+        } catch (e) {
+            return '';
+        }
+    }, [cv]);
+
+    return (
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 hover:border-slate-500 transition-all group relative overflow-hidden flex flex-col h-full">
+            <div className="flex justify-between items-start mb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold uppercase text-xs">
+                    {cv.language || 'ES'}
+                </div>
+                <div className="text-xs text-slate-500">
+                    {new Date(cv.updated_at).toLocaleDateString()}
+                </div>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-1 truncate">{cv.title || 'Mi CV Sin Título'}</h3>
+            
+            {/* VISTA PREVIA TIPO DOCUMENTO (Miniatura) */}
+            <div ref={containerRef} className="mb-6 h-40 bg-slate-900/50 rounded-md overflow-hidden relative shadow-sm border border-slate-700/50 group-hover:border-slate-500/50 transition-all">
+                <style>{scopedCss}</style>
+                <div id={`cv-preview-${cv.id}`} className="w-full h-full overflow-hidden relative bg-slate-800">
+                    <div 
+                        className="cv-preview-content origin-top-left bg-white shadow-xl pointer-events-none select-none"
+                        style={{ 
+                            width: '210mm', 
+                            minHeight: '297mm', 
+                            transform: `scale(${scale})`, 
+                            transformOrigin: 'top left'
+                        }}
+                    >
+                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                        {markdownContent}
+                        </ReactMarkdown>
+                    </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-800 via-transparent to-transparent pointer-events-none"></div>
+            </div>
+            
+            <div className="flex gap-2 mt-auto">
+                <a href={`/app/editor?id=${cv.id}`} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm font-medium text-center transition-colors flex items-center justify-center">
+                    Editar
+                </a>
+                <button onClick={() => onDelete(cv.id)} className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors" title="Eliminar">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    );
+};
 
 export default function Dashboard() {
     const [resumes, setResumes] = useState<Resume[]>([]);
@@ -121,41 +216,7 @@ export default function Dashboard() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {resumes.map(cv => (
-                        <div key={cv.id} className="bg-slate-800 border border-slate-700 rounded-xl p-5 hover:border-slate-500 transition-all group relative overflow-hidden flex flex-col h-full">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold uppercase text-xs">
-                                    {cv.language || 'ES'}
-                                </div>
-                                <div className="text-xs text-slate-500">
-                                    {new Date(cv.updated_at).toLocaleDateString()}
-                                </div>
-                            </div>
-                            <h3 className="text-xl font-bold text-white mb-1 truncate">{cv.title || 'Mi CV Sin Título'}</h3>
-                            
-                            <div className="text-sm text-slate-400 mb-6 h-[42px] overflow-hidden relative">
-                                {cv.data?.mode === 'markdown' ? (
-                                    <div className="[&>h1]:text-white [&>h1]:font-bold [&>h1]:text-sm [&>h2]:text-white [&>h2]:font-bold [&>h2]:text-xs [&>p]:mb-1 [&>ul]:list-disc [&>ul]:pl-4">
-                                        <ReactMarkdown allowedElements={['p', 'h1', 'h2', 'h3', 'strong', 'em', 'ul', 'li', 'br']}>
-                                            {cv.data.markdown || 'Markdown sin contenido'}
-                                        </ReactMarkdown>
-                                    </div>
-                                ) : (
-                                    <p className="line-clamp-2">{cv.data?.personal?.summary || 'Sin resumen profesional...'}</p>
-                                )}
-                                <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-slate-800 to-transparent pointer-events-none"></div>
-                            </div>
-                            
-                            <div className="flex gap-2 mt-auto">
-                                <a href={`/app/editor?id=${cv.id}`} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-sm font-medium text-center transition-colors flex items-center justify-center">
-                                    Editar
-                                </a>
-                                <button onClick={() => handleDelete(cv.id)} className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors" title="Eliminar">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
+                        <ResumeCard key={cv.id} cv={cv} onDelete={handleDelete} />
                     ))}
                 </div>
             )}
