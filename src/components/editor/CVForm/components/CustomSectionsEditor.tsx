@@ -41,7 +41,7 @@ export const CustomSectionsEditor = ({ sections, onUpdate, t }: CustomSectionsEd
                         <button onClick={() => removeSection(sIdx)} className="text-red-400 hover:text-red-300 text-xs uppercase font-bold">{t.actions.delete}</button>
                     </div>
                     {section.items.map((item: any, iIdx: number) => (
-                        <div key={item.id} className="bg-slate-800/30 p-3 rounded mb-3 border border-slate-700/50">
+                        <div key={item.id} className="bg-[rgba(30,41,59,0.3)] p-3 rounded mb-3 border border-[rgba(51,65,85,0.5)]">
                             <Input value={item.title} onChange={(v) => updateItem(sIdx, iIdx, 'title', v)} placeholder={t.labels.itemTitle} className="mb-2" />
                             <Input value={item.subtitle} onChange={(v) => updateItem(sIdx, iIdx, 'subtitle', v)} placeholder={t.labels.itemSubtitle} className="mb-2 text-xs" />
                             <TextArea value={item.description} onChange={(v: string) => updateItem(sIdx, iIdx, 'description', v)} rows={2} />

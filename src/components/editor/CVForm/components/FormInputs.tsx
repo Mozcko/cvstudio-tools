@@ -24,7 +24,7 @@ export const Input = ({ label, value, onChange, placeholder, type = "text", disa
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className={`w-full bg-slate-700/50 border rounded px-3 py-2 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all
+        className={`w-full bg-[rgba(51,65,85,0.5)] border rounded px-3 py-2 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all
             ${disabled ? 'border-slate-800 text-slate-500 cursor-not-allowed' : 'border-slate-600 focus:border-transparent'}
             ${required && !value ? 'border-l-2 border-l-red-500' : ''}`}
       />
@@ -38,7 +38,7 @@ export const TextArea = ({ label, value, onChange, rows = 3 }: any) => (
         value={value} 
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        className="w-full bg-slate-700/50 border border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-mono transition-all custom-scrollbar"
+        className="w-full bg-[rgba(51,65,85,0.5)] border border-slate-600 rounded px-3 py-2 text-sm text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none font-mono transition-all custom-scrollbar"
       />
     </div>
 );

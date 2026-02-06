@@ -25,6 +25,7 @@ interface EditorPanelProps {
 export default function EditorPanel({
     editMode, setEditMode, activeThemeId, handleThemeChange, isAiProcessing, t, cvData, handleDataChange, markdown, setMarkdown, isVisible
 }: EditorPanelProps) {
+    const [isReordering, setIsReordering] = useState(false);
     const [showCodeWarning, setShowCodeWarning] = useState(true);
 
     const highlightCode = (code: string) => Prism.highlight(code, Prism.languages.markdown, 'markdown');
@@ -37,7 +38,19 @@ export default function EditorPanel({
                     <button onClick={() => setEditMode('form')} className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${editMode === 'form' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}>{t.header.visualEditor}</button>
                     <button onClick={() => setEditMode('code')} className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${editMode === 'code' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}>{t.header.codeEditor}</button>
                 </div>
-                <ThemeSelector currentTheme={activeThemeId} onSelect={handleThemeChange} />
+                
+                <div className="flex items-center gap-2">
+                    <button 
+                        onClick={() => setIsReordering(!isReordering)}
+                        className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors border ${isReordering ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-800 hover:bg-slate-700 text-blue-400 border-slate-700'}`}
+                        title={t.header.reorder}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                            <path fillRule="evenodd" d="M2 3.75A.75.75 0 012.75 3h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 3.75zm0 4.167a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75zm0 4.166a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75zm0 4.167a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+                    <ThemeSelector currentTheme={activeThemeId} onSelect={handleThemeChange} />
+                </div>
             </div>
 
             {/* AI Overlay */}
@@ -50,7 +63,13 @@ export default function EditorPanel({
 
             {editMode === 'form' ? (
                 <div className="overflow-y-auto custom-scrollbar h-full">
-                    <CVForm data={cvData} onChange={handleDataChange} t={t} />
+                    <CVForm 
+                        data={cvData} 
+                        onChange={handleDataChange} 
+                        t={t} 
+                        isReordering={isReordering}
+                        onReorderFinish={() => setIsReordering(false)}
+                    />
                 </div>
             ) : (
                 <div className="relative h-full flex flex-col bg-[#1d1f21]">

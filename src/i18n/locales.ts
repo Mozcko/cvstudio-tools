@@ -10,7 +10,8 @@ export const locales = {
       preview: "Vista Previa",
       editor: "Editor",
       emptyFieldsNotice: "Los campos vacíos se ocultarán automáticamente en el documento.",
-      showHelp: "Mostrar Ayuda"
+      showHelp: "Mostrar Ayuda",
+      reorder: "Acomodar Secciones"
     },
     sections: {
       personal: "Información Personal",
@@ -105,7 +106,8 @@ export const locales = {
       preview: "Preview",
       editor: "Editor",
       emptyFieldsNotice: "Empty fields will be automatically hidden in the document.",
-      showHelp: "Show Help"
+      showHelp: "Show Help",
+      reorder: "Reorder Sections"
     },
     sections: {
       personal: "Personal Information",

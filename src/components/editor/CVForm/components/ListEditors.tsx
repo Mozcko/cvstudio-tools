@@ -74,7 +74,7 @@ export const DynamicListEditor = ({ title, items, onUpdate, t }: ListEditorProps
                     </button>
                 </div>
             ))}
-            {safeItems.length === 0 && <div className="text-xs text-slate-500 italic p-3 text-center bg-slate-800/30 rounded border border-slate-700 border-dashed">No hay elementos.</div>}
+            {safeItems.length === 0 && <div className="text-xs text-slate-500 italic p-3 text-center bg-[rgba(30,41,59,0.3)] rounded border border-slate-700 border-dashed">No hay elementos.</div>}
         </div>
     );
 };

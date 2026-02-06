@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { CVData, Experience, Education } from '../../../types/cv';
 import type { Translation } from '../../../i18n/locales';
 import { Input, TextArea } from './components/FormInputs';
@@ -13,10 +13,73 @@ interface Props {
   data: CVData;
   onChange: (newData: CVData) => void;
   t: Translation;
+  isReordering: boolean;
+  onReorderFinish: () => void;
 }
 
-export default function CVForm({ data, onChange, t }: Props) {
+export default function CVForm({ data, onChange, t, isReordering, onReorderFinish }: Props) {
   const [showInfoBanner, setShowInfoBanner] = useState(true);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    const target = e.target as Element;
+    if (!target.closest || !target.closest('.drag-handle')) {
+        e.preventDefault();
+        return;
+    }
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedIndex === null || draggedIndex === index) return;
+    
+    const newOrder = [...(data.sectionOrder || ['experience', 'projects', 'education', 'skills', 'custom'])];
+    const item = newOrder[draggedIndex];
+    newOrder.splice(draggedIndex, 1);
+    newOrder.splice(index, 0, item);
+    
+    setDraggedIndex(index);
+    onChange({ ...data, sectionOrder: newOrder } as any);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    onReorderFinish();
+  };
+
+  // Soporte para Touch (Móviles)
+  const handleTouchStart = (index: number) => {
+    setDraggedIndex(index);
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(50);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (draggedIndex === null) return;
+    
+    const touch = e.touches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    if (!target) return;
+    
+    const row = target.closest('[data-reorder-index]');
+    if (row) {
+        const targetIndex = parseInt(row.getAttribute('data-reorder-index') || '-1', 10);
+        if (targetIndex !== -1 && targetIndex !== draggedIndex) {
+             const newOrder = [...(data.sectionOrder || ['experience', 'projects', 'education', 'skills', 'custom'])];
+             const item = newOrder[draggedIndex];
+             newOrder.splice(draggedIndex, 1);
+             newOrder.splice(targetIndex, 0, item);
+             
+             setDraggedIndex(targetIndex);
+             onChange({ ...data, sectionOrder: newOrder } as any);
+        }
+    }
+  };
   
   const updatePersonal = (field: keyof CVData['personal'], value: any) => {
     onChange({ ...data, personal: { ...data.personal, [field]: value } });
@@ -63,8 +126,19 @@ export default function CVForm({ data, onChange, t }: Props) {
       onChange({ ...data, sectionOrder: newOrder } as any);
   };
 
+  const getSectionTitle = (id: string) => {
+    switch(id) {
+        case 'experience': return t.sections.experience;
+        case 'projects': return t.sections.projects;
+        case 'education': return t.sections.edu;
+        case 'skills': return t.sections.skills;
+        case 'custom': return t.sections.custom;
+        default: return id.toUpperCase();
+    }
+  };
+
   return (
-    <div className="p-3 md:p-6 space-y-6 md:space-y-8 pb-4">
+    <div className="p-2 md:p-4 space-y-6 md:space-y-8 pb-4">
       
       {/* Aviso de campos vacíos */}
       {showInfoBanner && <InfoBanner t={t} onClose={() => setShowInfoBanner(false)} />}
@@ -91,7 +165,39 @@ export default function CVForm({ data, onChange, t }: Props) {
       </section>
 
       {/* SECCIONES REORDENABLES */}
-      {sectionOrder.map((sectionId: string, index: number) => {
+      {isReordering ? (
+        <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex justify-between items-center mb-2 border-b border-slate-700 pb-2">
+                <h3 className="text-sm font-bold text-blue-400 uppercase tracking-wider">Reordenar Secciones</h3>
+                <button onClick={onReorderFinish} className="text-xs text-slate-400 hover:text-white">{t.actions.close}</button>
+            </div>
+            <p className="text-xs text-slate-500 mb-4">Arrastra y suelta una sección para cambiar su posición.</p>
+            {sectionOrder.map((sectionId: string, index: number) => (
+                <div 
+                    key={sectionId}
+                    data-reorder-index={index}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                    onTouchStart={() => handleTouchStart(index)}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleDragEnd}
+                    className={`drag-handle touch-none select-none p-4 rounded-lg border-2 flex justify-between items-center cursor-move transition-all
+                        ${draggedIndex === index 
+                            ? 'border-blue-500 bg-[rgba(59,130,246,0.1)] opacity-50' 
+                            : 'border-slate-700 bg-[rgba(30,41,59,0.5)] hover:border-slate-500 hover:bg-[rgba(30,41,59,0.8)]'
+                        }`}
+                >
+                    <span className="font-bold text-slate-200">{getSectionTitle(sectionId)}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-slate-500">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                </div>
+            ))}
+        </div>
+      ) : (
+        sectionOrder.map((sectionId: string, index: number) => {
         
         const headerProps = {
             onMoveUp: () => moveSection(index, 'up'),
@@ -101,68 +207,78 @@ export default function CVForm({ data, onChange, t }: Props) {
             t
         };
 
-        if (sectionId === 'experience') return (
-          <section key="experience">
-            <SectionHeader title={t.sections.experience} onAdd={addExp} {...headerProps} />
-            <button onClick={addExp} className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-colors shadow-lg shadow-blue-900/20">{t.actions.add}</button>
-            <div className="space-y-6">
-            {data.experience.map((exp, idx) => (
-                <ExperienceItem key={exp.id} item={exp} index={idx} onUpdate={updateExp} onRemove={removeExp} t={t} />
-            ))}
-            </div>
-          </section>
-        );
+        let content = null;
 
-        if (sectionId === 'projects') return (
-          <section key="projects">
-            <SectionHeader title={t.sections.projects} onAdd={addProject} {...headerProps} />
-            <div className="space-y-6">
-            {safeProjects.map((proj: any, idx: number) => (
-                <ProjectItem key={proj.id} item={proj} index={idx} onUpdate={updateProject} onRemove={removeProject} t={t} />
-            ))}
-            </div>
-          </section>
-        );
+        if (sectionId === 'experience') {
+            content = (
+              <section>
+                <SectionHeader title={t.sections.experience} onAdd={addExp} {...headerProps} />
+                <button onClick={addExp} className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-colors shadow-lg shadow-blue-900/20">{t.actions.add}</button>
+                <div className="space-y-6 mt-4">
+                {data.experience.map((exp, idx) => (
+                    <ExperienceItem key={exp.id} item={exp} index={idx} onUpdate={updateExp} onRemove={removeExp} t={t} />
+                ))}
+                </div>
+              </section>
+            );
+        } else if (sectionId === 'projects') {
+            content = (
+              <section>
+                <SectionHeader title={t.sections.projects} onAdd={addProject} {...headerProps} />
+                <div className="space-y-6">
+                {safeProjects.map((proj: any, idx: number) => (
+                    <ProjectItem key={proj.id} item={proj} index={idx} onUpdate={updateProject} onRemove={removeProject} t={t} />
+                ))}
+                </div>
+              </section>
+            );
+        } else if (sectionId === 'education') {
+            content = (
+              <section>
+                <SectionHeader title={t.sections.edu} onAdd={addEdu} {...headerProps} />
+                <div className="space-y-6">
+                {data.education.map((edu, idx) => (
+                    <EducationItem key={edu.id} item={edu} index={idx} onUpdate={updateEdu} onRemove={removeEdu} t={t} />
+                ))}
+                </div>
+              </section>
+            );
+        } else if (sectionId === 'skills') {
+            content = (
+              <section>
+                <SectionHeader title={t.sections.skills} {...headerProps} />
+                <div className="space-y-8">
+                <DynamicListEditor title={t.labels.techSkills} items={data.skills} onUpdate={(newSkills) => onChange({...data, skills: newSkills})} t={t} />
+                <div className="h-px bg-slate-700/50"></div>
+                <DynamicListEditor title={t.labels.certifications} items={data.certifications} onUpdate={(newCerts) => onChange({...data, certifications: newCerts})} t={t} />
+                </div>
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input label={t.labels.languages} value={data.languages} onChange={(v) => onChange({...data, languages: v})} />
+                <Input label={t.labels.interests} value={data.interests} onChange={(v) => onChange({...data, interests: v})} />
+                </div>
+              </section>
+            );
+        } else if (sectionId === 'custom') {
+            content = (
+              <section>
+                <SectionHeader title={t.sections.custom} {...headerProps} />
+                <CustomSectionsEditor 
+                    sections={(data as any).customSections || []} 
+                    onUpdate={(secs) => onChange({ ...data, customSections: secs } as any)} 
+                    t={t} 
+                />
+              </section>
+            );
+        }
 
-        if (sectionId === 'education') return (
-          <section key="education">
-            <SectionHeader title={t.sections.edu} onAdd={addEdu} {...headerProps} />
-            <div className="space-y-6">
-            {data.education.map((edu, idx) => (
-                <EducationItem key={edu.id} item={edu} index={idx} onUpdate={updateEdu} onRemove={removeEdu} t={t} />
-            ))}
-            </div>
-          </section>
-        );
+        if (!content) return null;
 
-        if (sectionId === 'skills') return (
-          <section key="skills">
-            <SectionHeader title={t.sections.skills} {...headerProps} />
-            <div className="space-y-8">
-            <DynamicListEditor title={t.labels.techSkills} items={data.skills} onUpdate={(newSkills) => onChange({...data, skills: newSkills})} t={t} />
-            <div className="h-px bg-slate-700/50"></div>
-            <DynamicListEditor title={t.labels.certifications} items={data.certifications} onUpdate={(newCerts) => onChange({...data, certifications: newCerts})} t={t} />
+        return (
+            <div key={sectionId}>
+                {content}
             </div>
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input label={t.labels.languages} value={data.languages} onChange={(v) => onChange({...data, languages: v})} />
-            <Input label={t.labels.interests} value={data.interests} onChange={(v) => onChange({...data, interests: v})} />
-            </div>
-          </section>
         );
-
-        if (sectionId === 'custom') return (
-          <section key="custom">
-            <SectionHeader title={t.sections.custom} {...headerProps} />
-        <CustomSectionsEditor 
-            sections={(data as any).customSections || []} 
-            onUpdate={(secs) => onChange({ ...data, customSections: secs } as any)} 
-            t={t} 
-        />
-          </section>
-        );
-
-        return null;
-      })}
+      }))}
 
     </div>
   );
