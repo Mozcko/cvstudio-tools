@@ -1,0 +1,43 @@
+name: CI Quality Check
+
+# ¿Cuándo se ejecuta esto?
+on:
+  push:
+    branches: [ main ] # Al subir directo a main
+  pull_request:
+    branches: [ main ] # En cualquier PR hacia main
+
+jobs:
+  build-and-lint:
+    name: 🛡️ Build & Lint Check
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Bajar el código
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Instalar pnpm (tu gestor de paquetes)
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      # 3. Instalar Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      # 4. Instalar dependencias
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 5. Correr el Linter (Si falla aquí, el PR se marca en rojo ❌)
+      - name: Run Linter
+        run: pnpm lint
+
+      # 6. Intentar compilar (Build) para asegurar que no hay errores graves de Astro
+      - name: Build Project
+        run: pnpm build
