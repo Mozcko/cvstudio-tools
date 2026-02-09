@@ -15,7 +15,7 @@ jobs:
     steps:
       # 1. Bajar el código
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # 2. Instalar pnpm (tu gestor de paquetes)
       - name: Install pnpm
