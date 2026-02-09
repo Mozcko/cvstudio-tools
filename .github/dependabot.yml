@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Mantener actualizadas las acciones de GitHub (el CI que acabamos de hacer)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+
+  # Mantener actualizadas las dependencias de npm/pnpm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Opcional: Para no volverse loco, limitar a 10 PRs abiertos
+    open-pull-requests-limit: 10
