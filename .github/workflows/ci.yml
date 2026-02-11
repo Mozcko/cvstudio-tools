@@ -19,7 +19,7 @@ jobs:
 
       # 2. Instalar pnpm (tu gestor de paquetes)
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v4
         with:
           version: 9
 
