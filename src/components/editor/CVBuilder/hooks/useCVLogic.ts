@@ -14,12 +14,15 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [resumeTitle, setResumeTitle] = useState<string>('');
 
+  // Bandera para saber si hay cambios sin guardar
+  const [isDirty, setIsDirty] = useState(false);
+
   // 2. THEME STATE
   const [activeThemeId, setActiveThemeId] = useLocalStorage<string>('cv-theme-id', 'basic');
   const [customCSS, setCustomCSS] = useLocalStorage<string>('cv-custom-css', themes[0].css);
 
   // 3. EDITOR STATE
-  const [markdown, setMarkdown] = useState<string>('');
+  const [markdown, setMarkdownState] = useState<string>('');
   const [editMode, setEditMode] = useState<'form' | 'code'>('form');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
 
@@ -46,7 +49,7 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
   // 5. SYNC MARKDOWN
   useEffect(() => {
     if (editMode === 'form') {
-      setMarkdown(generateMarkdown(cvData, lang));
+      setMarkdownState(generateMarkdown(cvData, lang));
     }
   }, [cvData, editMode, lang]);
 
@@ -70,16 +73,20 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
           .single();
         if (data) {
           if (data.data) {
-            if (data.data.mode === 'markdown' && typeof data.data.markdown === 'string') {
-              setMarkdown(data.data.markdown);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const userCvData = data.data as any;
+            if (userCvData.mode === 'markdown' && typeof userCvData.markdown === 'string') {
+              setMarkdownState(userCvData.markdown);
               setEditMode('code');
             } else {
-              setRawData(data.data);
+              setRawData(userCvData);
               setEditMode('form');
             }
           }
           if (data.theme) setActiveThemeId(data.theme);
           if (data.title) setResumeTitle(data.title);
+          setIsDirty(false);
+          setSaveStatus('saved'); // Cargado exitosamente
         }
       } else if (!resumeId) {
         const { data } = await supabase
@@ -93,26 +100,49 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
           setResumeId(data.id);
           if (data.title) setResumeTitle(data.title);
           if (data.data) {
-            if (data.data.mode === 'markdown' && typeof data.data.markdown === 'string') {
-              setMarkdown(data.data.markdown);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const userCvData = data.data as any;
+            if (userCvData.mode === 'markdown' && typeof userCvData.markdown === 'string') {
+              setMarkdownState(userCvData.markdown);
               setEditMode('code');
             } else {
-              setRawData(data.data);
+              setRawData(userCvData);
               setEditMode('form');
             }
           }
+          setIsDirty(false);
+          setSaveStatus('saved');
         }
       }
     };
     initSession();
   }, []);
 
-  // 7. ACTIONS
-  const handleDataChange = (newData: CVData) => setRawData(newData);
+  // 7. ACTIONS (Ahora resetean saveStatus a 'idle')
+
+  const handleDataChange = (newData: CVData) => {
+    setRawData(newData);
+    setIsDirty(true);
+    setSaveStatus('idle'); // Quitamos "Saved" porque ya cambió
+  };
 
   const handleThemeChange = (theme: CvTheme) => {
     setActiveThemeId(theme.id);
     setCustomCSS(theme.css);
+    setIsDirty(true);
+    setSaveStatus('idle');
+  };
+
+  const handleMarkdownChange = (newMarkdown: string) => {
+    setMarkdownState(newMarkdown);
+    setIsDirty(true);
+    setSaveStatus('idle');
+  };
+
+  const handleTitleChange = (newTitle: string) => {
+    setResumeTitle(newTitle);
+    setIsDirty(true);
+    setSaveStatus('idle');
   };
 
   const handleReset = () => {
@@ -120,10 +150,18 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
       setRawData(initialCVData);
       handleThemeChange(themes[0]);
       setEditMode('form');
+      setIsDirty(true);
+      setSaveStatus('idle');
     }
   };
 
   const handleSave = useCallback(async () => {
+    // NUEVO: Bloqueo de seguridad
+    // Si ya estamos guardando, o NO hay cambios y ya está guardado, no hacemos nada.
+    if (saveStatus === 'saving' || (!isDirty && saveStatus === 'saved')) {
+      return;
+    }
+
     setSaveStatus('saving');
     const {
       data: { user },
@@ -166,14 +204,27 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
         if (error) throw error;
         if (data) setResumeId(data.id);
       }
+
       setSaveStatus('saved');
-      setTimeout(() => setSaveStatus((prev) => (prev === 'saved' ? 'idle' : prev)), 3000);
+      setIsDirty(false);
+      // ELIMINADO: setTimeout que reseteaba a idle. Ahora se queda en 'saved'.
     } catch (error) {
       console.error('Error saving CV:', error);
       setSaveStatus('error');
       alert('Error al guardar. Revisa tu conexión.');
     }
-  }, [cvData, lang, activeThemeId, resumeId, setResumeId, resumeTitle, editMode, markdown]);
+  }, [
+    cvData,
+    lang,
+    activeThemeId,
+    resumeId,
+    setResumeId,
+    resumeTitle,
+    editMode,
+    markdown,
+    isDirty,
+    saveStatus,
+  ]); // Añadidos isDirty y saveStatus
 
   const handleAiAction = async (action: 'enhance' | 'optimize' | 'translate') => {
     setIsAiProcessing(true);
@@ -201,6 +252,8 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
       if (!newCvData || !newCvData.personal) throw new Error('Respuesta inválida.');
 
       setRawData(newCvData);
+      setIsDirty(true);
+      setSaveStatus('idle'); // La IA cambió datos, ya no estamos guardados
 
       const successMsg = {
         enhance: t.ai.alerts.enhance,
@@ -224,7 +277,7 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
     customCSS,
     setCustomCSS,
     markdown,
-    setMarkdown,
+    setMarkdown: handleMarkdownChange,
     editMode,
     setEditMode,
     isAiProcessing,
@@ -233,7 +286,8 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
     handleSave,
     handleReset,
     resumeTitle,
-    setResumeTitle,
+    setResumeTitle: handleTitleChange,
     resumeId,
+    isDirty,
   };
 }
