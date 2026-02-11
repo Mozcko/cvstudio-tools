@@ -20,6 +20,11 @@ export default [
   // 2. Configuración Base (JS + TS)
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+    },
+  },
 
   // 3. Configuración para Astro
   ...eslintPluginAstro.configs.recommended,
