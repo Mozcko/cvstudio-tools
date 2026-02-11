@@ -3,220 +3,237 @@ import { supabase } from '../../../../lib/supabase';
 import useLocalStorage from '../../../../hooks/useLocalStorage';
 import { initialCVData, type CVData } from '../../../../types/cv';
 import { generateMarkdown } from '../../../../utils/markdownGenerator';
+import type { CvTheme } from '../../../../templates';
 import { themes } from '../../../../templates';
 import type { Translation } from '../../../../i18n/locales';
 
 export function useCVLogic(t: Translation, lang: 'es' | 'en') {
-    // 1. DATA STATE
-    const [rawData, setRawData] = useLocalStorage<CVData>('cv-data', initialCVData);
-    const [resumeId, setResumeId] = useLocalStorage<string | null>('cv-resume-id', null);
-    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-    const [resumeTitle, setResumeTitle] = useState<string>('');
-    
-    // 2. THEME STATE
-    const [activeThemeId, setActiveThemeId] = useLocalStorage<string>('cv-theme-id', 'basic');
-    const [customCSS, setCustomCSS] = useLocalStorage<string>('cv-custom-css', themes[0].css);
+  // 1. DATA STATE
+  const [rawData, setRawData] = useLocalStorage<CVData>('cv-data', initialCVData);
+  const [resumeId, setResumeId] = useLocalStorage<string | null>('cv-resume-id', null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [resumeTitle, setResumeTitle] = useState<string>('');
 
-    // 3. EDITOR STATE
-    const [markdown, setMarkdown] = useState<string>('');
-    const [editMode, setEditMode] = useState<'form' | 'code'>('form');
-    const [isAiProcessing, setIsAiProcessing] = useState(false);
+  // 2. THEME STATE
+  const [activeThemeId, setActiveThemeId] = useLocalStorage<string>('cv-theme-id', 'basic');
+  const [customCSS, setCustomCSS] = useLocalStorage<string>('cv-custom-css', themes[0].css);
 
-    // 4. SCHEMA VALIDATION
-    const cvData = useMemo(() => {
-        const isOldSchema = 
-            !Array.isArray(rawData.skills) || 
-            !Array.isArray(rawData.certifications) ||
-            !Array.isArray(rawData.personal?.socials) ||
-            (rawData.experience.length > 0 && typeof rawData.experience[0].description === 'string');
+  // 3. EDITOR STATE
+  const [markdown, setMarkdown] = useState<string>('');
+  const [editMode, setEditMode] = useState<'form' | 'code'>('form');
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
 
-        if (isOldSchema) {
-            console.warn("Schema antiguo detectado. Reiniciando datos para evitar errores.");
-            return initialCVData;
-        }
-        return {
-            projects: [],
-            customSections: [],
-            sectionOrder: ['experience', 'projects', 'education', 'skills', 'custom'],
-            ...rawData
-        };
-    }, [rawData]);
+  // 4. SCHEMA VALIDATION
+  const cvData = useMemo(() => {
+    const isOldSchema =
+      !Array.isArray(rawData.skills) ||
+      !Array.isArray(rawData.certifications) ||
+      !Array.isArray(rawData.personal?.socials) ||
+      (rawData.experience.length > 0 && typeof rawData.experience[0].description === 'string');
 
-    // 5. SYNC MARKDOWN
-    useEffect(() => {
-        if (editMode === 'form') {
-            setMarkdown(generateMarkdown(cvData, lang));
-        }
-    }, [cvData, editMode, lang]);
-
-    // 6. LOAD FROM DB
-    useEffect(() => {
-        const initSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.user) return;
-
-            const params = new URLSearchParams(window.location.search);
-            const urlId = params.get('id');
-
-            if (urlId) {
-                setResumeId(urlId);
-                const { data } = await supabase.from('resumes').select('data, theme, title').eq('id', urlId).single();
-                if (data) {
-                    if (data.data) {
-                        if (data.data.mode === 'markdown' && typeof data.data.markdown === 'string') {
-                            setMarkdown(data.data.markdown);
-                            setEditMode('code');
-                        } else {
-                            setRawData(data.data);
-                            setEditMode('form');
-                        }
-                    }
-                    if (data.theme) setActiveThemeId(data.theme);
-                    if (data.title) setResumeTitle(data.title);
-                }
-            } else if (!resumeId) {
-                const { data } = await supabase.from('resumes').select('id, data, title').eq('user_id', session.user.id).order('updated_at', { ascending: false }).limit(1).single();
-                if (data) {
-                    setResumeId(data.id);
-                    if (data.title) setResumeTitle(data.title);
-                    if (data.data) {
-                        if (data.data.mode === 'markdown' && typeof data.data.markdown === 'string') {
-                            setMarkdown(data.data.markdown);
-                            setEditMode('code');
-                        } else {
-                            setRawData(data.data);
-                            setEditMode('form');
-                        }
-                    }
-                }
-            }
-        };
-        initSession();
-    }, []);
-
-    // 7. ACTIONS
-    const handleDataChange = (newData: CVData) => setRawData(newData);
-    
-    const handleThemeChange = (theme: any) => {
-        setActiveThemeId(theme.id);
-        setCustomCSS(theme.css);
-    };
-
-    const handleReset = () => {
-        if(confirm(t.actions.confirmReset)){
-            setRawData(initialCVData);
-            handleThemeChange(themes[0]);
-            setEditMode('form');
-        }
-    };
-
-    const handleSave = useCallback(async () => {
-        setSaveStatus('saving');
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-            alert("Debes iniciar sesión para guardar tu progreso en la nube.");
-            setSaveStatus('idle');
-            return;
-        }
-
-        let finalTitle = resumeTitle;
-        let dataPayload = cvData;
-
-        if (editMode === 'code') {
-            dataPayload = { mode: 'markdown', markdown } as any;
-            if (!finalTitle) {
-                 const h1Match = markdown.match(/^#\s+(.*)/);
-                 finalTitle = h1Match ? h1Match[1].trim() : 'Markdown CV';
-            }
-        } else {
-            if (!finalTitle) finalTitle = cvData.personal.role || 'Mi CV';
-        }
-
-        const payload = {
-            user_id: user.id,
-            title: finalTitle,
-            data: dataPayload,
-            language: lang,
-            theme: activeThemeId,
-            updated_at: new Date().toISOString()
-        };
-
-        try {
-            if (resumeId) {
-                const { error } = await supabase.from('resumes').update(payload).eq('id', resumeId);
-                if (error) throw error;
-            } else {
-                const { data, error } = await supabase.from('resumes').insert(payload).select().single();
-                if (error) throw error;
-                if (data) setResumeId(data.id);
-            }
-            setSaveStatus('saved');
-            setTimeout(() => setSaveStatus((prev) => prev === 'saved' ? 'idle' : prev), 3000);
-        } catch (error) {
-            console.error("Error saving CV:", error);
-            setSaveStatus('error');
-            alert("Error al guardar. Revisa tu conexión.");
-        }
-    }, [cvData, lang, activeThemeId, resumeId, setResumeId, resumeTitle, editMode, markdown]);
-
-    const handleAiAction = async (action: 'enhance' | 'optimize' | 'translate') => {
-        setIsAiProcessing(true);
-        try {
-            let jobDescription = "";
-            if (action === 'optimize') {
-                const promptText = (t.ai as any).jobDescriptionPrompt || "Pega aquí la descripción del trabajo:";
-                jobDescription = prompt(promptText) || "";
-                if (!jobDescription) {
-                    setIsAiProcessing(false);
-                    return;
-                }
-            }
-
-            const response = await fetch('/api/ai', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action, cvData, lang, jobDescription })
-            });
-
-            if (!response.ok) throw new Error(`Error en la API: ${response.statusText}`);
-            const newCvData = await response.json();
-            if (!newCvData || !newCvData.personal) throw new Error("Respuesta inválida.");
-
-            setRawData(newCvData);
-            
-            const successMsg = {
-                enhance: t.ai.alerts.enhance,
-                translate: t.ai.alerts.translate,
-                optimize: t.ai.alerts.optimize
-            }[action];
-            alert(successMsg);
-        } catch (error) {
-            console.error("AI Action Error:", error);
-            alert("Hubo un error al procesar tu solicitud con IA.");
-        } finally {
-            setIsAiProcessing(false);
-        }
-    };
-
+    if (isOldSchema) {
+      console.warn('Schema antiguo detectado. Reiniciando datos para evitar errores.');
+      return initialCVData;
+    }
     return {
-        cvData,
-        handleDataChange,
-        activeThemeId,
-        handleThemeChange,
-        customCSS,
-        setCustomCSS,
-        markdown,
-        setMarkdown,
-        editMode,
-        setEditMode,
-        isAiProcessing,
-        handleAiAction,
-        saveStatus,
-        handleSave,
-        handleReset,
-        resumeTitle,
-        setResumeTitle,
-        resumeId
+      projects: [],
+      customSections: [],
+      sectionOrder: ['experience', 'projects', 'education', 'skills', 'custom'],
+      ...rawData,
     };
+  }, [rawData]);
+
+  // 5. SYNC MARKDOWN
+  useEffect(() => {
+    if (editMode === 'form') {
+      setMarkdown(generateMarkdown(cvData, lang));
+    }
+  }, [cvData, editMode, lang]);
+
+  // 6. LOAD FROM DB
+  useEffect(() => {
+    const initSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const urlId = params.get('id');
+
+      if (urlId) {
+        setResumeId(urlId);
+        const { data } = await supabase
+          .from('resumes')
+          .select('data, theme, title')
+          .eq('id', urlId)
+          .single();
+        if (data) {
+          if (data.data) {
+            if (data.data.mode === 'markdown' && typeof data.data.markdown === 'string') {
+              setMarkdown(data.data.markdown);
+              setEditMode('code');
+            } else {
+              setRawData(data.data);
+              setEditMode('form');
+            }
+          }
+          if (data.theme) setActiveThemeId(data.theme);
+          if (data.title) setResumeTitle(data.title);
+        }
+      } else if (!resumeId) {
+        const { data } = await supabase
+          .from('resumes')
+          .select('id, data, title')
+          .eq('user_id', session.user.id)
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .single();
+        if (data) {
+          setResumeId(data.id);
+          if (data.title) setResumeTitle(data.title);
+          if (data.data) {
+            if (data.data.mode === 'markdown' && typeof data.data.markdown === 'string') {
+              setMarkdown(data.data.markdown);
+              setEditMode('code');
+            } else {
+              setRawData(data.data);
+              setEditMode('form');
+            }
+          }
+        }
+      }
+    };
+    initSession();
+  }, []);
+
+  // 7. ACTIONS
+  const handleDataChange = (newData: CVData) => setRawData(newData);
+
+  const handleThemeChange = (theme: CvTheme) => {
+    setActiveThemeId(theme.id);
+    setCustomCSS(theme.css);
+  };
+
+  const handleReset = () => {
+    if (confirm(t.actions.confirmReset)) {
+      setRawData(initialCVData);
+      handleThemeChange(themes[0]);
+      setEditMode('form');
+    }
+  };
+
+  const handleSave = useCallback(async () => {
+    setSaveStatus('saving');
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert('Debes iniciar sesión para guardar tu progreso en la nube.');
+      setSaveStatus('idle');
+      return;
+    }
+
+    let finalTitle = resumeTitle;
+    let dataPayload = cvData;
+
+    if (editMode === 'code') {
+      dataPayload = { mode: 'markdown', markdown } as unknown as CVData;
+      if (!finalTitle) {
+        const h1Match = markdown.match(/^#\s+(.*)/);
+        finalTitle = h1Match ? h1Match[1].trim() : 'Markdown CV';
+      }
+    } else {
+      if (!finalTitle) finalTitle = cvData.personal.role || 'Mi CV';
+    }
+
+    const payload = {
+      user_id: user.id,
+      title: finalTitle,
+      data: dataPayload,
+      language: lang,
+      theme: activeThemeId,
+      updated_at: new Date().toISOString(),
+    };
+
+    try {
+      if (resumeId) {
+        const { error } = await supabase.from('resumes').update(payload).eq('id', resumeId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from('resumes').insert(payload).select().single();
+        if (error) throw error;
+        if (data) setResumeId(data.id);
+      }
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus((prev) => (prev === 'saved' ? 'idle' : prev)), 3000);
+    } catch (error) {
+      console.error('Error saving CV:', error);
+      setSaveStatus('error');
+      alert('Error al guardar. Revisa tu conexión.');
+    }
+  }, [cvData, lang, activeThemeId, resumeId, setResumeId, resumeTitle, editMode, markdown]);
+
+  const handleAiAction = async (action: 'enhance' | 'optimize' | 'translate') => {
+    setIsAiProcessing(true);
+    try {
+      let jobDescription = '';
+      if (action === 'optimize') {
+        const promptText =
+          (t.ai as { jobDescriptionPrompt?: string }).jobDescriptionPrompt ||
+          'Pega aquí la descripción del trabajo:';
+        jobDescription = prompt(promptText) || '';
+        if (!jobDescription) {
+          setIsAiProcessing(false);
+          return;
+        }
+      }
+
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, cvData, lang, jobDescription }),
+      });
+
+      if (!response.ok) throw new Error(`Error en la API: ${response.statusText}`);
+      const newCvData = await response.json();
+      if (!newCvData || !newCvData.personal) throw new Error('Respuesta inválida.');
+
+      setRawData(newCvData);
+
+      const successMsg = {
+        enhance: t.ai.alerts.enhance,
+        translate: t.ai.alerts.translate,
+        optimize: t.ai.alerts.optimize,
+      }[action];
+      alert(successMsg);
+    } catch (error) {
+      console.error('AI Action Error:', error);
+      alert('Hubo un error al procesar tu solicitud con IA.');
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  return {
+    cvData,
+    handleDataChange,
+    activeThemeId,
+    handleThemeChange,
+    customCSS,
+    setCustomCSS,
+    markdown,
+    setMarkdown,
+    editMode,
+    setEditMode,
+    isAiProcessing,
+    handleAiAction,
+    saveStatus,
+    handleSave,
+    handleReset,
+    resumeTitle,
+    setResumeTitle,
+    resumeId,
+  };
 }
