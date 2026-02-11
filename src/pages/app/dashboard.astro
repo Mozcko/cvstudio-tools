@@ -4,11 +4,11 @@ import SiteHeader from '../../components/ui/SiteHeader';
 import UserDashboard from '../../components/dashboard/Dashboard';
 
 // 1. Protección de Ruta (Server Side)
-const { cookies, redirect } = Astro;
+// const { cookies, redirect } = Astro;
 
 // Supabase Auth Helper para SSR (Básico)
-const accessToken = cookies.get("sb-access-token");
-const refreshToken = cookies.get("sb-refresh-token");
+// const accessToken = cookies.get("sb-access-token");
+// const refreshToken = cookies.get("sb-refresh-token");
 
 // NOTA: Para producción real con SSR estricto necesitaríamos más configuración,
 // pero por ahora confiaremos en la redirección del cliente si falla.
@@ -21,9 +21,9 @@ const refreshToken = cookies.get("sb-refresh-token");
 ---
 
 <AppLayout title="Mis Currículums - CVStudio">
-    <SiteHeader client:load />
-    
-    <main class="container mx-auto px-4 pt-24 pb-12">
-        <UserDashboard client:load />
-    </main>
+  <SiteHeader client:load />
+
+  <main class="container mx-auto px-4 pt-24 pb-12">
+    <UserDashboard client:load />
+  </main>
 </AppLayout>

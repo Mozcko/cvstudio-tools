@@ -9,7 +9,15 @@ import eslintConfigPrettier from "eslint-config-prettier";
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
-  // 1. Configuración Global
+    {
+    ignores: [
+      ".astro/",
+      "dist/",
+      "node_modules/",
+      "**/*.d.ts",
+    ],
+  },
+
   {
     files: ["**/*.{js,mjs,cjs,ts,tsx,astro}"],
     languageOptions: {
@@ -17,23 +25,23 @@ export default [
     },
   },
 
-  // 2. Configuración Base (JS + TS)
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
     },
   },
 
-  // 3. Configuración para Astro
   ...eslintPluginAstro.configs.recommended,
   {
     files: ["**/*.astro"],
-    processor: "astro/client-side-ts", // Procesa scripts dentro de .astro
+    processor: "astro/client-side-ts",
+    rules: {
+    }
   },
 
-  // 4. Configuración para React
   {
     files: ["**/*.{jsx,tsx}"],
     plugins: {
@@ -45,15 +53,16 @@ export default [
       ...pluginReact.configs.recommended.rules,
       ...pluginReactHooks.configs.recommended.rules,
       ...pluginJsxA11y.configs.recommended.rules,
+      
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
+      "react-hooks/exhaustive-deps": "warn", 
     },
     settings: {
       react: { 
-        version: "19.0" // <--- CAMBIO IMPORTANTE: Ponemos la versión fija
+        version: "19.0"
       },
     },
   },
-  // 5. Integración con Prettier (Siempre al final para desactivar reglas de estilo conflictivas)
   eslintConfigPrettier, 
 ];
