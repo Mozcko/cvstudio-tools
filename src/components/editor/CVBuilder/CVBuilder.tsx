@@ -15,7 +15,6 @@ export default function CVBuilder() {
   );
   const [isMounted, setIsMounted] = useState(false);
 
-  // Custom Hooks
   const cvLogic = useCVLogic(t, lang);
   const {
     resumeId,
@@ -35,6 +34,7 @@ export default function CVBuilder() {
     handleThemeChange,
     handleDataChange,
     setMarkdown,
+    isDirty,
   } = cvLogic;
 
   const pdfPreview = usePDFPreview(markdown, customCSS, mobileTab, windowWidth, cvData);
@@ -68,12 +68,17 @@ export default function CVBuilder() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSave]);
 
+  // LÓGICA DE AUTO-GUARDADO (Refinada)
   useEffect(() => {
-    if (!resumeId || saveStatus === 'saving' || saveStatus === 'error' || saveStatus === 'saved')
-      return;
+    // 1. Debe haber un ID para guardar.
+    // 2. No debe estar guardando ya.
+    // 3. IMPORTANTISIMO: Solo guardar si isDirty es true.
+    if (!resumeId || saveStatus === 'saving' || !isDirty) return;
+
+    // Si cumple, esperamos 3 segundos de inactividad
     const timer = setTimeout(() => handleSave(), 3000);
     return () => clearTimeout(timer);
-  }, [cvData, resumeId, saveStatus, handleSave]);
+  }, [resumeId, saveStatus, handleSave, isDirty]);
 
   if (!isMounted)
     return (
