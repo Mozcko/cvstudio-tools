@@ -6,6 +6,7 @@ interface AIToolsProps {
   onEnhance: () => void;
   onOptimize: () => void;
   onTranslate: () => void;
+  onAtsSimulator: () => void;
   isProcessing: boolean;
 }
 
@@ -14,6 +15,7 @@ export default function AITools({
   onEnhance,
   onOptimize,
   onTranslate,
+  onAtsSimulator,
   isProcessing,
 }: AIToolsProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -103,6 +105,13 @@ export default function AITools({
             >
               <span className="text-green-400 group-hover:text-green-300">🌐</span>{' '}
               {t.ai.dropdown.translate}
+            </button>
+            <button
+              onClick={() => handleAction(onAtsSimulator)}
+              className="group flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-slate-700"
+            >
+              <span className="text-orange-400 group-hover:text-orange-300">📊</span>{' '}
+              {t.ai.ats.button}
             </button>
           </div>
           <div className="border-t border-slate-700/50 bg-slate-900/50 p-2 text-center text-[10px] text-slate-500">

@@ -6,6 +6,7 @@ import { usePDFPreview } from './hooks/usePDFPreview';
 import EditorPanel from './components/EditorPanel';
 import PreviewPanel from './components/PreviewPanel';
 import MobileNavigation from './components/MobileNavigation';
+import ATSModal from '../ATSModal';
 
 export default function CVBuilder() {
   const { t, lang, toggleLang } = useTranslation();
@@ -35,6 +36,9 @@ export default function CVBuilder() {
     handleDataChange,
     setMarkdown,
     isDirty,
+    isAtsModalOpen,
+    setIsAtsModalOpen,
+    handleAtsAnalysis,
   } = cvLogic;
 
   const pdfPreview = usePDFPreview(markdown, customCSS, mobileTab, windowWidth, cvData);
@@ -102,6 +106,7 @@ export default function CVBuilder() {
           saveStatus={saveStatus}
           resumeTitle={resumeTitle}
           onTitleChange={setResumeTitle}
+          onAtsSimulator={() => setIsAtsModalOpen(true)}
         />
       </div>
 
@@ -131,6 +136,12 @@ export default function CVBuilder() {
           isVisible={mobileTab === 'preview'}
         />
       </main>
+      <ATSModal
+        isOpen={isAtsModalOpen}
+        onClose={() => setIsAtsModalOpen(false)}
+        t={t}
+        onAnalyze={handleAtsAnalysis}
+      />
       <MobileNavigation mobileTab={mobileTab} setMobileTab={setMobileTab} t={t} />
     </div>
   );
