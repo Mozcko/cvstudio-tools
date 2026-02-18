@@ -19,6 +19,11 @@ interface EditorToolbarProps {
 
   resumeTitle: string;
   onTitleChange: (title: string) => void;
+
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export default function EditorToolbar({
@@ -34,6 +39,10 @@ export default function EditorToolbar({
   resumeTitle,
   onTitleChange,
   onAtsSimulator,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
 }: EditorToolbarProps) {
   return (
     <header className="bg-panel-bg border-panel-border relative z-10 flex shrink-0 items-center justify-between border-b px-2 py-3 shadow-sm md:px-4 print:hidden">
@@ -105,6 +114,52 @@ export default function EditorToolbar({
       {/* DERECHA: Herramientas del Editor */}
       <div className="flex items-center gap-2 lg:gap-3">
         {/* 1. Herramientas AI */}
+        <div className="flex items-center rounded-lg border border-slate-700 bg-slate-800 p-1">
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            className="rounded p-1.5 text-slate-400 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            title={t.actions.undo}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="h-4 w-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+              />
+            </svg>
+          </button>
+          <div className="mx-1 h-4 w-px bg-slate-700"></div>
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            className="rounded p-1.5 text-slate-400 hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            title={t.actions.redo}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="h-4 w-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3"
+              />
+            </svg>
+          </button>
+        </div>
+
         <AITools
           t={t}
           isProcessing={isAiProcessing}

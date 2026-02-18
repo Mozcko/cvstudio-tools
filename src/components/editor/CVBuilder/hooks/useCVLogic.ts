@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '../../../../lib/supabase';
 import useLocalStorage from '../../../../hooks/useLocalStorage';
 import { initialCVData, type CVData } from '../../../../types/cv';
@@ -16,6 +16,17 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
 
   // Bandera para saber si hay cambios sin guardar
   const [isDirty, setIsDirty] = useState(false);
+
+  // --- NUEVO: HISTORY STATE (Undo/Redo) ---
+  const [past, setPast] = useState<CVData[]>([]);
+  const [future, setFuture] = useState<CVData[]>([]);
+  const historyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Guardamos una referencia al estado actual para el debounce
+  const currentDataRef = useRef<CVData>(rawData);
+  useEffect(() => {
+    currentDataRef.current = rawData;
+  }, [rawData]);
 
   // 2. THEME STATE
   const [activeThemeId, setActiveThemeId] = useLocalStorage<string>('cv-theme-id', 'basic');
@@ -83,6 +94,8 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
             } else {
               setRawData(userCvData);
               setEditMode('form');
+              setPast([]);
+              setFuture([]);
             }
           }
           if (data.theme) setActiveThemeId(data.theme);
@@ -110,6 +123,8 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
             } else {
               setRawData(userCvData);
               setEditMode('form');
+              setPast([]);
+              setFuture([]);
             }
           }
           setIsDirty(false);
@@ -122,10 +137,64 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
 
   // 7. ACTIONS (Ahora resetean saveStatus a 'idle')
 
-  const handleDataChange = (newData: CVData) => {
-    setRawData(newData);
+  const handleDataChange = useCallback(
+    (newData: CVData) => {
+      // 1. Cancelamos cualquier timer pendiente para evitar duplicados rápidos
+      if (historyTimeoutRef.current) {
+        clearTimeout(historyTimeoutRef.current);
+      }
+
+      // 2. Definimos el snapshot del estado PREVIO al cambio actual
+      const previousState = currentDataRef.current;
+
+      // 3. Establecemos un timer (Debounce).
+      historyTimeoutRef.current = setTimeout(() => {
+        setPast((prev) => {
+          const newPast = [...prev, previousState];
+          if (newPast.length > 50) return newPast.slice(newPast.length - 50);
+          return newPast;
+        });
+      }, 800);
+
+      // 4. Si la pila de "Futuro" tiene algo, se borra porque creamos una nueva línea temporal
+      if (future.length > 0) setFuture([]);
+
+      setRawData(newData);
+      setIsDirty(true);
+      setSaveStatus('idle'); // Quitamos "Saved" porque ya cambió
+    },
+    [future.length, setRawData]
+  );
+
+  const pushImmediateHistory = (stateToSave: CVData) => {
+    setPast((prev) => [...prev, stateToSave]);
+    setFuture([]);
+  };
+
+  const handleUndo = () => {
+    if (past.length === 0) return;
+
+    const previous = past[past.length - 1];
+    const newPast = past.slice(0, -1);
+
+    setFuture([rawData, ...future]);
+    setRawData(previous);
+    setPast(newPast);
     setIsDirty(true);
-    setSaveStatus('idle'); // Quitamos "Saved" porque ya cambió
+    setSaveStatus('idle');
+  };
+
+  const handleRedo = () => {
+    if (future.length === 0) return;
+
+    const next = future[0];
+    const newFuture = future.slice(1);
+
+    setPast([...past, rawData]);
+    setRawData(next);
+    setFuture(newFuture);
+    setIsDirty(true);
+    setSaveStatus('idle');
   };
 
   const handleThemeChange = (theme: CvTheme) => {
@@ -149,6 +218,7 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
 
   const handleReset = () => {
     if (confirm(t.actions.confirmReset)) {
+      pushImmediateHistory(rawData);
       setRawData(initialCVData);
       handleThemeChange(themes[0]);
       setEditMode('form');
@@ -253,6 +323,7 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
       const newCvData = await response.json();
       if (!newCvData || !newCvData.personal) throw new Error('Respuesta inválida.');
 
+      pushImmediateHistory(rawData);
       setRawData(newCvData);
       setIsDirty(true);
       setSaveStatus('idle'); // La IA cambió datos, ya no estamos guardados
@@ -315,5 +386,9 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
     isAtsModalOpen,
     setIsAtsModalOpen,
     handleAtsAnalysis,
+    handleUndo,
+    handleRedo,
+    canUndo: past.length > 0,
+    canRedo: future.length > 0,
   };
 }
