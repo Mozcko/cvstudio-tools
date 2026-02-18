@@ -43,6 +43,10 @@ export default function CVBuilder() {
     isCoverLetterOpen,
     setIsCoverLetterOpen,
     handleGenerateCoverLetter,
+    handleUndo,
+    handleRedo,
+    canUndo,
+    canRedo,
   } = cvLogic;
 
   const pdfPreview = usePDFPreview(markdown, customCSS, mobileTab, windowWidth, cvData);
@@ -67,14 +71,27 @@ export default function CVBuilder() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        handleSave();
+      if (e.ctrlKey || e.metaKey) {
+        const key = e.key.toLowerCase();
+        if (key === 's') {
+          e.preventDefault();
+          handleSave();
+        } else if (key === 'z') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            handleRedo();
+          } else {
+            handleUndo();
+          }
+        } else if (key === 'y') {
+          e.preventDefault();
+          handleRedo();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSave]);
+  }, [handleSave, handleUndo, handleRedo]);
 
   // LÓGICA DE AUTO-GUARDADO (Refinada)
   useEffect(() => {
@@ -112,6 +129,10 @@ export default function CVBuilder() {
           onTitleChange={setResumeTitle}
           onAtsSimulator={() => setIsAtsModalOpen(true)}
           onCoverLetter={() => setIsCoverLetterOpen(true)}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={canUndo}
+          canRedo={canRedo}
         />
       </div>
 
