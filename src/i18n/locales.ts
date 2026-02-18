@@ -111,6 +111,18 @@ export const locales = {
         improvements: 'Acciones de Mejora',
         requirements: 'Análisis de Requisitos',
       },
+      coverLetter: {
+        button: 'Generar Cover Letter',
+        title: 'Generador de Carta de Presentación',
+        description:
+          'La IA redactará una carta personalizada conectando tu experiencia con los requisitos de la oferta.',
+        placeholder: 'Pega aquí la descripción del puesto (JD)...',
+        generate: 'Generar Carta',
+        generating: 'Escribiendo...',
+        copy: 'Copiar al Portapapeles',
+        copied: '¡Copiada!',
+        emptyWarning: 'Por favor ingresa la descripción del trabajo.',
+      },
     },
   },
   en: {
@@ -222,6 +234,18 @@ export const locales = {
         missingKeywords: 'Missing Keywords',
         improvements: 'Improvement Actions',
         requirements: 'Requirements Analysis',
+      },
+      coverLetter: {
+        button: 'Generate Cover Letter',
+        title: 'Cover Letter Generator',
+        description:
+          'AI will write a personalized letter connecting your experience with the job requirements.',
+        placeholder: 'Paste the Job Description (JD) here...',
+        generate: 'Generate Letter',
+        generating: 'Writing...',
+        copy: 'Copy to Clipboard',
+        copied: 'Copied!',
+        emptyWarning: 'Please enter the job description.',
       },
     },
   },
