@@ -10,6 +10,7 @@ interface EditorToolbarProps {
   onReset: () => void;
   onPrint: () => void;
   onAtsSimulator: () => void;
+  onCoverLetter: () => void;
 
   isAiProcessing: boolean;
   onAiAction: (action: 'enhance' | 'optimize' | 'translate') => void;
@@ -34,6 +35,7 @@ export default function EditorToolbar({
   resumeTitle,
   onTitleChange,
   onAtsSimulator,
+  onCoverLetter,
 }: EditorToolbarProps) {
   return (
     <header className="bg-panel-bg border-panel-border relative z-10 flex shrink-0 items-center justify-between border-b px-2 py-3 shadow-sm md:px-4 print:hidden">
@@ -112,6 +114,7 @@ export default function EditorToolbar({
           onOptimize={() => onAiAction('optimize')}
           onTranslate={() => onAiAction('translate')}
           onAtsSimulator={onAtsSimulator}
+          onCoverLetter={onCoverLetter}
         />
 
         {/* 4. Acciones: Reset & Download */}

@@ -27,6 +27,7 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
   const [isAiProcessing, setIsAiProcessing] = useState(false);
 
   const [isAtsModalOpen, setIsAtsModalOpen] = useState(false);
+  const [isCoverLetterOpen, setIsCoverLetterOpen] = useState(false);
 
   // 4. SCHEMA VALIDATION
   const cvData = useMemo(() => {
@@ -292,6 +293,30 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
     }
   };
 
+  const handleGenerateCoverLetter = async (jd: string) => {
+    try {
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'cover_letter',
+          cvData,
+          lang,
+          jobDescription: jd,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Error generando carta');
+
+      const data = await response.json();
+      return data.coverLetter || null;
+    } catch (error) {
+      console.error(error);
+      alert('Error al generar la Cover Letter. Intenta de nuevo.');
+      return null;
+    }
+  };
+
   return {
     cvData,
     handleDataChange,
@@ -315,5 +340,8 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
     isAtsModalOpen,
     setIsAtsModalOpen,
     handleAtsAnalysis,
+    isCoverLetterOpen,
+    setIsCoverLetterOpen,
+    handleGenerateCoverLetter,
   };
 }

@@ -1,18 +1,18 @@
-import type { APIRoute } from "astro";
-import OpenAI from "openai";
+import type { APIRoute } from 'astro';
+import OpenAI from 'openai';
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   const deepseek = new OpenAI({
-    baseURL: "https://api.deepseek.com",
+    baseURL: 'https://api.deepseek.com',
     apiKey: import.meta.env.DEEPSEEK_API_KEY,
   });
 
   try {
     const body = await request.json();
     const { action, cvData, jobDescription, lang } = body;
-    const targetLang = lang === "es" ? "Español" : "Inglés";
+    const targetLang = lang === 'es' ? 'Español' : 'Inglés';
 
     // --- SYSTEM PROMPT (El "Cerebro") ---
     const systemPrompt = `
@@ -30,11 +30,11 @@ export const POST: APIRoute = async ({ request }) => {
       - SKILLS: Estandariza la terminología técnica.
     `;
 
-    let userPrompt = "";
+    let userPrompt = '';
 
     // --- PROMPTS ESPECÍFICOS ---
 
-    if (action === "enhance") {
+    if (action === 'enhance') {
       userPrompt = `
         Toma este JSON de un CV y mejora PROFUNDAMENTE la redacción de TODO el contenido al idioma ${targetLang}.
 
@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
         JSON DEL CV:
         ${JSON.stringify(cvData)}
       `;
-    } else if (action === "translate") {
+    } else if (action === 'translate') {
       userPrompt = `
         Traduce TODO el contenido textual de este CV al ${targetLang}.
         
@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ request }) => {
         JSON DEL CV:
         ${JSON.stringify(cvData)}
       `;
-    } else if (action === "optimize") {
+    } else if (action === 'optimize') {
       userPrompt = `
         Actúa como un sistema ATS (Applicant Tracking System) inteligente.
         Optimiza este CV para asegurar que pase los filtros para la siguiente Descripción de Trabajo.
@@ -84,7 +84,33 @@ export const POST: APIRoute = async ({ request }) => {
         JSON DEL CV:
         ${JSON.stringify(cvData)}
       `;
-    } else if (action === "evaluate_match") {
+    } else if (action === 'cover_letter') {
+      userPrompt = `
+        Escribe una Carta de Presentación (Cover Letter) altamente persuasiva y profesional en idioma ${targetLang}.
+        
+        OBJETIVO:
+        Demostrar por qué el candidato es la pieza perfecta para este rol específico, conectando sus logros pasados con las necesidades futuras de la empresa.
+
+        INPUTS:
+        1. DATOS DEL CANDIDATO (JSON):
+        ${JSON.stringify(cvData)}
+
+        2. DESCRIPCIÓN DEL TRABAJO (Job Description):
+        "${jobDescription}"
+
+        ESTRUCTURA DE LA CARTA:
+        - Encabezado: Datos del candidato (Nombre, Email, Teléfono, Links).
+        - Saludo: Profesional.
+        - Introducción: Enganche potente mencionando el rol y por qué le interesa la empresa.
+        - Cuerpo (2 párrafos): Conectar habilidades clave del CV (Hard & Soft Skills) con los problemas que la empresa busca resolver según el JD. Usa ejemplos concretos del CV.
+        - Cierre: Call to action (solicitar entrevista) y despedida formal.
+        
+        FORMATO DE SALIDA (JSON):
+        {
+          "coverLetter": "Texto completo de la carta en formato Markdown o Texto plano con saltos de línea"
+        }
+      `;
+    } else if (action === 'evaluate_match') {
       userPrompt = `
         Actúa como un Reclutador Senior Técnico.
         Tu tarea es evaluar si este candidato encaja en la vacante proporcionada.
@@ -109,33 +135,30 @@ export const POST: APIRoute = async ({ request }) => {
     // --- LLAMADA A LA API ---
     const completion = await deepseek.chat.completions.create({
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
       ],
-      model: "deepseek-chat",
+      model: 'deepseek-chat',
       temperature: 1.1, // Subimos un poco la creatividad para que reescriba mejor
       max_tokens: 4000, // Aseguramos espacio suficiente para todo el JSON
-      response_format: { type: "json_object" },
+      response_format: { type: 'json_object' },
     });
 
     const result = completion.choices[0].message.content;
 
-    if (!result) throw new Error("No response from AI");
+    if (!result) throw new Error('No response from AI');
 
     const jsonResponse = JSON.parse(result);
 
     return new Response(JSON.stringify(jsonResponse), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error("AI Error:", error);
-    return new Response(
-      JSON.stringify({ error: "Error procesando IA", details: String(error) }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    console.error('AI Error:', error);
+    return new Response(JSON.stringify({ error: 'Error procesando IA', details: String(error) }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 };

@@ -7,6 +7,7 @@ import EditorPanel from './components/EditorPanel';
 import PreviewPanel from './components/PreviewPanel';
 import MobileNavigation from './components/MobileNavigation';
 import ATSModal from '../ATSModal';
+import CoverLetterModal from '../CoverLetterModal';
 
 export default function CVBuilder() {
   const { t, lang, toggleLang } = useTranslation();
@@ -39,6 +40,9 @@ export default function CVBuilder() {
     isAtsModalOpen,
     setIsAtsModalOpen,
     handleAtsAnalysis,
+    isCoverLetterOpen,
+    setIsCoverLetterOpen,
+    handleGenerateCoverLetter,
   } = cvLogic;
 
   const pdfPreview = usePDFPreview(markdown, customCSS, mobileTab, windowWidth, cvData);
@@ -107,6 +111,7 @@ export default function CVBuilder() {
           resumeTitle={resumeTitle}
           onTitleChange={setResumeTitle}
           onAtsSimulator={() => setIsAtsModalOpen(true)}
+          onCoverLetter={() => setIsCoverLetterOpen(true)}
         />
       </div>
 
@@ -141,6 +146,12 @@ export default function CVBuilder() {
         onClose={() => setIsAtsModalOpen(false)}
         t={t}
         onAnalyze={handleAtsAnalysis}
+      />
+      <CoverLetterModal
+        isOpen={isCoverLetterOpen}
+        onClose={() => setIsCoverLetterOpen(false)}
+        t={t}
+        onGenerate={handleGenerateCoverLetter}
       />
       <MobileNavigation mobileTab={mobileTab} setMobileTab={setMobileTab} t={t} />
     </div>

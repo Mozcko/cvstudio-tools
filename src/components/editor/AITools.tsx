@@ -7,6 +7,7 @@ interface AIToolsProps {
   onOptimize: () => void;
   onTranslate: () => void;
   onAtsSimulator: () => void;
+  onCoverLetter: () => void;
   isProcessing: boolean;
 }
 
@@ -16,6 +17,7 @@ export default function AITools({
   onOptimize,
   onTranslate,
   onAtsSimulator,
+  onCoverLetter,
   isProcessing,
 }: AIToolsProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -106,6 +108,16 @@ export default function AITools({
               <span className="text-green-400 group-hover:text-green-300">🌐</span>{' '}
               {t.ai.dropdown.translate}
             </button>
+            <button
+              onClick={() => handleAction(onCoverLetter)}
+              className="group flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-slate-700"
+            >
+              <span className="text-pink-400 group-hover:text-pink-300">📝</span>{' '}
+              {t.ai.coverLetter.button}
+            </button>
+
+            <div className="my-1 border-t border-slate-700/50"></div>
+
             <button
               onClick={() => handleAction(onAtsSimulator)}
               className="group flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-slate-700"
