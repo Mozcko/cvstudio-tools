@@ -26,6 +26,8 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
   const [editMode, setEditMode] = useState<'form' | 'code'>('form');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
 
+  const [isAtsModalOpen, setIsAtsModalOpen] = useState(false);
+
   // 4. SCHEMA VALIDATION
   const cvData = useMemo(() => {
     const isOldSchema =
@@ -269,6 +271,27 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
     }
   };
 
+  const handleAtsAnalysis = async (jd: string) => {
+    try {
+      // Usamos el estado 'markdown' que ya está sincronizado
+      const response = await fetch('/api/ats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobDescription: jd,
+          cvMarkdown: markdown,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Error analyzing ATS');
+      return await response.json();
+    } catch (error) {
+      console.error(error);
+      alert('Error connecting to ATS Simulator');
+      return null;
+    }
+  };
+
   return {
     cvData,
     handleDataChange,
@@ -289,5 +312,8 @@ export function useCVLogic(t: Translation, lang: 'es' | 'en') {
     setResumeTitle: handleTitleChange,
     resumeId,
     isDirty,
+    isAtsModalOpen,
+    setIsAtsModalOpen,
+    handleAtsAnalysis,
   };
 }
