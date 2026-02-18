@@ -77,6 +77,8 @@ export const locales = {
       saving: 'Guardando...',
       saved: 'Guardado',
       close: 'Cerrar',
+      undo: 'Deshacer',
+      redo: 'Rehacer',
     },
     ai: {
       button: 'Herramientas IA',
@@ -188,6 +190,8 @@ export const locales = {
       saving: 'Saving...',
       saved: 'Saved',
       close: 'Close',
+      undo: 'Undo',
+      redo: 'Redo',
     },
     ai: {
       button: 'AI Tools',
