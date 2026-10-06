@@ -11,7 +11,7 @@ export const locales = {
         upgrade: 'Upgrade to Pro 🚀',
       },
       hero: {
-        badge: '✨ Potenciado por DeepSeek AI',
+        badge: '✨ Potenciado por IA',
         title: 'Tu currículum profesional,',
         titleAccent: 'optimizado en segundos.',
         description:
@@ -26,7 +26,7 @@ export const locales = {
           ai: {
             title: 'IA de Redacción Avanzada',
             description:
-              'Mejora tu perfil y experiencia con sugerencias impulsadas por DeepSeek AI. Profesionalismo garantizado en cada palabra.',
+              'Mejora tu perfil y experiencia con sugerencias impulsadas por IA. Profesionalismo garantizado en cada palabra.',
           },
           ats: {
             title: 'Simulador de Filtros ATS',
@@ -78,12 +78,7 @@ export const locales = {
             price: '$2.50',
             duration: ' / 7 días',
             action: 'Seleccionar',
-            features: [
-              'Hasta 30 CVs',
-              'IA Avanzada (DeepSeek)',
-              'Cartas Ilimitadas',
-              'Simulador ATS',
-            ],
+            features: ['Hasta 30 CVs', 'IA Avanzada', 'Cartas Ilimitadas', 'Simulador ATS'],
           },
           active: {
             name: 'Active Hunt',
@@ -214,6 +209,31 @@ export const locales = {
       undo: 'Deshacer',
       redo: 'Rehacer',
     },
+    messages: {
+      saved: 'CV guardado',
+      saveError: 'Error al guardar. Se reintentará cuando hagas otro cambio.',
+      notFound: 'CV no encontrado, iniciando uno nuevo',
+      limitTitle: 'Límite del plan gratuito',
+      limitDescription:
+        'Has alcanzado el máximo de CVs del plan gratuito. Mejora a Pro para crear más.',
+      upgradeTitle: 'Función Pro',
+      upgradeDescription: 'Esta función está disponible con el plan Pro.',
+      authTitle: 'Inicia sesión para continuar',
+      authDescription: 'Crea una cuenta gratuita para guardar tus CVs en la nube.',
+      signInToOpen: 'Inicia sesión para abrir este CV.',
+      signInToDownload: 'Regístrate gratis para descargar tu currículum en PDF.',
+      aiError: 'La IA no pudo procesar la solicitud. Inténtalo de nuevo.',
+      aiRateLimited: 'Has alcanzado el límite de uso de IA. Inténtalo más tarde.',
+      atsError: 'No se pudo completar el análisis ATS.',
+      coverLetterError: 'No se pudo generar la carta.',
+      copyCreated: 'Copia creada',
+      applied: 'Cambios aplicados',
+      genericError: 'Algo salió mal. Inténtalo de nuevo.',
+      loading: 'Cargando...',
+      upgrade: 'Mejorar a Pro',
+      signIn: 'Iniciar sesión',
+      pageBreak: 'Salto de página aproximado',
+    },
     ai: {
       button: 'Herramientas IA',
       processing: 'Procesando...',
@@ -278,7 +298,7 @@ export const locales = {
         upgrade: 'Upgrade to Pro 🚀',
       },
       hero: {
-        badge: '✨ Powered by DeepSeek AI',
+        badge: '✨ Powered by AI',
         title: 'Your professional resume,',
         titleAccent: 'optimized in seconds.',
         description:
@@ -293,7 +313,7 @@ export const locales = {
           ai: {
             title: 'Advanced AI Writing',
             description:
-              'Enhance your profile and experience with suggestions powered by DeepSeek AI. Professionalism guaranteed in every word.',
+              'Enhance your profile and experience with suggestions powered by AI. Professionalism guaranteed in every word.',
           },
           ats: {
             title: 'ATS Filter Simulator',
@@ -345,12 +365,7 @@ export const locales = {
             price: '$2.50',
             duration: ' / 7 days',
             action: 'Select',
-            features: [
-              'Up to 30 CVs',
-              'Advanced AI (DeepSeek)',
-              'Unlimited Letters',
-              'ATS Simulator',
-            ],
+            features: ['Up to 30 CVs', 'Advanced AI', 'Unlimited Letters', 'ATS Simulator'],
           },
           active: {
             name: 'Active Hunt',
@@ -479,6 +494,31 @@ export const locales = {
       undo: 'Undo',
       redo: 'Redo',
     },
+    messages: {
+      saved: 'CV saved',
+      saveError: 'Could not save. It will retry after your next change.',
+      notFound: 'CV not found, starting fresh',
+      limitTitle: 'Free plan limit',
+      limitDescription:
+        'You have reached the maximum number of CVs on the free plan. Upgrade to Pro to create more.',
+      upgradeTitle: 'Pro feature',
+      upgradeDescription: 'This feature is available on the Pro plan.',
+      authTitle: 'Sign in to continue',
+      authDescription: 'Create a free account to save your CVs to the cloud.',
+      signInToOpen: 'Sign in to open this CV.',
+      signInToDownload: 'Sign up for free to download your resume as a PDF.',
+      aiError: 'The AI could not process the request. Please try again.',
+      aiRateLimited: 'You have reached the AI usage limit. Please try again later.',
+      atsError: 'The ATS analysis could not be completed.',
+      coverLetterError: 'The cover letter could not be generated.',
+      copyCreated: 'Copy created',
+      applied: 'Changes applied',
+      genericError: 'Something went wrong. Please try again.',
+      loading: 'Loading...',
+      upgrade: 'Upgrade to Pro',
+      signIn: 'Sign in',
+      pageBreak: 'Approximate page break',
+    },
     ai: {
       button: 'AI Tools',
       processing: 'Processing...',
@@ -542,7 +582,7 @@ export const locales = {
         upgrade: 'Upgrade para Pro 🚀',
       },
       hero: {
-        badge: '✨ Potencializado por DeepSeek AI',
+        badge: '✨ Potencializado por IA',
         title: 'Seu currículo profissional,',
         titleAccent: 'otimizado em segundos.',
         description:
@@ -557,7 +597,7 @@ export const locales = {
           ai: {
             title: 'IA de Redação Avançada',
             description:
-              'Melhore seu perfil e experiência com sugestões impulsionadas por DeepSeek AI. Profissionalismo garantido em cada palavra.',
+              'Melhore seu perfil e experiência com sugestões impulsionadas por IA. Profissionalismo garantido em cada palavra.',
           },
           ats: {
             title: 'Simulador de Filtros ATS',
@@ -609,12 +649,7 @@ export const locales = {
             price: '$2.50',
             duration: ' / 7 dias',
             action: 'Selecionar',
-            features: [
-              'Até 30 CVs',
-              'IA Avançada (DeepSeek)',
-              'Cartas Ilimitadas',
-              'Simulador ATS',
-            ],
+            features: ['Até 30 CVs', 'IA Avançada', 'Cartas Ilimitadas', 'Simulador ATS'],
           },
           active: {
             name: 'Active Hunt',
@@ -733,6 +768,31 @@ export const locales = {
       close: 'Fechar',
       undo: 'Desfazer',
       redo: 'Refazer',
+    },
+    messages: {
+      saved: 'Currículo salvo',
+      saveError: 'Erro ao salvar. Tentaremos de novo após a próxima alteração.',
+      notFound: 'CV não encontrado, iniciando um novo',
+      limitTitle: 'Limite do plano gratuito',
+      limitDescription:
+        'Você atingiu o máximo de CVs do plano gratuito. Faça upgrade para o Pro para criar mais.',
+      upgradeTitle: 'Recurso Pro',
+      upgradeDescription: 'Este recurso está disponível no plano Pro.',
+      authTitle: 'Entre para continuar',
+      authDescription: 'Crie uma conta gratuita para salvar seus CVs na nuvem.',
+      signInToOpen: 'Entre para abrir este CV.',
+      signInToDownload: 'Cadastre-se grátis para baixar seu currículo em PDF.',
+      aiError: 'A IA não conseguiu processar a solicitação. Tente novamente.',
+      aiRateLimited: 'Você atingiu o limite de uso de IA. Tente novamente mais tarde.',
+      atsError: 'Não foi possível concluir a análise ATS.',
+      coverLetterError: 'Não foi possível gerar a carta.',
+      copyCreated: 'Cópia criada',
+      applied: 'Alterações aplicadas',
+      genericError: 'Algo deu errado. Tente novamente.',
+      loading: 'Carregando...',
+      upgrade: 'Fazer upgrade para o Pro',
+      signIn: 'Entrar',
+      pageBreak: 'Quebra de página aproximada',
     },
     ai: {
       button: 'Ferramentas de IA',

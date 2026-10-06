@@ -2,21 +2,17 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { useAuth } from '@clerk/astro/react';
-import { api } from '../../lib/api';
+import { api, isApiError, type CVRecord } from '../../lib/api';
+import { removeDraft } from '../../lib/cvDraft';
 import { generateMarkdown } from '../../utils/markdownGenerator';
-import { themes } from '../../templates';
-import type { CVData } from '../../types/cv';
+import { DEFAULT_THEME_ID, getThemeById } from '../../templates';
+import { isMarkdownContent, type CVData, type CVLang } from '../../types/cv';
+import useFitScale from '../../hooks/useFitScale';
+import { localePrefixFromPath } from '../../i18n/utils';
 import { locales } from '../../i18n/locales';
 import useProStatus from '../../hooks/useProStatus';
 
-interface Resume {
-  id: string;
-  title: string;
-  updated_at: string;
-  language: string;
-  content: Record<string, unknown>;
-  theme: string;
-}
+type Resume = CVRecord;
 
 const ResumeCard = ({
   cv,
@@ -27,25 +23,9 @@ const ResumeCard = ({
   onDelete: (id: string) => void;
   lang: string;
 }) => {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const [scale, setScale] = React.useState(0.22);
+  const { containerRef, scale } = useFitScale<HTMLDivElement>(undefined, { initialScale: 0.22 });
 
-  React.useEffect(() => {
-    if (!containerRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const width = entry.contentRect.width;
-        const A4_WIDTH_PX = 794;
-        setScale(width / A4_WIDTH_PX);
-      }
-    });
-
-    resizeObserver.observe(containerRef.current);
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  const theme = themes.find((t) => t.id === cv.theme) || themes[0];
+  const theme = getThemeById(cv.theme || DEFAULT_THEME_ID);
   const scopedCss = theme.css.replace(
     /\.cv-preview-content/g,
     `#cv-preview-${cv.id} .cv-preview-content`
@@ -53,14 +33,11 @@ const ResumeCard = ({
 
   const markdownContent = useMemo(() => {
     try {
-      const content = cv.content as Record<string, unknown>;
-      if (content?.mode === 'markdown') {
-        return (content.markdown as string) || '';
-      }
+      const content = cv.content;
+      if (isMarkdownContent(content)) return content.markdown || '';
 
-      const rawData = content || {};
-
-      const safeData = {
+      const rawData = (content || {}) as Partial<CVData>;
+      const safeData: CVData = {
         ...rawData,
         personal: {
           name: '',
@@ -69,17 +46,21 @@ const ResumeCard = ({
           email: '',
           phone: '',
           city: '',
-          socials: [],
-          ...((rawData.personal as Record<string, unknown>) || {}),
+          ...(rawData.personal || {}),
+          socials: rawData.personal?.socials || [],
         },
-        experience: (rawData.experience as unknown[]) || [],
-        education: (rawData.education as unknown[]) || [],
-        skills: (rawData.skills as unknown[]) || [],
-        projects: (rawData.projects as unknown[]) || [],
-        languages: (rawData.languages as string) || '',
-        certifications: (rawData.certifications as unknown[]) || [],
-      } as unknown as CVData;
-      return generateMarkdown(safeData, (cv.language.toLowerCase() as 'es' | 'en' | 'pt') || 'es');
+        experience: rawData.experience || [],
+        education: rawData.education || [],
+        skills: rawData.skills || [],
+        certifications: rawData.certifications || [],
+        languages: rawData.languages || '',
+        interests: rawData.interests || '',
+      };
+      const cvLang = (cv.language || 'es').toLowerCase();
+      return generateMarkdown(
+        safeData,
+        (['es', 'en', 'pt'].includes(cvLang) ? cvLang : 'es') as CVLang
+      );
     } catch (err) {
       console.error('Error generating markdown for card:', err);
       return '';
@@ -90,7 +71,7 @@ const ResumeCard = ({
     <div className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-800 p-5 transition-all hover:border-slate-500">
       <div className="mb-4 flex items-start justify-between">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/20 text-xs font-bold text-blue-400 uppercase">
-          {cv.language || (cv.content as { language?: string })?.language || 'ES'}
+          {cv.language || 'ES'}
         </div>
         <div className="text-xs text-slate-500">{new Date(cv.updated_at).toLocaleDateString()}</div>
       </div>
@@ -129,7 +110,7 @@ const ResumeCard = ({
 
       <div className="mt-auto flex gap-2">
         <a
-          href={`/app/editor?id=${cv.id}`}
+          href={`${localePrefixFromPath()}/app/editor?id=${cv.id}`}
           className="flex flex-1 items-center justify-center rounded-lg bg-slate-700 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-slate-600"
         >
           {lang === 'es' ? 'Editar' : lang === 'pt' ? 'Editar' : 'Edit'}
@@ -207,22 +188,40 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
     }
   }, [userId, loadResumes]);
 
+  // A guest draft promoted to the cloud right after sign-in (see GuestSync) should show up
+  useEffect(() => {
+    const reload = () => loadResumes();
+    window.addEventListener('cvstudio:cv-created', reload);
+    return () => window.removeEventListener('cvstudio:cv-created', reload);
+  }, [loadResumes]);
+
   const handleCreate = async () => {
     if (!userId) return;
 
+    const pricingUrl = `${localePrefixFromPath()}/pricing`;
+    const limitMessage =
+      lang === 'es'
+        ? 'Has alcanzado el límite de CVs del plan gratuito'
+        : lang === 'pt'
+          ? 'Você atingiu o limite de CVs do plano gratuito'
+          : 'You have reached the CV limit of the free plan';
+
     if (!isPro && resumes.length >= 3) {
-      alert(lang === 'es' ? 'Has alcanzado el límite de 3 CVs' : 'You have reached the limit');
-      window.location.href = lang === 'es' ? '/pricing' : `/${lang}/pricing`;
+      alert(limitMessage);
+      window.location.href = pricingUrl;
       return;
     }
 
-    const token = await getToken();
-
-    const initialData = {
+    const initialData: CVData = {
       personal: {
-        name: 'Tu Nombre',
-        role: 'Tu Rol',
-        summary: 'Resumen profesional...',
+        name: lang === 'es' ? 'Tu Nombre' : lang === 'pt' ? 'Seu Nome' : 'Your Name',
+        role: lang === 'es' ? 'Tu Rol' : lang === 'pt' ? 'Seu Cargo' : 'Your Role',
+        summary:
+          lang === 'es'
+            ? 'Resumen profesional...'
+            : lang === 'pt'
+              ? 'Resumo profissional...'
+              : 'Professional summary...',
         email: '',
         phone: '',
         city: '',
@@ -237,22 +236,26 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
     };
 
     try {
-      const newId = crypto.randomUUID();
+      const token = await getToken();
       const data = await api.createCV(
         {
-          id: newId,
           title:
             lang === 'es' ? 'Nuevo Currículum' : lang === 'pt' ? 'Novo Currículo' : 'New Resume',
-          content: initialData as unknown as CVData,
+          content: initialData,
           language: lang.toUpperCase(),
+          theme: DEFAULT_THEME_ID,
         },
         token
       );
 
-      if (data) {
-        window.location.href = `/app/editor?id=${data.id}`;
-      }
+      window.location.href = `${localePrefixFromPath()}/app/editor?id=${data.id}`;
     } catch (err: unknown) {
+      if (isApiError(err, 403)) {
+        // The server enforces the free-plan limit too
+        alert(limitMessage);
+        window.location.href = pricingUrl;
+        return;
+      }
       const errorMsg = err instanceof Error ? err.message : String(err);
       alert(errorMsg);
     }
@@ -264,6 +267,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
     try {
       const token = await getToken();
       await api.deleteCV(id, token);
+      removeDraft(id);
       setResumes((prev) => prev.filter((r) => r.id !== id));
     } catch (err: unknown) {
       if (err instanceof Error) alert(err.message);

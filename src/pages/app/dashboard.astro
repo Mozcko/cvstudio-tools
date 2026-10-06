@@ -6,7 +6,7 @@ import UserDashboard from '../../components/dashboard/Dashboard';
 const { userId } = Astro.locals.auth();
 
 if (!userId) {
-  Astro.redirect('/sign-in');
+  return Astro.redirect('/sign-in');
 }
 ---
 

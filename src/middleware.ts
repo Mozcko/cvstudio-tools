@@ -10,6 +10,8 @@ const isPublicRoute = createRouteMatcher([
   '/pricing',
   '/en/pricing',
   '/pt/pricing',
+  '/privacy',
+  '/login',
   '/sign-in(.*)',
   '/en/sign-in(.*)',
   '/pt/sign-in(.*)',
@@ -21,6 +23,9 @@ const isPublicRoute = createRouteMatcher([
   '/pt/app/editor(.*)',
 ]);
 
+// Pages that exist only at the root (no /en or /pt twin under src/pages/[lang])
+const UNLOCALIZED_PATHS = ['/privacy', '/login'];
+
 const i18nMiddleware = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect } = context;
   const pathname = url.pathname;
@@ -30,13 +35,14 @@ const i18nMiddleware = defineMiddleware(async (context, next) => {
   const defaultLocale = 'es';
   const prefixedLocales = ['en', 'pt'];
 
-  // 1. Skip middleware for API, internal routes, assets, and auth pages
+  // 1. Skip middleware for API, internal routes, assets, auth pages and unlocalized pages
   if (
     pathname.startsWith('/api') ||
     pathname.startsWith('/_astro') ||
     pathname.includes('.') ||
     pathname.startsWith('/sign-in') ||
-    pathname.startsWith('/sign-up')
+    pathname.startsWith('/sign-up') ||
+    UNLOCALIZED_PATHS.includes(pathname.replace(/\/$/, ''))
   ) {
     return next();
   }
@@ -60,7 +66,8 @@ const i18nMiddleware = defineMiddleware(async (context, next) => {
 
     // Prevent redirecting if we are already at the target path (should not happen with isDefaultPath check)
     if (pathname !== newPath) {
-      return redirect(newPath, 302);
+      // Keep the query string (e.g. /app/editor?id=...) and hash-less params intact
+      return redirect(`${newPath}${url.search}`, 302);
     }
   }
 

@@ -1,17 +1,10 @@
-import type { CVData, SkillItem, SocialLink } from '../types/cv';
+import type { CVData, CVLang, SkillItem, SocialLink } from '../types/cv';
+import { DEFAULT_SECTION_ORDER } from '../types/cv';
+import { formatMonth, presentLabel, titlesMap } from './cvLocale';
 
-const formatDate = (
-  dateString: string | null,
-  isCurrent: boolean,
-  lang: 'es' | 'en' | 'pt'
-): string => {
-  if (isCurrent) {
-    return lang === 'es' ? 'Presente' : lang === 'pt' ? 'Presente' : 'Present';
-  }
-  if (!dateString) return '';
-  const [year, month] = dateString.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1);
-  return new Intl.DateTimeFormat(lang, { month: 'short', year: 'numeric' }).format(date);
+const formatDate = (dateString: string | null, isCurrent: boolean, lang: CVLang): string => {
+  if (isCurrent) return presentLabel[lang] || presentLabel.en;
+  return formatMonth(dateString, lang);
 };
 
 // Helper para generar lista de items (SkillItem)
@@ -32,43 +25,15 @@ const generateSocialLinks = (socials: SocialLink[]): string => {
   return socials.map((link) => `**[${link.network}](${link.url})**`).join(' | ');
 };
 
-interface Project {
-  name: string;
-  role: string;
-  startDate: string;
-  endDate: string;
-  url: string;
-  description: string[];
-}
-
-interface CustomSection {
-  title: string;
-  items: {
-    title: string;
-    subtitle: string;
-    description: string;
-  }[];
-}
-
-export const generateMarkdown = (data: CVData, lang: 'es' | 'en' | 'pt' = 'en'): string => {
-  const {
-    personal,
-    experience,
-    education,
-    skills,
-    certifications,
-    projects,
-    customSections,
-    sectionOrder,
-  } = data as unknown as CVData & {
-    projects?: Project[];
-    customSections?: CustomSection[];
-    sectionOrder?: string[];
-  };
+export const generateMarkdown = (data: CVData, lang: CVLang = 'en'): string => {
+  const { personal, experience, education, skills, certifications, projects, customSections } =
+    data;
+  const titles = titlesMap[lang] || titlesMap.en;
+  const present = presentLabel[lang] || presentLabel.en;
 
   const socialLinksLine = generateSocialLinks(personal.socials);
 
-  const experienceSection = experience
+  const experienceSection = (experience || [])
     .map((exp) => {
       const start = formatDate(exp.startDate, false, lang);
       const end = formatDate(exp.endDate, exp.isCurrent, lang);
@@ -91,28 +56,31 @@ ${descriptionBullets}
     })
     .join('\n');
 
-  let projectsSection = '';
-  if (projects && projects.length > 0) {
-    projectsSection = projects
-      .map((proj) => {
-        const start = formatDate(proj.startDate, false, lang);
-        const end = formatDate(proj.endDate, false, lang);
-        const dateRange =
-          start || end ? `${start} - ${end || (lang === 'es' ? 'Presente' : 'Present')}` : '';
-        const link = proj.url ? ` | Link` : '';
-        const descriptionBullets = generateBulletList(proj.description);
+  const projectsSection = (projects || [])
+    .map((proj) => {
+      const start = formatDate(proj.startDate, false, lang);
+      const end = formatDate(proj.endDate, false, lang);
+      const dateRange = start || end ? `${start} - ${end || present}` : '';
+      // Only the parts that exist are printed, e.g. "*Role* | abr 2023 - Presente | [Link](url)"
+      const meta = [
+        proj.role ? `*${proj.role}*` : '',
+        dateRange,
+        proj.url ? `[Link](${proj.url})` : '',
+      ]
+        .filter(Boolean)
+        .join(' | ');
+      const descriptionBullets = generateBulletList(proj.description);
 
-        return `
+      return `
 ### ${proj.name}
-*${proj.role}* | ${dateRange}${link}
+${meta}
 
 ${descriptionBullets}
 `;
-      })
-      .join('\n');
-  }
+    })
+    .join('\n');
 
-  const educationSection = education
+  const educationSection = (education || [])
     .map((edu) => {
       const start = formatDate(edu.startDate, false, lang);
       const end = formatDate(edu.endDate, edu.isCurrent, lang);
@@ -124,56 +92,21 @@ ${descriptionBullets}
     })
     .join('\n<br>\n');
 
-  let customSectionsContent = '';
-  if (customSections && customSections.length > 0) {
-    customSectionsContent = customSections
-      .map((sec) => {
-        const items = sec.items
-          .map((item) => {
-            return `
+  const customSectionsContent = (customSections || [])
+    .map((sec) => {
+      const items = sec.items
+        .map((item) => {
+          return `
 ### ${item.title}
 ${item.subtitle ? `*${item.subtitle}*` : ''}
 
 ${item.description}
 `;
-          })
-          .join('\n');
-        return `## ${sec.title}\n\n${items}`;
-      })
-      .join('\n\n');
-  }
-
-  const titlesMap: Record<string, Record<string, string>> = {
-    es: {
-      exp: 'Experiencia Profesional',
-      skills: 'Habilidades Técnicas',
-      edu: 'Educación',
-      certs: 'Certificaciones',
-      lang: 'Idiomas',
-      int: 'Intereses',
-      projects: 'Proyectos Destacados',
-    },
-    en: {
-      exp: 'Professional Experience',
-      skills: 'Technical Skills',
-      edu: 'Education',
-      certs: 'Certifications',
-      lang: 'Languages',
-      int: 'Interests',
-      projects: 'Key Projects',
-    },
-    pt: {
-      exp: 'Experiência Profissional',
-      skills: 'Habilidades Técnicas',
-      edu: 'Educação',
-      certs: 'Certificações',
-      lang: 'Idiomas',
-      int: 'Interesses',
-      projects: 'Projetos em Destaque',
-    },
-  };
-
-  const titles = titlesMap[lang] || titlesMap.en;
+        })
+        .join('\n');
+      return `## ${sec.title}\n\n${items}`;
+    })
+    .join('\n\n');
 
   const sectionsMap: Record<string, string> = {
     experience: experienceSection ? `\n## ${titles.exp}\n\n${experienceSection}` : '',
@@ -192,14 +125,20 @@ ${item.description}
     })(),
   };
 
-  const order = (sectionOrder || ['experience', 'projects', 'education', 'skills', 'custom']).map(
-    (s) => s.toLowerCase()
-  );
+  const order = (
+    data.sectionOrder && data.sectionOrder.length > 0 ? data.sectionOrder : DEFAULT_SECTION_ORDER
+  ).map((s) => s.toLowerCase());
+
+  // Empty contact fields are left out instead of printing empty bold markers
+  const contactLine = [personal.city, personal.email, personal.phone]
+    .filter(Boolean)
+    .map((value) => `**${value}**`)
+    .join(' | ');
 
   let md = `
 # ${personal.name}
 
-**${personal.city}** | **${personal.email}** | **${personal.phone}**
+${contactLine}
 <br>
 ${socialLinksLine}
 

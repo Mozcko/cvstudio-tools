@@ -3,6 +3,7 @@ import { useAuth } from '@clerk/astro/react';
 import { useUiTranslations } from '../../i18n/utils';
 import type { locales } from '../../i18n/locales';
 import useProStatus from '../../hooks/useProStatus';
+import { api } from '../../lib/api';
 
 export default function PricingSection({
   lang = 'es',
@@ -41,21 +42,7 @@ export default function PricingSection({
     try {
       setLoadingPlan(planType);
       const token = await getToken();
-
-      const response = await fetch(
-        `${import.meta.env.PUBLIC_API_URL}/billing/create-checkout-session`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ plan_type: planType }),
-        }
-      );
-
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
+      const data = await api.createCheckoutSession(planType, token);
 
       if (data.url) {
         window.location.href = data.url;
@@ -80,22 +67,7 @@ export default function PricingSection({
     setPromoMessage(null);
     try {
       const token = await getToken();
-
-      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/promo/redeem`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ code: promoCode }),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.detail || 'Invalid promo code');
-      }
-
-      const res = await response.json();
+      const res = await api.redeemPromo(promoCode.trim(), token);
       if (res && res.success) {
         setPromoMessage({ text: 'Promo redeemed successfully! Reloading...', type: 'success' });
         setTimeout(() => {

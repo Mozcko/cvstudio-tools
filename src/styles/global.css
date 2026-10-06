@@ -26,17 +26,6 @@
   }
 }
 
-/* Reglas de impresión globales (se mantienen igual) */
-@media print {
-    body > *:not(main) { display: none; }
-    @page { margin: 0; }
-    body { 
-        margin: 0; 
-        background-color: white; /* Al imprimir, el fondo debe ser blanco */
-        color: black;
-    }
-}
-
 /* Ajustes finos para el editor de código */
 code[class*="language-"],
 pre[class*="language-"] {

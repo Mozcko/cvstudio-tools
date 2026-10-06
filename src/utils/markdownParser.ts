@@ -1,27 +1,10 @@
-import type { CVData, Experience, Education, SkillItem } from '../types/cv';
+import type { CVData, CustomSection, Education, Experience, Project, SkillItem } from '../types/cv';
 import { initialCVData } from '../types/cv';
+import { isPresent, parseMonth, splitDateRange, titleToKey, titlesMap, CV_LANGS } from './cvLocale';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types
 // ────────────────────────────────────────────────────────────────────────────
-
-interface Project {
-  name: string;
-  role: string;
-  startDate: string;
-  endDate: string;
-  url: string;
-  description: string[];
-}
-
-interface CustomSection {
-  title: string;
-  items: {
-    title: string;
-    subtitle: string;
-    description: string;
-  }[];
-}
 
 export interface ParseResult {
   success: boolean;
@@ -29,57 +12,6 @@ export interface ParseResult {
   /** Sections or fields that couldn't be fully parsed */
   warnings: string[];
 }
-
-// ────────────────────────────────────────────────────────────────────────────
-// Localized section title maps (must match markdownGenerator.ts titlesMap)
-// ────────────────────────────────────────────────────────────────────────────
-
-const titlesMap: Record<string, Record<string, string>> = {
-  es: {
-    exp: 'Experiencia Profesional',
-    skills: 'Habilidades Técnicas',
-    edu: 'Educación',
-    certs: 'Certificaciones',
-    lang: 'Idiomas',
-    int: 'Intereses',
-    projects: 'Proyectos Destacados',
-  },
-  en: {
-    exp: 'Professional Experience',
-    skills: 'Technical Skills',
-    edu: 'Education',
-    certs: 'Certifications',
-    lang: 'Languages',
-    int: 'Interests',
-    projects: 'Key Projects',
-  },
-  pt: {
-    exp: 'Experiência Profissional',
-    skills: 'Habilidades Técnicas',
-    edu: 'Educação',
-    certs: 'Certificações',
-    lang: 'Idiomas',
-    int: 'Interesses',
-    projects: 'Projetos em Destaque',
-  },
-};
-
-/**
- * Build a reverse lookup: localized title → section key.
- * Includes titles for ALL languages so the parser can handle
- * a CV written in any language regardless of the `lang` parameter.
- */
-function buildTitleToKeyMap(): Map<string, string> {
-  const map = new Map<string, string>();
-  for (const langTitles of Object.values(titlesMap)) {
-    for (const [key, title] of Object.entries(langTitles)) {
-      map.set(title.toLowerCase(), key);
-    }
-  }
-  return map;
-}
-
-const titleToKey = buildTitleToKeyMap();
 
 // ────────────────────────────────────────────────────────────────────────────
 // Utility helpers
@@ -94,117 +26,26 @@ function resetIdCounter(): void {
   idCounter = 0;
 }
 
-/**
- * Try to convert a human-readable date like "Jan 2023" or "ene 2023" back to "2023-01".
- * Also handles "Presente" / "Present" → null (for isCurrent).
- */
-function parseDateString(dateStr: string): { date: string; isCurrent: boolean } {
-  const trimmed = dateStr.trim();
-  if (!trimmed) return { date: '', isCurrent: false };
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  const currentPatterns = ['presente', 'present', 'actual', 'current'];
-  if (currentPatterns.includes(trimmed.toLowerCase())) {
-    return { date: '', isCurrent: true };
-  }
+const labelPattern = (key: 'lang' | 'int') =>
+  [...new Set(CV_LANGS.map((lang) => titlesMap[lang][key]))].map(escapeRegExp).join('|');
 
-  // Try parsing with Intl-friendly Date parsing
-  // The generator outputs: "Jan 2023", "ene 2023", etc.
-  // Strategy: try creating a Date from the string
-  const parsed = new Date(trimmed);
-  if (!isNaN(parsed.getTime()) && parsed.getFullYear() > 1900) {
-    const year = parsed.getFullYear();
-    const month = String(parsed.getMonth() + 1).padStart(2, '0');
-    return { date: `${year}-${month}`, isCurrent: false };
-  }
+// "**Languages:** English, Spanish" / "**Interests:** ..." in any supported language
+const LANGUAGES_LINE = new RegExp(`^\\*\\*(?:${labelPattern('lang')}):\\*\\*\\s*(.*)$`, 'i');
+const INTERESTS_LINE = new RegExp(`^\\*\\*(?:${labelPattern('int')}):\\*\\*\\s*(.*)$`, 'i');
 
-  // Fallback: try to extract month/year manually
-  // Pattern: "Mon YYYY" or "YYYY-MM"
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})$/);
-  if (isoMatch) {
-    return { date: trimmed, isCurrent: false };
-  }
+const isBreak = (line: string) => /^<br\s*\/?>$/i.test(line.trim());
 
-  // Try with month names in multiple languages
-  const monthNames: Record<string, number> = {
-    // English
-    jan: 1,
-    feb: 2,
-    mar: 3,
-    apr: 4,
-    may: 5,
-    jun: 6,
-    jul: 7,
-    aug: 8,
-    sep: 9,
-    oct: 10,
-    nov: 11,
-    dec: 12,
-    // Spanish
-    ene: 1,
-    abr: 4,
-    ago: 8,
-    dic: 12,
-    // Portuguese
-    fev: 2,
-    mai: 5,
-    set: 9,
-    out: 10,
-    dez: 12,
-    // Long month names (English)
-    january: 1,
-    february: 2,
-    march: 3,
-    april: 4,
-    june: 6,
-    july: 7,
-    august: 8,
-    september: 9,
-    october: 10,
-    november: 11,
-    december: 12,
-    // Long month names (Spanish)
-    enero: 1,
-    febrero: 2,
-    marzo: 3,
-    abril: 4,
-    mayo: 5,
-    junio: 6,
-    julio: 7,
-    agosto: 8,
-    septiembre: 9,
-    octubre: 10,
-    noviembre: 11,
-    diciembre: 12,
-    // Long month names (Portuguese)
-    janeiro: 1,
-    fevereiro: 2,
-    março: 3,
-    maio: 5,
-    junho: 6,
-    julho: 7,
-    setembro: 9,
-    outubro: 10,
-    novembro: 11,
-    dezembro: 12,
+/** Parses "abr 2023 - Presente" into structured dates. */
+function parseRange(range: string): { start: string; end: string; isCurrent: boolean } {
+  const [startText, endText] = splitDateRange(range);
+  const isCurrent = isPresent(endText);
+  return {
+    start: parseMonth(startText),
+    end: isCurrent ? '' : parseMonth(endText),
+    isCurrent,
   };
-
-  const monthYearMatch = trimmed.match(/^([a-záéíóúñç.]+)\s+(\d{4})$/i);
-  if (monthYearMatch) {
-    const monthKey = monthYearMatch[1].replace('.', '').toLowerCase();
-    const year = monthYearMatch[2];
-    const monthNum = monthNames[monthKey];
-    if (monthNum) {
-      return { date: `${year}-${String(monthNum).padStart(2, '0')}`, isCurrent: false };
-    }
-  }
-
-  // Last resort: if we can extract just a year
-  const yearMatch = trimmed.match(/(\d{4})/);
-  if (yearMatch) {
-    return { date: `${yearMatch[1]}-01`, isCurrent: false };
-  }
-
-  return { date: '', isCurrent: false };
 }
 
 /**
@@ -234,15 +75,53 @@ function splitSections(md: string): { title: string; content: string }[] {
   return sections;
 }
 
+/**
+ * The generator appends the Languages / Interests lines to the "skills" slot, wherever
+ * that slot happens to be. Pull them out of the document first so they never end up
+ * inside another section's content.
+ */
+function extractLanguagesAndInterests(md: string): {
+  markdown: string;
+  languages: string;
+  interests: string;
+} {
+  let languages = '';
+  let interests = '';
+  const kept: string[] = [];
+  const lines = md.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const langMatch = line.match(LANGUAGES_LINE);
+    if (langMatch) {
+      languages = langMatch[1].trim();
+      continue;
+    }
+    const intMatch = line.match(INTERESTS_LINE);
+    if (intMatch) {
+      interests = intMatch[1].trim();
+      // Drop the <br> the generator puts between the two lines
+      if (kept.length > 0 && isBreak(kept[kept.length - 1])) kept.pop();
+      continue;
+    }
+    kept.push(lines[i]);
+  }
+
+  return { markdown: kept.join('\n'), languages, interests };
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Section Parsers
 // ────────────────────────────────────────────────────────────────────────────
+
+const looksLikeEmail = (value: string) => /^[^\s@]+@[^\s@]+$/.test(value);
+const looksLikePhone = (value: string) => /^[+(]?\d[\d\s().-]{4,}$/.test(value);
 
 /**
  * Parse the header block (before any ## heading).
  * Expected format:
  *   # Name
- *   **City** | **Email** | **Phone**
+ *   **City** | **Email** | **Phone**      (empty fields are omitted)
  *   <br>
  *   **[LinkedIn](url)** | **[GitHub](url)**
  *   Summary text...
@@ -260,9 +139,16 @@ function parseHeader(content: string, warnings: string[]): CVData['personal'] {
   };
 
   let lineIndex = 0;
+  const skipBlank = (alsoBreaks = false) => {
+    while (
+      lineIndex < lines.length &&
+      (!lines[lineIndex] || (alsoBreaks && isBreak(lines[lineIndex])))
+    ) {
+      lineIndex++;
+    }
+  };
 
-  // Skip empty lines
-  while (lineIndex < lines.length && !lines[lineIndex]) lineIndex++;
+  skipBlank();
 
   // Parse # Name
   if (lineIndex < lines.length) {
@@ -275,41 +161,31 @@ function parseHeader(content: string, warnings: string[]): CVData['personal'] {
     }
   }
 
-  // Skip empty lines
-  while (lineIndex < lines.length && !lines[lineIndex]) lineIndex++;
+  skipBlank();
 
-  // Parse **City** | **Email** | **Phone**
-  if (lineIndex < lines.length) {
-    const contactLine = lines[lineIndex];
-    const boldParts = [...contactLine.matchAll(/\*\*([^*]+)\*\*/g)].map((m) => m[1].trim());
-    if (boldParts.length >= 3) {
-      personal.city = boldParts[0];
-      personal.email = boldParts[1];
-      personal.phone = boldParts[2];
+  // Parse the contact line: bold parts that are not links
+  if (lineIndex < lines.length && !lines[lineIndex].includes('](')) {
+    const boldParts = [...lines[lineIndex].matchAll(/\*\*([^*]+)\*\*/g)].map((m) => m[1].trim());
+    if (boldParts.length === 3) {
+      [personal.city, personal.email, personal.phone] = boldParts;
       lineIndex++;
-    } else if (boldParts.length === 2) {
-      // Maybe city + email only, or email + phone
-      personal.city = boldParts[0];
-      personal.email = boldParts[1];
+    } else if (boldParts.length > 0 && boldParts.length < 3) {
+      // Some fields were empty and omitted: work out which ones we have
+      for (const part of boldParts) {
+        if (!personal.email && looksLikeEmail(part)) personal.email = part;
+        else if (!personal.phone && looksLikePhone(part)) personal.phone = part;
+        else if (!personal.city) personal.city = part;
+        else warnings.push(`Could not classify contact field "${part}"`);
+      }
       lineIndex++;
-      warnings.push('Only found 2 contact fields in header (expected 3)');
-    } else {
-      warnings.push('Could not parse contact line in header');
     }
   }
 
-  // Skip <br> and empty lines
-  while (
-    lineIndex < lines.length &&
-    (!lines[lineIndex] || lines[lineIndex] === '<br>' || lines[lineIndex] === '<br/>')
-  ) {
-    lineIndex++;
-  }
+  skipBlank(true);
 
   // Parse social links: **[Network](url)** | **[Network](url)**
   if (lineIndex < lines.length) {
-    const socialLine = lines[lineIndex];
-    const socialMatches = [...socialLine.matchAll(/\*\*\[([^\]]+)\]\(([^)]+)\)\*\*/g)];
+    const socialMatches = [...lines[lineIndex].matchAll(/\*\*\[([^\]]*)\]\(([^)]*)\)\*\*/g)];
     if (socialMatches.length > 0) {
       personal.socials = socialMatches.map((m) => ({
         id: nextId(),
@@ -322,16 +198,10 @@ function parseHeader(content: string, warnings: string[]): CVData['personal'] {
     // If no socials found, that's fine — not all CVs have them
   }
 
-  // Skip empty lines
-  while (lineIndex < lines.length && !lines[lineIndex]) lineIndex++;
+  skipBlank();
 
   // Everything remaining is the summary
-  const summaryLines: string[] = [];
-  while (lineIndex < lines.length) {
-    summaryLines.push(lines[lineIndex]);
-    lineIndex++;
-  }
-  personal.summary = summaryLines.join('\n').trim();
+  personal.summary = lines.slice(lineIndex).join('\n').trim();
 
   return personal;
 }
@@ -382,15 +252,10 @@ function parseExperience(content: string, warnings: string[]): Experience[] {
     );
     if (secondRowMatch) {
       exp.location = secondRowMatch[1].trim();
-      const dateRange = secondRowMatch[2].trim();
-      const dateParts = dateRange.split(/\s*-\s*/);
-      if (dateParts.length >= 2) {
-        const startParsed = parseDateString(dateParts[0]);
-        const endParsed = parseDateString(dateParts.slice(1).join('-'));
-        exp.startDate = startParsed.date;
-        exp.isCurrent = endParsed.isCurrent;
-        exp.endDate = endParsed.isCurrent ? null : endParsed.date || null;
-      }
+      const range = parseRange(secondRowMatch[2]);
+      exp.startDate = range.start;
+      exp.isCurrent = range.isCurrent;
+      exp.endDate = range.isCurrent ? null : range.end || null;
     }
 
     // Extract bullet points after </table>
@@ -401,8 +266,8 @@ function parseExperience(content: string, warnings: string[]): Experience[] {
       .map((line) => line.trim().replace(/^-\s*/, ''));
     exp.description = bullets;
 
-    // Only add if we got at least a company or role
-    if (exp.company || exp.role) {
+    // Only add if the block really was an entry table
+    if (firstRowMatch || secondRowMatch) {
       experiences.push(exp);
     } else if (bullets.length > 0) {
       warnings.push('Found experience bullets without a company/role table');
@@ -419,10 +284,9 @@ function parseExperience(content: string, warnings: string[]): Experience[] {
  */
 function parseCategoryList(content: string): SkillItem[] {
   const items: SkillItem[] = [];
-  const lines = content.split('\n');
 
-  for (const line of lines) {
-    const match = line.trim().match(/^-\s+\*\*([^*]+):\*\*\s*(.+)$/);
+  for (const line of content.split('\n')) {
+    const match = line.trim().match(/^-\s+\*\*([^*]*):\*\*\s*(.*)$/);
     if (match) {
       items.push({
         id: nextId(),
@@ -437,29 +301,16 @@ function parseCategoryList(content: string): SkillItem[] {
 
 /**
  * Parse education section.
- * Expected format:
+ * Expected format (entries separated by <br>):
  *   **Degree**
  *   <br>
  *   *Institution | Start - End*
  */
 function parseEducation(content: string, warnings: string[]): Education[] {
   const educations: Education[] = [];
+  let current: Education | null = null;
 
-  // Split by <br> which separates education entries
-  // The format is: **Degree**\n<br>\n*Institution | Start - End*
-  // Multiple entries separated by \n<br>\n
-  const blocks = content.split(/\n<br>\n/);
-
-  // Process pairs: each education entry spans potentially two blocks
-  // Pattern: block with **Degree** followed by block with *Institution | dates*
-  let i = 0;
-  while (i < blocks.length) {
-    const block = blocks[i].trim();
-    if (!block) {
-      i++;
-      continue;
-    }
-
+  const startEntry = (): Education => {
     const edu: Education = {
       id: nextId(),
       institution: '',
@@ -468,80 +319,39 @@ function parseEducation(content: string, warnings: string[]): Education[] {
       endDate: null,
       isCurrent: false,
     };
+    educations.push(edu);
+    return edu;
+  };
 
-    // Try to find degree and institution in this block and possibly the next
-    const lines = block
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean);
+  for (const rawLine of content.split('\n')) {
+    const line = rawLine.trim();
+    if (!line || isBreak(line)) continue;
 
-    for (const line of lines) {
-      // Check for **Degree**
-      const degreeMatch = line.match(/^\*\*([^*]+)\*\*$/);
-      if (degreeMatch) {
-        edu.degree = degreeMatch[1].trim();
-        continue;
-      }
-
-      // Check for *Institution | Start - End*
-      const instMatch = line.match(/^\*([^*]+)\*$/);
-      if (instMatch) {
-        const instContent = instMatch[1].trim();
-        const pipeIndex = instContent.indexOf('|');
-        if (pipeIndex !== -1) {
-          edu.institution = instContent.substring(0, pipeIndex).trim();
-          const dateRange = instContent.substring(pipeIndex + 1).trim();
-          const dateParts = dateRange.split(/\s*-\s*/);
-          if (dateParts.length >= 2) {
-            const startParsed = parseDateString(dateParts[0]);
-            const endParsed = parseDateString(dateParts.slice(1).join('-'));
-            edu.startDate = startParsed.date;
-            edu.isCurrent = endParsed.isCurrent;
-            edu.endDate = endParsed.isCurrent ? null : endParsed.date || null;
-          }
-        } else {
-          edu.institution = instContent;
-        }
-        continue;
-      }
+    // **Degree** starts a new entry (the degree may be empty: "****")
+    const degreeMatch = line.match(/^\*\*([^*]*)\*\*$/);
+    if (degreeMatch) {
+      current = startEntry();
+      current.degree = degreeMatch[1].trim();
+      continue;
     }
 
-    // If we have a degree but no institution, check next block
-    if (edu.degree && !edu.institution && i + 1 < blocks.length) {
-      i++;
-      const nextBlock = blocks[i].trim();
-      const nextLines = nextBlock
-        .split('\n')
-        .map((l) => l.trim())
-        .filter(Boolean);
-      for (const line of nextLines) {
-        const instMatch = line.match(/^\*([^*]+)\*$/);
-        if (instMatch) {
-          const instContent = instMatch[1].trim();
-          const pipeIndex = instContent.indexOf('|');
-          if (pipeIndex !== -1) {
-            edu.institution = instContent.substring(0, pipeIndex).trim();
-            const dateRange = instContent.substring(pipeIndex + 1).trim();
-            const dateParts = dateRange.split(/\s*-\s*/);
-            if (dateParts.length >= 2) {
-              const startParsed = parseDateString(dateParts[0]);
-              const endParsed = parseDateString(dateParts.slice(1).join('-'));
-              edu.startDate = startParsed.date;
-              edu.isCurrent = endParsed.isCurrent;
-              edu.endDate = endParsed.isCurrent ? null : endParsed.date || null;
-            }
-          } else {
-            edu.institution = instContent;
-          }
-        }
+    // *Institution | Start - End*
+    const instMatch = line.match(/^\*([^*]+)\*$/);
+    if (instMatch) {
+      if (!current || current.institution || current.startDate) current = startEntry();
+      const instContent = instMatch[1];
+      const pipeIndex = instContent.indexOf('|');
+      if (pipeIndex !== -1) {
+        current.institution = instContent.substring(0, pipeIndex).trim();
+        const range = parseRange(instContent.substring(pipeIndex + 1));
+        current.startDate = range.start;
+        current.isCurrent = range.isCurrent;
+        current.endDate = range.isCurrent ? null : range.end || null;
+      } else {
+        current.institution = instContent.trim();
       }
+      current = null;
     }
-
-    if (edu.degree || edu.institution) {
-      educations.push(edu);
-    }
-
-    i++;
   }
 
   if (educations.length === 0 && content.trim()) {
@@ -555,10 +365,10 @@ function parseEducation(content: string, warnings: string[]): Education[] {
  * Parse projects section.
  * Expected format:
  *   ### Project Name
- *   *Role* | Start - End | Link
+ *   *Role* | Start - End | [Link](url)      (each part is optional)
  *   - Bullet 1
  */
-function parseProjects(content: string, _warnings: string[]): Project[] {
+function parseProjects(content: string): Project[] {
   const projects: Project[] = [];
 
   // Split by ### headings
@@ -569,10 +379,10 @@ function parseProjects(content: string, _warnings: string[]): Project[] {
     if (!trimmed) continue;
 
     const lines = trimmed.split('\n');
-    const name = lines[0].trim();
 
     const proj: Project = {
-      name,
+      id: nextId(),
+      name: lines[0].trim(),
       role: '',
       startDate: '',
       endDate: '',
@@ -580,39 +390,35 @@ function parseProjects(content: string, _warnings: string[]): Project[] {
       description: [],
     };
 
-    // Parse the metadata line: *Role* | DateRange | Link
+    let metaParsed = false;
+
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
 
-      // Check for *Role* | dates pattern
-      const metaMatch = line.match(/^\*([^*]+)\*\s*\|\s*(.+)$/);
-      if (metaMatch) {
-        proj.role = metaMatch[1].trim();
-        const rest = metaMatch[2].trim();
-
-        // Check if there's a "| Link" at the end
-        if (rest.includes('| Link')) {
-          const datesPart = rest.replace(/\|\s*Link\s*$/, '').trim();
-          const dateParts = datesPart.split(/\s*-\s*/);
-          if (dateParts.length >= 2) {
-            proj.startDate = parseDateString(dateParts[0]).date;
-            proj.endDate = parseDateString(dateParts.slice(1).join('-')).date;
-          }
-          proj.url = 'link'; // Placeholder — original URL is lost in generation
-        } else {
-          const dateParts = rest.split(/\s*-\s*/);
-          if (dateParts.length >= 2) {
-            proj.startDate = parseDateString(dateParts[0]).date;
-            proj.endDate = parseDateString(dateParts.slice(1).join('-')).date;
-          }
-        }
-        continue;
-      }
-
       // Collect bullet points
       if (line.startsWith('-')) {
         proj.description.push(line.replace(/^-\s*/, ''));
+        continue;
+      }
+
+      // The first other line is the metadata line
+      if (metaParsed) continue;
+      metaParsed = true;
+
+      for (const token of line.split(/\s+\|\s+/)) {
+        const part = token.trim();
+        const roleMatch = part.match(/^\*([^*]+)\*$/);
+        const linkMatch = part.match(/^\[[^\]]*\]\(([^)]*)\)$/);
+        if (roleMatch) {
+          proj.role = roleMatch[1].trim();
+        } else if (linkMatch) {
+          proj.url = linkMatch[1].trim();
+        } else if (part && part.toLowerCase() !== 'link') {
+          const range = parseRange(part);
+          proj.startDate = range.start;
+          proj.endDate = range.end;
+        }
       }
     }
 
@@ -625,83 +431,6 @@ function parseProjects(content: string, _warnings: string[]): Project[] {
 }
 
 /**
- * Parse the skills section content which may contain:
- * - Skills list (- **Category:** Items)
- * - Certifications subsection (## Certifications heading within)
- * - **Languages:** line
- * - **Interests:** line
- *
- * Since the generator combines skills, certifications, languages, and interests
- * into a single "skills" section slot, we need to split them here.
- */
-function parseSkillsComposite(
-  content: string,
-  _warnings: string[]
-): {
-  skills: SkillItem[];
-  certifications: SkillItem[];
-  languages: string;
-  interests: string;
-} {
-  const result = {
-    skills: [] as SkillItem[],
-    certifications: [] as SkillItem[],
-    languages: '',
-    interests: '',
-  };
-
-  // The content might contain inline ## headings for Certifications
-  // Split by ## within the content
-  const subSections = content.split(/^##\s+/m);
-
-  for (let i = 0; i < subSections.length; i++) {
-    const block = subSections[i].trim();
-    if (!block) continue;
-
-    // For the first block (i=0), it's the skills content (no heading prefix)
-    // For subsequent blocks, the first line is the heading
-    let sectionContent = block;
-    let isCertsSection = false;
-
-    if (i > 0) {
-      const firstLineEnd = block.indexOf('\n');
-      const heading = firstLineEnd !== -1 ? block.substring(0, firstLineEnd).trim() : block;
-      sectionContent = firstLineEnd !== -1 ? block.substring(firstLineEnd + 1).trim() : '';
-      const key = titleToKey.get(heading.toLowerCase());
-      if (key === 'certs') {
-        isCertsSection = true;
-      }
-    }
-
-    // Extract **Languages:** and **Interests:** lines
-    const langMatch = sectionContent.match(/\*\*(?:Idiomas|Languages):\*\*\s*(.+)/i);
-    if (langMatch) {
-      result.languages = langMatch[1].trim();
-      sectionContent = sectionContent.replace(langMatch[0], '').trim();
-    }
-
-    const intMatch = sectionContent.match(/\*\*(?:Intereses|Interests|Interesses):\*\*\s*(.+)/i);
-    if (intMatch) {
-      result.interests = intMatch[1].trim();
-      sectionContent = sectionContent.replace(intMatch[0], '').trim();
-    }
-
-    // Parse category list items
-    const items = parseCategoryList(sectionContent);
-    if (isCertsSection) {
-      result.certifications = items;
-    } else if (i === 0) {
-      result.skills = items;
-    } else {
-      // Unknown subsection, treat as skills
-      result.skills.push(...items);
-    }
-  }
-
-  return result;
-}
-
-/**
  * Parse a custom section.
  * Expected format:
  *   ### Item Title
@@ -710,7 +439,7 @@ function parseSkillsComposite(
  *   Description text
  */
 function parseCustomSection(title: string, content: string): CustomSection {
-  const section: CustomSection = { title, items: [] };
+  const section: CustomSection = { id: nextId(), title, items: [] };
 
   const itemBlocks = content.split(/^###\s+/m);
 
@@ -727,7 +456,7 @@ function parseCustomSection(title: string, content: string): CustomSection {
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
-      if (!foundSubtitle) {
+      if (!foundSubtitle && descriptionLines.length === 0) {
         const subMatch = line.match(/^\*([^*]+)\*$/);
         if (subMatch) {
           subtitle = subMatch[1].trim();
@@ -742,6 +471,7 @@ function parseCustomSection(title: string, content: string): CustomSection {
 
     if (itemTitle) {
       section.items.push({
+        id: nextId(),
         title: itemTitle,
         subtitle,
         description: descriptionLines.join('\n').trim(),
@@ -758,55 +488,50 @@ function parseCustomSection(title: string, content: string): CustomSection {
 
 /**
  * Parse a markdown string (as generated by markdownGenerator.ts) back into
- * a structured CVData object.
+ * a structured CVData object. Section headings are recognised in every
+ * supported language.
  *
  * @param markdown - The raw markdown string
- * @param lang - Language hint (used to match section headings)
  * @returns ParseResult with success flag, data, and any warnings
  */
-export function parseMarkdownToCV(markdown: string, lang: string = 'en'): ParseResult {
+export function parseMarkdownToCV(markdown: string): ParseResult {
   resetIdCounter();
   const warnings: string[] = [];
-  // Validate language (the titleToKey map already handles all languages)
-  void (['es', 'en', 'pt'].includes(lang.toLowerCase()) ? lang.toLowerCase() : 'en');
 
   if (!markdown || !markdown.trim()) {
     return { success: false, data: null, warnings: ['Empty markdown content'] };
   }
 
   try {
-    // Split into sections by ## headings
-    const sections = splitSections(markdown);
+    const extracted = extractLanguagesAndInterests(markdown);
 
-    if (sections.length === 0) {
-      return { success: false, data: null, warnings: ['No sections found in markdown'] };
-    }
+    // Split into sections by ## headings
+    const sections = splitSections(extracted.markdown);
 
     // Parse header (first section, no ## heading)
-    const headerSection = sections[0];
-    const personal = parseHeader(headerSection.content, warnings);
+    const personal = parseHeader(sections[0].content, warnings);
 
-    // Initialize CVData with defaults
-    const cvData: CVData & {
-      projects: Project[];
-      customSections: CustomSection[];
-      sectionOrder: string[];
-    } = {
+    const cvData: CVData = {
       ...initialCVData,
       personal,
       experience: [],
       skills: [],
       education: [],
       certifications: [],
-      languages: '',
-      interests: '',
+      languages: extracted.languages,
+      interests: extracted.interests,
       projects: [],
       customSections: [],
       sectionOrder: [],
     };
+    const projects: Project[] = [];
+    const customSections: CustomSection[] = [];
 
     // Track section order as we encounter them
     const sectionOrder: string[] = [];
+    const addToOrder = (id: string) => {
+      if (!sectionOrder.includes(id)) sectionOrder.push(id);
+    };
 
     // Process each ## section
     for (let i = 1; i < sections.length; i++) {
@@ -818,59 +543,28 @@ export function parseMarkdownToCV(markdown: string, lang: string = 'en'): ParseR
       switch (key) {
         case 'exp': {
           cvData.experience = parseExperience(content, warnings);
-          sectionOrder.push('experience');
+          addToOrder('experience');
           break;
         }
         case 'skills': {
-          // The "skills" section in the generator also includes certifications,
-          // languages, and interests. However, those may appear as separate
-          // ## subsections within the content. We handle the composite here.
-          const compositeContent = `${content}`;
-
-          // Check if subsequent sections are certifications (they were generated
-          // inline under the skills slot in the generator)
-          let fullContent = compositeContent;
-          while (
-            i + 1 < sections.length &&
-            titleToKey.get(sections[i + 1].title.toLowerCase()) === 'certs'
-          ) {
-            fullContent += `\n## ${sections[i + 1].title}\n${sections[i + 1].content}`;
-            i++;
-          }
-
-          const composite = parseSkillsComposite(fullContent, warnings);
-          cvData.skills = composite.skills;
-          cvData.certifications = composite.certifications;
-          cvData.languages = composite.languages;
-          cvData.interests = composite.interests;
-          sectionOrder.push('skills');
+          cvData.skills = parseCategoryList(content);
+          addToOrder('skills');
           break;
         }
         case 'certs': {
-          // Standalone certifications section (if not already consumed by skills)
-          const certs = parseCategoryList(content);
-          cvData.certifications.push(...certs);
-
-          // Also check for languages/interests inline
-          const langMatch = content.match(/\*\*(?:Idiomas|Languages):\*\*\s*(.+)/i);
-          if (langMatch) cvData.languages = langMatch[1].trim();
-          const intMatch = content.match(/\*\*(?:Intereses|Interests|Interesses):\*\*\s*(.+)/i);
-          if (intMatch) cvData.interests = intMatch[1].trim();
-
-          // If skills slot isn't in sectionOrder yet, add it
-          if (!sectionOrder.includes('skills')) {
-            sectionOrder.push('skills');
-          }
+          // Certifications are part of the "skills" slot in the generator
+          cvData.certifications.push(...parseCategoryList(content));
+          addToOrder('skills');
           break;
         }
         case 'edu': {
           cvData.education = parseEducation(content, warnings);
-          sectionOrder.push('education');
+          addToOrder('education');
           break;
         }
         case 'projects': {
-          cvData.projects = parseProjects(content, warnings);
-          sectionOrder.push('projects');
+          projects.push(...parseProjects(content));
+          addToOrder('projects');
           break;
         }
         default: {
@@ -880,36 +574,36 @@ export function parseMarkdownToCV(markdown: string, lang: string = 'en'): ParseR
           // If there are no ### sub-items, create one item with the content as description
           if (customSection.items.length === 0 && content.trim()) {
             customSection.items.push({
+              id: nextId(),
               title: title,
               subtitle: '',
               description: content.trim(),
             });
           }
 
-          cvData.customSections.push(customSection);
-          if (!sectionOrder.includes('custom')) {
-            sectionOrder.push('custom');
-          }
+          customSections.push(customSection);
+          addToOrder('custom');
           break;
         }
       }
     }
 
+    // Languages / interests alone still occupy the skills slot
+    if (extracted.languages || extracted.interests) addToOrder('skills');
+
+    cvData.projects = projects;
+    cvData.customSections = customSections;
     cvData.sectionOrder = sectionOrder;
 
     // Determine success: we need at least a name or some content in any section
     const hasContent =
-      personal.name ||
+      !!personal.name ||
       cvData.experience.length > 0 ||
       cvData.education.length > 0 ||
       cvData.skills.length > 0 ||
-      cvData.projects.length > 0;
+      projects.length > 0;
 
-    return {
-      success: hasContent ? true : false,
-      data: cvData as unknown as CVData,
-      warnings,
-    };
+    return { success: hasContent, data: cvData, warnings };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     return {

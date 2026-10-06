@@ -11,6 +11,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
+    "typecheck": "astro sync && tsc --noEmit",
+    "test": "vitest run",
     "prepare": "husky",
     "test:e2e": "playwright test"
   },
@@ -20,8 +22,6 @@
     "@clerk/astro": "^3.3.3",
     "@tailwindcss/vite": "^4.3.0",
     "astro": "^6.4.4",
-    "html2pdf.js": "^0.14.0",
-    "openai": "^6.42.0",
     "prismjs": "^1.30.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -44,11 +44,13 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.6.0",
     "husky": "^9.1.7",
-    "lint-staged": "^16.4.0",
+    "lint-staged": "^17.0.7",
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
-    "prettier-plugin-tailwindcss": "^0.7.4",
-    "typescript-eslint": "^8.60.1"
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.1",
+    "vitest": "^5.0.3"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,astro}": [

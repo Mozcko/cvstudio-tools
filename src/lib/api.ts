@@ -1,6 +1,23 @@
-import type { CVData } from '../types/cv';
+import type { CVContent, CVData, CVLang } from '../types/cv';
 
 const BASE_URL = import.meta.env.PUBLIC_API_URL;
+
+/** Error thrown for any non-2xx response. `status` is the HTTP status code. */
+export class ApiError extends Error {
+  status: number;
+  /** Seconds to wait before retrying, when the server says so (429). */
+  retryAfter?: number;
+
+  constructor(message: string, status: number, retryAfter?: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.retryAfter = retryAfter;
+  }
+}
+
+export const isApiError = (error: unknown, status?: number): error is ApiError =>
+  error instanceof ApiError && (status === undefined || error.status === status);
 
 async function apiRequest<T>(
   endpoint: string,
@@ -22,57 +39,65 @@ async function apiRequest<T>(
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
-    const error = new Error(errorBody.detail || 'API Request Failed');
-    (error as { status?: number }).status = response.status;
-    throw error;
+    const detail = typeof errorBody.detail === 'string' ? errorBody.detail : 'API Request Failed';
+    const retryAfter = Number(response.headers.get('Retry-After')) || undefined;
+    throw new ApiError(detail, response.status, retryAfter);
   }
 
   if (response.status === 204) return {} as T;
   return response.json();
 }
 
-interface CVListItem {
+export interface CVRecord {
   id: string;
   title: string;
-  content: CVData;
+  content: CVContent;
   language: string;
+  theme: string | null;
   updated_at: string;
-  theme: string;
 }
 
-interface CVDetail {
-  id: string;
+interface CVWrite {
   title: string;
-  content: CVData;
-  language: string;
+  content: CVContent;
+  language?: string;
+  theme?: string;
 }
+
+export interface ATSResult {
+  final_ats_score: number;
+  overall_interview_probability: number;
+  tier_classification: string;
+  hard_requirements_analysis: Array<{ requirement: string; status: string; comment: string }>;
+  missing_keywords: string[];
+  top_improvement_actions: string[];
+}
+
+export type RewriteAction = 'enhance' | 'optimize' | 'translate';
+export type PlanType = '7' | '30' | 'lifetime';
 
 export const api = {
   // User Profile
   getUserProfile: (token: string | null) =>
-    apiRequest<{ id: string; is_pro: boolean }>(`/users/me?_t=${Date.now()}`, token),
+    apiRequest<{ id: string; is_pro: boolean; pro_expires_at: string | null }>(
+      `/users/me?_t=${Date.now()}`,
+      token
+    ),
 
-  // CV CRUD
-  getCVs: (token: string | null) => apiRequest<CVListItem[]>(`/cvs/?_t=${Date.now()}`, token),
+  // CV CRUD (the server assigns the id)
+  getCVs: (token: string | null) => apiRequest<CVRecord[]>(`/cvs/?_t=${Date.now()}`, token),
 
   getCV: (id: string, token: string | null) =>
-    apiRequest<CVDetail>(`/cvs/${id}?_t=${Date.now()}`, token),
+    apiRequest<CVRecord>(`/cvs/${id}?_t=${Date.now()}`, token),
 
-  createCV: (
-    data: { id: string; title: string; content: CVData; language?: string },
-    token: string | null
-  ) =>
-    apiRequest<{ id: string }>('/cvs/', token, {
+  createCV: (data: CVWrite, token: string | null) =>
+    apiRequest<CVRecord>('/cvs/', token, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  updateCV: (
-    id: string,
-    data: { title?: string; content?: CVData; language?: string },
-    token: string | null
-  ) =>
-    apiRequest<{ id: string }>(`/cvs/${id}`, token, {
+  updateCV: (id: string, data: Partial<CVWrite>, token: string | null) =>
+    apiRequest<CVRecord>(`/cvs/${id}`, token, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
@@ -83,32 +108,44 @@ export const api = {
     }),
 
   // AI Actions
-  improveText: (text: string, context: string, token: string | null) =>
-    apiRequest<{ improved_text: string }>('/ai/improve', token, {
+  rewriteCV: (
+    params: {
+      cv_content: CVData;
+      action: RewriteAction;
+      target_language: CVLang;
+      job_description?: string;
+    },
+    token: string | null
+  ) =>
+    apiRequest<{ cv: Record<string, unknown> }>('/ai/rewrite', token, {
       method: 'POST',
-      body: JSON.stringify({ text, context }),
+      body: JSON.stringify(params),
     }),
 
-  simulateATS: (cv_content: CVData, job_description: string, token: string | null) =>
-    apiRequest<{
-      final_ats_score: number;
-      overall_interview_probability: number;
-      tier_classification: string;
-      hard_requirements_analysis: Array<{ requirement: string; status: string; comment: string }>;
-      missing_keywords: string[];
-      top_improvement_actions: string[];
-    }>('/ai/ats', token, {
+  simulateATS: (
+    cv_content: CVData,
+    job_description: string,
+    language: CVLang,
+    token: string | null
+  ) =>
+    apiRequest<ATSResult>('/ai/ats', token, {
       method: 'POST',
-      body: JSON.stringify({ cv_content, job_description }),
+      body: JSON.stringify({ cv_content, job_description, language }),
     }),
 
-  generateCoverLetter: (cv_content: CVData, job_description: string, token: string | null) =>
+  generateCoverLetter: (
+    cv_content: CVData,
+    job_description: string,
+    language: CVLang,
+    token: string | null
+  ) =>
     apiRequest<{ cover_letter: string }>('/ai/cover-letter', token, {
       method: 'POST',
-      body: JSON.stringify({ cv_content, job_description }),
+      body: JSON.stringify({ cv_content, job_description, language }),
     }),
 
-  createCheckoutSession: (plan_type: '7' | '30' | 'lifetime', token: string | null) =>
+  // Billing
+  createCheckoutSession: (plan_type: PlanType, token: string | null) =>
     apiRequest<{ url: string }>('/billing/create-checkout-session', token, {
       method: 'POST',
       body: JSON.stringify({ plan_type }),

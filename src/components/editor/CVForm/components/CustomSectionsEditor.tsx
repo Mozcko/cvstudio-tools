@@ -1,19 +1,7 @@
 import React from 'react';
 import type { Translation } from '../../../../i18n/locales';
+import type { CustomItem, CustomSection } from '../../../../types/cv';
 import { Input, TextArea } from './FormInputs';
-
-export interface CustomItem {
-  id: number | string;
-  title: string;
-  subtitle: string;
-  description: string;
-}
-
-export interface CustomSection {
-  id: string;
-  title: string;
-  items: CustomItem[];
-}
 
 interface CustomSectionsEditorProps {
   sections: CustomSection[];
@@ -37,19 +25,31 @@ export const CustomSectionsEditor = ({ sections, onUpdate, t }: CustomSectionsEd
   };
 
   const addItem = (secIdx: number) => {
-    const newSecs = [...safeSections];
-    newSecs[secIdx].items.push({
-      id: Date.now(),
-      title: 'Elemento',
-      subtitle: '',
-      description: '',
-    });
+    const newSecs = safeSections.map((section, i) =>
+      i === secIdx
+        ? {
+            ...section,
+            items: [
+              ...section.items,
+              { id: Date.now(), title: 'Elemento', subtitle: '', description: '' },
+            ],
+          }
+        : section
+    );
     onUpdate(newSecs);
   };
 
   const updateItem = (secIdx: number, itemIdx: number, field: keyof CustomItem, val: string) => {
-    const newSecs = [...safeSections];
-    newSecs[secIdx].items[itemIdx] = { ...newSecs[secIdx].items[itemIdx], [field]: val };
+    const newSecs = safeSections.map((section, i) =>
+      i === secIdx
+        ? {
+            ...section,
+            items: section.items.map((item, j) =>
+              j === itemIdx ? { ...item, [field]: val } : item
+            ),
+          }
+        : section
+    );
     onUpdate(newSecs);
   };
 
