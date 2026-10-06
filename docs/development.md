@@ -56,9 +56,6 @@ Then point the frontend at it with `PUBLIC_API_URL=http://localhost:8000/api/v1`
 `PUBLIC_`-prefixed variables are inlined into the client bundle; never put a secret behind that
 prefix.
 
-`.env.example` also lists `PUBLIC_STRIPE_PUBLISHABLE_KEY` and several `PUBLIC_STRIPE_LINK_*`
-values. Nothing in `src/` reads them — checkout URLs come from the backend.
-
 Production values for both services are in [`PROD-ENV-CHECKLIST.md`](../PROD-ENV-CHECKLIST.md).
 
 ## Scripts
@@ -71,10 +68,18 @@ Production values for both services are in [`PROD-ENV-CHECKLIST.md`](../PROD-ENV
 | `pnpm start` | `node dist/server/entry.mjs` — how production runs it |
 | `pnpm lint` / `pnpm lint:fix` | ESLint |
 | `pnpm format` | Prettier over the repo |
+| `pnpm typecheck` | `tsc --noEmit` over `src/` |
+| `pnpm test` | Vitest unit tests (`src/**/*.test.ts`) |
 | `pnpm test:e2e` | `playwright test` — currently not runnable, see [known-issues.md](./known-issues.md) |
 
-There are no unit tests. `astro build` does not type-check; run `pnpm astro check` (after adding
-`@astrojs/check`) or rely on the editor for TypeScript errors.
+`astro build` does not type-check, so run `pnpm typecheck` as well. Before pushing:
+
+```bash
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
+```
+
+Unit tests cover pure utilities only: the Markdown generator/parser round trip in three languages,
+date parsing, and local draft storage (including migration of the old keys).
 
 ## Code style
 
@@ -113,7 +118,7 @@ Railway, two services (see `PROD-ENV-CHECKLIST.md`):
 - **Frontend** (this repo): `pnpm build` then `pnpm start`. The Node adapter in `standalone` mode
   serves both SSR and static assets; it honours `HOST` and `PORT`.
 - **Backend** (`cvstudio-tools-backend`): PostgreSQL, Clerk secret, Stripe keys + webhook secret +
-  three price ids, OpenAI and DeepSeek keys, `FRONTEND_URL` for CORS.
+  three price ids, the Clerk issuer and webhook secret, the OpenAI key, `FRONTEND_URL` for CORS.
 
 Post-deploy smoke test, from the checklist: landing loads, backend `/api/v1/health` is healthy,
 login works, an AI feature shows the upgrade modal for a free user, a pricing button opens Stripe
@@ -130,19 +135,19 @@ Checkout.
    uses the field.
 5. `useCVLogic.ts` — the `cvData` normaliser (default value) and the AI merge in `handleAiAction`.
 6. `Dashboard.tsx` `ResumeCard` `safeData`, if the generator would crash without it.
-7. Check for a stale compiled twin (`src/types/cv.js`, `src/utils/markdownParser.js`).
+7. Extend `src/utils/__tests__/markdownRoundTrip.test.ts` so the field is covered.
 
 ### Add a new CV section
 
-Everything above, plus: a new slot id in the default `sectionOrder` (it is repeated in
-`useCVLogic.ts`, `CVForm.tsx` ×4 and `markdownGenerator.ts`), a branch in `CVForm`'s section
-renderer and `getSectionTitle`, a `sections.*` translation, and `titlesMap` in generator and parser.
+Everything above, plus: a new slot id in the default `sectionOrder` (`DEFAULT_SECTION_ORDER` in
+`src/types/cv.ts`), a branch in `CVForm`'s section
+renderer and `getSectionTitle`, a `sections.*` translation, and `titlesMap` in `src/utils/cvLocale.ts`.
 
 ### Add a public page
 
 Create the `.astro` file (and its `[lang]/` twin if it should be localised), then add the path to
-`isPublicRoute` in `src/middleware.ts`. If it has no `[lang]` twin, also make sure the locale
-middleware will not redirect to a non-existent prefixed URL.
+`isPublicRoute` in `src/middleware.ts`. If it has no `[lang]` twin, also add it to
+`UNLOCALIZED_PATHS` there so the locale middleware does not redirect to a non-existent URL.
 
 ### Add a backend call
 
@@ -153,3 +158,27 @@ Add a method to the `api` object in `src/lib/api.ts`, typed with `apiRequest<T>`
 
 See [markdown-pdf-themes.md](./markdown-pdf-themes.md#adding-a-theme) and
 [i18n.md](./i18n.md#adding-a-string).
+
+## Manual test checklist
+
+Needs Clerk keys in `.env` and the backend running (see above). Use a private window for the
+guest steps.
+
+1. **Guest:** open `/app/editor`, edit, reload — the edit is still there. *Save* and *Download*
+   open the sign-in prompt.
+2. **Promotion:** sign in from there and land on the dashboard — the draft appears as a CV.
+3. **Per-CV state:** create two CVs with different themes and content. Each reopens with its own
+   data and theme, and the dashboard thumbnails differ.
+4. **Locale:** set the browser language to English, open a CV from the dashboard — it loads the
+   right CV under `/en/app/editor?id=…`.
+5. **Autosave:** edit a saved CV, wait 3 s — "saved". Stop the backend, edit — one error toast and
+   no repeats; start it, edit again — it saves.
+6. **Undo:** type a sentence quickly, press `Ctrl+Z` once — the whole sentence goes.
+7. **Code mode:** in Spanish and Portuguese, with dates in April, August and December, switch to
+   Markdown and back — it returns to the form. Break the Markdown — it refuses and stays.
+8. **Download:** *Download PDF* → *Save as PDF*; select text in the file. Repeat for each theme.
+9. **Limits:** as a free user, try a fourth CV from the dashboard and from the editor — upgrade
+   prompt both times.
+10. **AI (Pro):** enhance, optimize, translate, cover letter and ATS; as a free user each opens the
+    upgrade prompt.
+11. `/privacy` loads signed out; `/login` redirects to sign-in.

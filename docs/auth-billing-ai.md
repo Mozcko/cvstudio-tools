@@ -11,46 +11,54 @@
 - Sign-in / sign-up pages mount Clerk's prebuilt `<SignIn>` / `<SignUp>` with dark `appearance`
   overrides.
 - Every backend call does `const token = await getToken()` and passes it to `src/lib/api.ts`.
-  The backend validates the token; this frontend holds no secrets beyond Clerk's.
+  The backend verifies the token against Clerk; this frontend holds no secrets beyond Clerk's.
 
 ## Three kinds of user
 
 | Capability | Guest | Free (signed in) | Pro |
 | :--- | :---: | :---: | :---: |
 | Use the editor, themes, live preview | ✅ | ✅ | ✅ |
-| Draft kept in `localStorage` | ✅ | ✅ | ✅ |
-| Save to cloud / autosave / dashboard | ❌ auth modal | ✅ | ✅ |
-| Download PDF | ❌ `alert()` | ✅ | ✅ |
-| Number of CVs | — | 3 (checked in `Dashboard.handleCreate`) | unlimited |
-| AI: enhance, optimize, translate | ❌ auth modal | ❌ upgrade modal | ✅ |
-| ATS simulator, cover letter | ❌ auth modal | ❌ upgrade modal | ✅ |
+| Local draft in `localStorage` | ✅ | ✅ | ✅ |
+| Save to cloud / autosave / dashboard | ❌ sign-in prompt | ✅ | ✅ |
+| Download PDF | ❌ sign-in prompt | ✅ | ✅ |
+| Number of CVs | — | 3 | unlimited |
+| AI: enhance, optimize, translate | ❌ sign-in prompt | ❌ upgrade prompt | ✅ |
+| ATS simulator, cover letter | ❌ sign-in prompt | ❌ upgrade prompt | ✅ |
 
-`isGuest` is simply `!userId`. `isPro` comes from `GET /users/me` → `is_pro`, fetched in two places:
-`useCVLogic` (editor) and the `useProStatus` hook (header, dashboard, pricing).
+`isGuest` is "Clerk has loaded and there is no user". `isPro` comes from `GET /users/me` → `is_pro`,
+fetched in two places: `useCVLogic` (editor) and the `useProStatus` hook (header, dashboard,
+pricing).
 
-All of this gating is UX only. The backend enforces two of these rules itself: the 3-CV limit
-(`403` on `POST /cvs/`) and Pro on every `/ai/*` endpoint. PDF download is purely client-side and
-cannot be enforced.
+The client checks are there for a good experience; the backend is the authority. It enforces the
+CV limit (`403` on `POST /cvs/`), Pro on every `/ai/*` endpoint (`403`) and an AI rate limit
+(`429`), and the editor maps those answers to the right prompt even when its own idea of the plan
+is stale (for example a pass that expired while the tab was open). PDF download is purely
+client-side and cannot be enforced.
 
 ### Guest mode and promotion
 
 `/app/editor` is a public route so visitors can try the product. `GuestBanner` tells them their
-work is local only. When they later sign in, `GuestSync` (`src/components/auth/GuestSync.tsx`,
-mounted by `AppLayout`) runs once:
+work is local only; it lives in the `cv-draft:new` local draft. When they sign in, one of two
+things happens:
 
-1. Signed in, and no `cv-resume-id` in `localStorage`?
-2. Is there a `cv-data` draft that differs from `initialCVData`?
-3. If so, `POST /cvs/` with a new UUID, title = the role (or "Mi CV"), then store the returned id
-   in `cv-resume-id`.
+- **They land on a page other than the editor** (usually the dashboard). `GuestSync`
+  (`src/components/auth/GuestSync.tsx`, mounted by `AppLayout`) finds a dirty `new` draft that is
+  not the untouched sample, creates a cloud CV from it, re-keys the draft to the new id and fires
+  `cvstudio:cv-created` so the dashboard reloads its list.
+- **They land back in the editor.** The draft is already on screen; the banner disappears and
+  **Save** creates the CV. `GuestSync` stays out of the way there to avoid a duplicate.
 
-The draft thereby becomes the user's first cloud CV without any action on their part.
+If the create fails (typically the free-plan limit), the local draft is kept.
 
 ### `AuthRequiredModal`
 
 One modal with two modes, opened through `triggerAuthModal(title?, description?, mode)`:
 
-- `auth` → button to `/sign-in`
-- `upgrade` → button to `{lang}/pricing`
+- `auth` → button to `{locale}/sign-in`
+- `upgrade` → button to `{locale}/pricing`
+
+Default texts come from `t.messages.*`; callers pass specific ones ("sign in to download",
+"free plan limit", …).
 
 ## Plans and checkout
 
@@ -69,52 +77,53 @@ is defined by the Stripe price ids on the backend.
 Checkout flow (`PricingSection.handleAction`):
 
 1. Not signed in → go to sign-in. Already Pro → no-op (buttons read "Your current plan").
-2. `POST /billing/create-checkout-session { plan_type }` → `{ url }`.
+2. `api.createCheckoutSession(plan_type)` → `{ url }`.
 3. `window.location.href = url` (Stripe-hosted checkout).
-4. Stripe notifies the backend by webhook (`/api/v1/webhooks/stripe` — `PROD-ENV-CHECKLIST.md` gives a different, wrong path); the
-   backend flips `is_pro`.
-   The frontend only ever learns the result by re-reading `/users/me`.
+4. Stripe notifies the backend by webhook (`/api/v1/webhooks/stripe`); the backend grants Pro,
+   adding the purchased time to whatever the user has left. The frontend only ever learns the
+   result by re-reading `/users/me`.
 
 `PricingSection` appears on the landing page (`#pricing`) and on the standalone `/pricing` page.
+On the standalone page it also has a promo-code field (revealed by clicking the title five times)
+that calls `api.redeemPromo`; a code can be redeemed once per account.
 
 ## AI features
 
 All entry points are in the `AITools` dropdown (each shows a `PRO` chip for non-Pro users). All go
-through `useCVLogic` and are checked guest → Pro before any request.
+through `useCVLogic`: `canUseAi()` checks guest → Pro first, and `reportAiError()` turns backend
+answers into the sign-in prompt, the upgrade prompt, a "limit reached" toast or a generic error.
 
 | Menu item | Flow | Endpoint |
 | :--- | :--- | :--- |
-| Enhance writing | `handleAiAction('enhance')` | `POST /ai/improve` |
-| Optimize for job post | `OptimizeModal` (paste JD) → `handleAiAction('optimize', jd)` | `POST /ai/improve` |
-| Translate | `handleAiAction('translate')` | `POST /ai/improve` |
+| Enhance writing | `handleAiAction('enhance')` | `POST /ai/rewrite` |
+| Optimize for job post | `OptimizeModal` (paste JD) → `handleAiAction('optimize', jd)` | `POST /ai/rewrite` |
+| Translate | `handleAiAction('translate')` | `POST /ai/rewrite` |
 | Cover letter | `CoverLetterModal` → `handleGenerateCoverLetter(jd)` | `POST /ai/cover-letter` |
 | ATS simulator | `ATSModal` → `handleAtsAnalysis(jd)` | `POST /ai/ats` |
 
+Every request includes the editor language, so results come back in the language the user is
+working in.
+
 ### The three "rewrite" actions
 
-They share one generic endpoint (`useCVLogic.ts:457`):
-
 ```ts
-api.improveText(
-  JSON.stringify(cvData),                                   // text
-  `Action: ${action}, Lang: ${lang}, JD: ${providedJd || ''}`, // context
-  token
-)
+api.rewriteCV({ cv_content: cvData, action, target_language: lang, job_description }, token)
+// → { cv: { …a whole CV… } }
 ```
 
-`improved_text` must be a JSON string of a whole CV. The hook then:
+The hook then:
 
-1. `JSON.parse`s it and requires a `personal` key.
+1. Requires a `personal` object in the answer.
 2. **Merges defensively** over the current data: each scalar and each list is taken from the AI
    result only if present and non-empty, otherwise the user's existing value is kept. An AI
-   response that drops a section cannot erase it.
+   response that drops a section cannot erase it. `sectionOrder` is always the user's.
 3. Stores the merged CV as `pendingAiData` and opens **`AIChoiceModal`**:
    - **Update current** → push an undo snapshot, replace the data, mark dirty.
-   - **Create a copy** → save the current CV if dirty, `POST` a new CV titled
-     `"<title> (AI Optimized)"`, and switch the editor to it.
+   - **Create a copy** → save the current CV if dirty, `POST` a new CV titled `"<title> (AI)"`, and
+     switch the editor to it. If the free-plan limit blocks the copy, the upgrade prompt opens.
 
-For `translate`, the target language is the editor's current UI language (`lang`), and the CV's
-`language` field is updated to match.
+For `translate`, the target language is the editor's current language, and the CV's `language`
+field is updated to match.
 
 While a request is running, `isAiProcessing` shows a spinner in the AI button and a blocking overlay
 on the editor panel.
@@ -126,16 +135,9 @@ in local component state (closing and reopening keeps it; "analyze another" clea
 
 - `ATSModal` renders score cards (colour thresholds at 80 and 60), the requirement-by-requirement
   analysis, missing keywords and improvement actions.
-- `CoverLetterModal` shows the letter in an editable textarea with **Copy** and **Download PDF**.
-  Its PDF does not use html2pdf: it writes a small HTML document into a hidden iframe and calls
-  `print()`, so the user saves via the browser's print dialog. The value handed to this modal is
-  probably the wrong shape — see [known-issues.md](./known-issues.md) item 4.
+- `CoverLetterModal` shows the letter in an editable textarea with **Copy** and **Download PDF**
+  (the same `printHtml` helper the CV uses).
 
-Prompts, model choice and PII anonymisation are backend concerns, documented in
-`../cvstudio-tools-backend/docs/ai-services.md`. In short: every feature runs on OpenAI
-`gpt-4o-mini` (the UI still says "Powered by Deepseek"), contact details are masked for ATS and
-cover letters but **not** for enhance / optimize / translate, and a non-Pro call comes back as
-`500` rather than `403`.
-
-A promo-code field on the pricing section exists on the frontend's `main` branch (commit
-`af6aeed`, calling `POST /promo/redeem`) but has not been merged into `master`.
+Prompts, model choice, PII masking and rate limits are backend concerns, documented in
+`../cvstudio-tools-backend/docs/ai-services.md`. In short: every feature runs on OpenAI, and
+contact details are masked before any CV is sent to the model.

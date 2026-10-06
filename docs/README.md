@@ -2,8 +2,8 @@
 
 Reference documentation for the `cv-builder` repository (the frontend of **CVStudio.tools**).
 
-> Written against commit `a1c75dc` (`origin/master`, 2026-06-19, "version 2.0"). If the code has
-> moved on, trust the code and update the page.
+> Describes the code as of the `fix/known-issues` branch (October 2026). If the code has moved
+> on, trust the code and update the page.
 
 ## What this project is
 
@@ -32,16 +32,18 @@ its own knowledge base at `../cvstudio-tools-backend/docs/`.
 ## Thirty-second mental model
 
 ```
-Form (CVData JSON) ──generateMarkdown──▶ Markdown ──react-markdown──▶ hidden HTML (+ theme CSS)
+Form (CVData JSON) ──generateMarkdown──▶ Markdown ──react-markdown──▶ HTML sheet (+ theme CSS) = live preview
         ▲                                   │                                   │
-        └────────parseMarkdownToCV──────────┘                              html2pdf.js
+        └────────parseMarkdownToCV──────────┘                           browser print engine
               (only when leaving code mode)                                     ▼
-                                                                    PDF blob (preview / download)
+                                                                    PDF with real text (download)
 ```
 
-- **Source of truth** is a `CVData` object, held in React state and mirrored to `localStorage`.
+- **Source of truth** is a `CVData` object, held in React state and mirrored to a per-CV draft in
+  `localStorage`.
 - **Markdown is derived** from it, unless the user switches to "code mode" and edits Markdown by hand.
-- **The PDF is rendered in the browser** from the HTML; nothing is rendered server-side.
+- **The PDF is printed by the browser** from that same HTML (real, selectable text); nothing is
+  rendered server-side.
 - **Persistence** is the backend REST API, authenticated with a Clerk session token.
 
 ## Naming

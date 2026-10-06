@@ -5,12 +5,28 @@ The rendering pipeline, end to end:
 ```
 CVData ─▶ generateMarkdown() ─▶ Markdown ─▶ <ReactMarkdown rehype-raw> inside .cv-preview-content
                                                         │  + <style>{theme css}</style>
-                                                        ▼
-                                           usePDFPreview.generatePDF()
-                                clone → inline computed styles → html2pdf.js → A4 PDF
-                                                        ▼
-                                   preview: blob URL in <iframe>   ·   save: file download
+                                     ┌──────────────────┴───────────────────┐
+                              PreviewPanel                           printHtml()
+                     scaled A4 sheet on screen          same HTML + theme CSS in a hidden iframe
+                                                         → browser print → "Save as PDF"
 ```
+
+The preview and the PDF are the same HTML and the same CSS, laid out by the same browser engine.
+
+## Language-dependent pieces (`src/utils/cvLocale.ts`)
+
+One module owns everything in the document that changes with the language, and both the generator
+and the parser import it:
+
+- `titlesMap` — section headings for es / en / pt, and `titleToKey` for the reverse lookup.
+- `presentLabel` / `isPresent` — "Presente" / "Present".
+- `formatMonth('2023-04', lang)` → `abr 2023` · `Apr 2023` · `abr 2023`, from fixed month tables.
+- `parseMonth(text)` — the inverse, tolerant of hand-written variants (`abril de 2023`,
+  `Abr. 2023`, `sept 2023`, `2023-04`, `04/2023`, `2023`).
+- `splitDateRange('abr 2023 - Presente')`.
+
+Dates deliberately do **not** use `Intl` or `new Date(string)`: their output and parsing differ
+between browsers and ICU versions, which used to break the round trip.
 
 ## The Markdown dialect (`src/utils/markdownGenerator.ts`)
 
@@ -44,7 +60,7 @@ treat it as a format, not as free-form Markdown.
 ## Key Projects
 
 ### {project name}
-*{role}* | {start} - {end} | Link
+*{role}* | {start} - {end} | [Link]({url})
 
 - {bullet}
 
@@ -75,70 +91,73 @@ treat it as a format, not as free-form Markdown.
 
 Rules:
 
-- Section headings and "Present" are localised from `titlesMap` (es / en / pt).
-- Dates go through `Intl.DateTimeFormat(lang, { month: 'short', year: 'numeric' })`, giving
-  `Jan 2023`, `ene 2023`, `jan. de 2023`.
 - Sections are emitted in `sectionOrder`; an empty section is omitted entirely.
+- Empty contact fields are omitted from the contact line (no empty `****`).
+- Each part of a project's meta line (role, dates, link) is optional and only printed if present.
 - The two-row `<table>` is how company/role and location/dates end up left/right aligned. Every
   theme styles `td:first-child` and `td:last-child`.
 - `personal.role` is **not** rendered anywhere in the document.
-- A project's `url` only produces the literal text `| Link`; the address itself is not output.
 
 ## The parser (`src/utils/markdownParser.ts`)
 
-`parseMarkdownToCV(markdown, lang)` is the inverse, used only when leaving code mode
+`parseMarkdownToCV(markdown)` is the inverse, used only when leaving code mode
 (see [editor.md](./editor.md)). It returns `{ success, data, warnings }`.
 
+- Pulls the `**Languages:**` / `**Interests:**` lines out first, wherever they are.
 - Splits on `## ` headings; the block before the first one is the header.
-- Recognises section titles in **all three languages** regardless of `lang`.
-- A certifications heading directly after skills is folded back into the `skills` slot.
+- Recognises section titles in **all three languages**, whatever the editor language is.
+- A certifications heading belongs to the `skills` slot.
 - Any unrecognised `## ` heading becomes a custom section.
+- When the contact line has fewer than three parts, it classifies them (contains `@` → email,
+  looks like a phone number → phone, otherwise city).
 - Rebuilds `sectionOrder` from the order the headings appear.
-- Ids are regenerated from a counter (`"1"`, `"2"`, …); project and custom items get no id.
+- Ids are regenerated from a counter (`"1"`, `"2"`, …) for every entry, project and custom item.
 
-`titlesMap` is duplicated in the generator and the parser and **must be kept identical** — the
-parser file says so in a comment.
+The round trip *generate → parse → generate* is covered by
+`src/utils/__tests__/markdownRoundTrip.test.ts` for all three languages and every month. **Any
+change to the generator needs the matching change in the parser and should extend that test.**
 
-Round-trip limits are listed in [known-issues.md](./known-issues.md); the important one is that
-some localised month abbreviations do not survive.
+## Preview (`PreviewPanel.tsx`)
 
-## Preview and PDF (`usePDFPreview.ts`, `PreviewPanel.tsx`)
+The right-hand panel renders the Markdown into a real `.cv-preview-content` element on a white
+sheet 794 px wide (A4 at 96 dpi) with 1 cm padding, and scales the whole sheet with
+`transform: scale()` to fit the panel (`src/hooks/useFitScale.ts`, also used by the dashboard
+thumbnails). It updates instantly as you type.
 
-`PreviewPanel` renders two things:
+`usePrintPreview` watches the sheet with a `ResizeObserver` and derives:
 
-1. A **hidden source**: `<div ref={sourceRef} class="cv-preview-content">` at 21 cm wide, 1 cm
-   padding, `opacity-0`, containing the rendered Markdown. A sibling `<style>` holds the theme CSS.
-2. An **`<iframe>`** showing the generated PDF blob (`#toolbar=0&view=FitV`, `FitH` on mobile),
-   plus a page-count badge.
+- `pageCount` — content height ÷ printable height of an A4 page with 1 cm margins (277 mm);
+- dashed guides where page breaks are expected.
 
-So the "live preview" is a real PDF, regenerated after each change — what you see is exactly what
-downloads.
+Both are estimates; the print engine makes the final decision.
 
-`generatePDF(mode)`:
+## PDF export (`src/utils/printDocument.ts`)
 
-1. `mode === 'save'` and not signed in → `alert()` and return (download requires an account).
-2. Dynamically import `html2pdf.js`.
-3. Clone the source into an off-screen 21 cm container.
-4. Walk source and clone in parallel, copying a fixed list of **computed** styles inline
-   (typography, borders, padding, margin, display/flex, width…) and stripping `class`. Colours are
-   resolved to `rgba()` through a 1×1 canvas, because html2canvas cannot parse modern colour
-   functions such as `oklch()` that Tailwind 4 emits.
-5. Run html2pdf: A4 portrait, 10 mm margin, JPEG 0.98, canvas scale 2 for save / 1 for preview.
-6. Read the page count from jsPDF; either `save()` or create a blob URL (revoking the previous one).
+`printHtml({ title, css, html, wrapperClass })`:
 
-Timing: content changes mark the preview stale; it regenerates after 2 s on desktop, 500 ms on
-mobile, and only while the preview panel is visible.
+1. Builds a standalone HTML document: a reset, `@page { size: A4; margin: 1cm }`, the theme CSS,
+   and the sheet's `innerHTML` inside `<div class="print-root cv-preview-content">`.
+2. Loads it in a hidden iframe (`srcdoc`), waits for `document.fonts.ready`.
+3. Sets the document title (browsers use it as the suggested file name) and calls `print()`.
+4. Cleans up on `afterprint`.
 
-Implications when editing themes:
+The user picks **Save as PDF** in the dialog. Because the browser's own print engine produces the
+file, the text is real text: selectable, searchable and readable by ATS parsers.
 
-- **Only the properties copied in `applyComputedStyles` reach the PDF.** Pseudo-elements
-  (`::before`, `::after`, `::marker`), `gap`, transforms, etc. are dropped.
-- The output is a rasterised image per page, so the PDF text is not selectable or machine-readable.
-- The downloaded file is named `{personal.name with underscores}_CV.pdf`.
+Two details that matter when touching this:
 
-The dashboard thumbnails (`ResumeCard`) do not use this pipeline: they render the same Markdown as
-live HTML, scaled with `transform: scale()` to fit the card, with the theme CSS re-scoped to
-`#cv-preview-{id}` so several themes can coexist on one page.
+- **The reset.** The on-screen preview lives inside the app, where Tailwind's preflight applies
+  (no list bullets, no heading sizes, zero margins, `border-box`), and the themes were written
+  against that. The print document has no Tailwind, so `PREFLIGHT_CSS` in `printDocument.ts`
+  reproduces the relevant rules. If a theme looks different in the PDF than in the preview, the
+  cause is almost always a preflight rule missing there.
+- **Margins.** On screen the sheet has 1 cm padding; in print the padding is forced to 0 and the
+  `@page` margin takes its place. A theme may override `@page` inside `@media print` (the Basic
+  theme does).
+
+`CoverLetterModal` uses the same `printHtml` for its "Download PDF" button.
+
+The export requires sign-in (`CVBuilder.handlePrint` opens the sign-in prompt for guests).
 
 ## Themes (`src/templates/`)
 
@@ -154,16 +173,22 @@ in `src/templates/index.ts`:
 | `minimal` | Minimal | `minimal.css` |
 
 The CSS is imported with Vite's `?raw` suffix, so it is a string injected via `<style>`, not a
-bundled stylesheet. Selecting a theme stores both its id and its full CSS text in `localStorage`.
+bundled stylesheet. `DEFAULT_THEME_ID` is the first theme; `getThemeById(id)` falls back to it.
 
-`getThemeById(id)` falls back to the first theme.
+The theme **id** is stored with the CV (in the local draft and in the backend's `theme` column);
+the CSS is always looked up from the id.
+
+The dashboard thumbnails render the same Markdown with the CV's theme, re-scoped to
+`#cv-preview-{id}` so several themes can coexist on one page.
 
 ### Adding a theme
 
 1. Create `src/templates/my_theme.css`. Prefix **every** selector with `.cv-preview-content`.
 2. Style at least: the root, `h1`, `p:first-of-type` (the contact line), `h2`, `h3`, `table`,
-   `td:first-child`, `td:last-child`, `ul`, `li`, `strong`, `a`.
+   `td:first-child`, `td:last-child`, `ul`, `li`, `strong`, `a`. Remember the reset: lists have no
+   bullets and headings no size unless you set them.
 3. Register it in `src/templates/index.ts` with a unique `id`, a display `name` and a swatch `color`.
-4. Check the result in the **PDF preview**, not just in DevTools — see the property list above.
-5. Do not rename existing ids: they are stored in users' browsers and in the backend's `theme`
-   column.
+4. Check it in the preview **and** in a downloaded PDF. Pseudo-elements, flexbox and backgrounds
+   all print.
+5. Add `break-inside: avoid` for blocks that should not be split across pages.
+6. Do not rename existing ids: they are stored with users' CVs.

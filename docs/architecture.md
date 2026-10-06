@@ -10,12 +10,12 @@
 | Auth | Clerk (`@clerk/astro`) | Middleware + React hooks/components |
 | Data / AI / billing | External REST backend | Base URL in `PUBLIC_API_URL`; see [data-model.md](./data-model.md) |
 | Markdown → HTML | `react-markdown` + `rehype-raw` | Raw HTML is allowed (the CV uses `<table>` and `<br>`) |
-| HTML → PDF | `html2pdf.js` (html2canvas + jsPDF) | Runs in the browser |
+| HTML → PDF | The browser's print engine, via a hidden iframe | `src/utils/printDocument.ts`; real text, no library |
+| Unit tests | Vitest | Pure utilities only |
 | Code editor | `react-simple-code-editor` + Prism | Markdown mode |
 | Runtime | Node ≥ 22.12 (required by Astro 6), pnpm | |
 
-The `openai` package is still in `package.json` but is no longer imported anywhere in `src/` — AI
-calls moved to the backend in v2.0.
+AI calls are made by the backend; this app has no AI SDK.
 
 ## System context
 
@@ -52,19 +52,19 @@ src/
 │   ├── privacy.astro        Privacy policy (es only)
 │   └── login.astro          Legacy redirect to /sign-in
 ├── components/
-│   ├── auth/                GuestSync, UserMenu, LoginCard (unused)
+│   ├── auth/                GuestSync, UserMenu
 │   ├── dashboard/           Dashboard (+ ResumeCard)
 │   ├── editor/              Toolbar, AI menu, modals, theme picker
 │   │   ├── CVBuilder/       Editor root, its two hooks, the two panels
 │   │   └── CVForm/          The structured form and its sub-editors
 │   └── ui/                  SiteHeader, HeroActions, Features/PricingSection, LanguagePicker,
-│                            CookieConsent, Toast, UpgradeModal (unused)
-├── hooks/                   useLocalStorage, useTranslation, useProStatus
+│                            CookieConsent, Toast
+├── hooks/                   useLocalStorage, useTranslation, useProStatus, useFitScale
 ├── i18n/                    locales.ts (all strings), utils.ts (server-side helper)
-├── lib/api.ts               Typed client for the backend
-├── templates/               CV themes (CSS) + registry (index.ts) + default.md (unused sample)
+├── lib/                     api.ts (typed backend client), cvDraft.ts (per-CV local drafts)
+├── templates/               CV themes (CSS) + registry (index.ts)
 ├── types/cv.ts              CVData types + initialCVData sample
-├── utils/                   markdownGenerator.ts, markdownParser.ts
+├── utils/                   markdownGenerator.ts, markdownParser.ts, cvLocale.ts, printDocument.ts
 └── styles/global.css        Tailwind import, theme tokens, print rules, scrollbar
 
 tests/privacy.spec.ts        Playwright e2e (see development.md for its status)
@@ -84,8 +84,8 @@ Spanish is the default locale and has no URL prefix; English and Portuguese live
 | `/sign-in`, `/sign-up` | `/[lang]/sign-in`, `/[lang]/sign-up` | public | Clerk `<SignIn>` / `<SignUp>` |
 | `/app/editor` | `/[lang]/app/editor` | **public** (guest mode) | `CVBuilder` |
 | `/app/dashboard` | `/[lang]/app/dashboard` | signed-in | `Dashboard` |
-| `/privacy` | — | *intended* public, see [known-issues.md](./known-issues.md) | Static policy |
-| `/login` | — | — | Legacy redirect |
+| `/privacy` | — | public | Static policy |
+| `/login` | — | public | Redirects to `/sign-in` |
 
 The editor takes one query parameter: `/app/editor?id=<cv uuid>` loads that CV from the backend.
 Without `id` it works on whatever is in `localStorage`.
@@ -98,10 +98,11 @@ Two middlewares run in sequence on every request:
    (`src/middleware.ts:4`), redirect to sign-in with a return URL. The public list is an explicit
    allow-list: a new public page must be added there (in all three locale forms) or it will bounce
    anonymous visitors.
-2. **Locale redirect** — skipped for `/api`, `/_astro`, any path containing a `.`, and
-   `/sign-in` / `/sign-up`. Otherwise it picks a preferred locale (cookie `cvstudio_locale` →
+2. **Locale redirect** — skipped for `/api`, `/_astro`, any path containing a `.`,
+   `/sign-in` / `/sign-up`, and pages that have no `/en` or `/pt` twin (`UNLOCALIZED_PATHS`:
+   `/privacy`, `/login`). Otherwise it picks a preferred locale (cookie `cvstudio_locale` →
    browser `Accept-Language` → `es`) and, if the URL has no locale prefix but the preference is
-   `en` or `pt`, issues a `302` to the prefixed path.
+   `en` or `pt`, issues a `302` to the prefixed path, keeping the query string.
 
 ## Rendering model
 
@@ -120,7 +121,8 @@ Layout.astro  (html/head, global.css, <slot/>, CookieConsent)
 ```
 
 `GuestSync` lives in `AppLayout` so that the first app page a newly signed-in user lands on
-promotes their guest draft to the cloud (see [auth-billing-ai.md](./auth-billing-ai.md)).
+(other than the editor itself) promotes their guest draft to the cloud — see
+[auth-billing-ai.md](./auth-billing-ai.md).
 
 ## Design tokens
 
