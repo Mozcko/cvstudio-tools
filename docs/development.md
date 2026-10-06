@@ -107,9 +107,8 @@ Conventions visible in the code:
   each other. Feature branches follow `feat/<issue>-<slug>`, `fix/<slug>`, `chore/<slug>`.
 - Dependabot: npm weekly (max 10 open PRs), GitHub Actions monthly.
 - Issue templates: bug report and feature request; blank issues are disabled.
-- `.github/workflows/ci.yml` defines three jobs (frontend lint+build, backend pytest, Playwright).
-  As written it does not match this repository's layout — details in
-  [known-issues.md](./known-issues.md).
+- `.github/workflows/ci.yml` runs `pnpm lint`, `pnpm typecheck`, `pnpm test` and `pnpm build` on
+  Node 22 for pushes and pull requests to `main` and `master`.
 
 ## Deployment
 

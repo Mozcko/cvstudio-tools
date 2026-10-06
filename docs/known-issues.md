@@ -34,11 +34,9 @@ content height (`usePrintPreview.ts`); the print engine decides the real breaks 
 
 ## Build, CI and tests
 
-### 4. CI does not match this repository — Read
-`.github/workflows/ci.yml` triggers only on `main` (the GitHub default branch is `master`), runs
-inside `cvstudio-tools/` and `cvstudio-tools-backend/` directories that do not exist in this repo,
-and uses Node 20 while Astro 6 requires Node ≥ 22.12. It should also run `pnpm typecheck` and
-`pnpm test`.
+### 4. CI does not run end-to-end tests — Read
+`.github/workflows/ci.yml` runs lint, type-check, unit tests and the build on Node 22 for pushes
+and pull requests to `main` and `master`. The Playwright job was removed until item 5 is done.
 
 ### 5. Playwright is not installed or configured — Read
 `pnpm test:e2e` runs `playwright test`, but `@playwright/test` is not a dependency and there is no
