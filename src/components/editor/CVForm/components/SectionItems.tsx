@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Experience, Education } from '../../../../types/cv';
+import type { Experience, Education, Project } from '../../../../types/cv';
 import type { Translation } from '../../../../i18n/locales';
 import { Input } from './FormInputs';
 import { SimpleListEditor } from './ListEditors';
@@ -158,16 +158,6 @@ export const EducationItem = ({ item, index, onUpdate, onRemove, t }: ItemProps<
     </div>
   </div>
 );
-
-export interface Project {
-  id: string;
-  name: string;
-  role: string;
-  startDate: string;
-  endDate: string;
-  url: string;
-  description: string[];
-}
 
 export const ProjectItem = ({ item, index, onUpdate, onRemove, t }: ItemProps<Project>) => (
   <div className="group relative rounded-lg border border-slate-700 bg-[rgba(30,41,59,0.4)] p-5 transition-colors hover:border-slate-500">

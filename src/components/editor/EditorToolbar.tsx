@@ -26,7 +26,6 @@ interface EditorToolbarProps {
   canUndo: boolean;
   canRedo: boolean;
   isPro: boolean;
-  onDashboardClick?: () => void;
 }
 
 export default function EditorToolbar({
@@ -48,16 +47,8 @@ export default function EditorToolbar({
   canUndo,
   canRedo,
   isPro,
-  onDashboardClick,
 }: EditorToolbarProps) {
   const langPrefix = lang === 'es' ? '' : `/${lang}`;
-
-  const handleDashboardLink = (e: React.MouseEvent) => {
-    if (onDashboardClick) {
-      e.preventDefault();
-      onDashboardClick();
-    }
-  };
 
   return (
     <header className="bg-panel-bg border-panel-border relative z-10 flex shrink-0 items-center justify-between border-b px-2 py-3 shadow-sm md:px-4 print:hidden">
@@ -65,7 +56,6 @@ export default function EditorToolbar({
       <div className="flex items-center gap-2 md:gap-4 lg:gap-6">
         <a
           href={`${langPrefix}/app/dashboard`}
-          onClick={handleDashboardLink}
           className="flex items-center gap-2 transition-opacity hover:opacity-80"
           title="Volver al Dashboard"
         >

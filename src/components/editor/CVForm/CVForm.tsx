@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
-import type { CVData, Experience, Education, SocialLink } from '../../../types/cv';
+import type { CVData, Experience, Education, Project, SocialLink } from '../../../types/cv';
+import { DEFAULT_SECTION_ORDER } from '../../../types/cv';
 import type { Translation } from '../../../i18n/locales';
 import { Input, TextArea } from './components/FormInputs';
 import { SocialsEditor } from './components/SocialsEditor';
 import { DynamicListEditor } from './components/ListEditors';
-import { CustomSectionsEditor, type CustomSection } from './components/CustomSectionsEditor';
+import { CustomSectionsEditor } from './components/CustomSectionsEditor';
 import { SectionHeader } from './components/SectionHeader';
 import { InfoBanner } from './components/InfoBanner';
-import {
-  ExperienceItem,
-  EducationItem,
-  ProjectItem,
-  type Project,
-} from './components/SectionItems';
+import { ExperienceItem, EducationItem, ProjectItem } from './components/SectionItems';
 
 interface Props {
   data: CVData;
@@ -43,21 +39,13 @@ export default function CVForm({ data, onChange, t, isReordering, onReorderFinis
     e.dataTransfer.dropEffect = 'move';
     if (draggedIndex === null || draggedIndex === index) return;
 
-    const newOrder = [
-      ...((data as unknown as { sectionOrder: string[] }).sectionOrder || [
-        'experience',
-        'projects',
-        'education',
-        'skills',
-        'custom',
-      ]),
-    ];
+    const newOrder = [...(data.sectionOrder || DEFAULT_SECTION_ORDER)];
     const item = newOrder[draggedIndex];
     newOrder.splice(draggedIndex, 1);
     newOrder.splice(index, 0, item);
 
     setDraggedIndex(index);
-    onChange({ ...data, sectionOrder: newOrder } as unknown as CVData);
+    onChange({ ...data, sectionOrder: newOrder });
   };
 
   const handleDragEnd = () => {
@@ -83,21 +71,13 @@ export default function CVForm({ data, onChange, t, isReordering, onReorderFinis
     if (row) {
       const targetIndex = parseInt(row.getAttribute('data-reorder-index') || '-1', 10);
       if (targetIndex !== -1 && targetIndex !== draggedIndex) {
-        const newOrder = [
-          ...((data as unknown as { sectionOrder: string[] }).sectionOrder || [
-            'experience',
-            'projects',
-            'education',
-            'skills',
-            'custom',
-          ]),
-        ];
+        const newOrder = [...(data.sectionOrder || DEFAULT_SECTION_ORDER)];
         const item = newOrder[draggedIndex];
         newOrder.splice(draggedIndex, 1);
         newOrder.splice(targetIndex, 0, item);
 
         setDraggedIndex(targetIndex);
-        onChange({ ...data, sectionOrder: newOrder } as unknown as CVData);
+        onChange({ ...data, sectionOrder: newOrder });
       }
     }
   };
@@ -167,11 +147,11 @@ export default function CVForm({ data, onChange, t, isReordering, onReorderFinis
   };
 
   // Helpers para Projects (usando any para bypass de tipo estricto temporalmente)
-  const safeProjects = (data as unknown as { projects: Project[] }).projects || [];
+  const safeProjects = data.projects || [];
   const updateProject = (index: number, field: string, value: string | boolean | string[]) => {
     const newProjs = [...safeProjects];
     newProjs[index] = { ...newProjs[index], [field]: value } as Project;
-    onChange({ ...data, projects: newProjs } as unknown as CVData);
+    onChange({ ...data, projects: newProjs });
   };
   const addProject = () =>
     onChange({
@@ -184,33 +164,28 @@ export default function CVForm({ data, onChange, t, isReordering, onReorderFinis
           role: 'Role',
           startDate: '',
           endDate: '',
+          url: '',
           description: ['Description...'],
         },
       ],
-    } as unknown as CVData);
+    });
   const removeProject = (index: number) => {
     if (confirm(t.actions.confirmDelete))
       onChange({
         ...data,
-        projects: safeProjects.filter((_: unknown, i: number) => i !== index),
-      } as unknown as CVData);
+        projects: safeProjects.filter((_, i) => i !== index),
+      });
   };
 
   // --- REORDENAMIENTO ---
-  const sectionOrder = (data as unknown as { sectionOrder: string[] }).sectionOrder || [
-    'experience',
-    'projects',
-    'education',
-    'skills',
-    'custom',
-  ];
+  const sectionOrder = data.sectionOrder || DEFAULT_SECTION_ORDER;
 
   const moveSection = (index: number, direction: 'up' | 'down') => {
     const newOrder = [...sectionOrder];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= newOrder.length) return;
     [newOrder[index], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[index]];
-    onChange({ ...data, sectionOrder: newOrder } as unknown as CVData);
+    onChange({ ...data, sectionOrder: newOrder });
   };
 
   const getSectionTitle = (id: string) => {
@@ -440,12 +415,8 @@ export default function CVForm({ data, onChange, t, isReordering, onReorderFinis
               <section>
                 <SectionHeader title={t.sections.custom} {...headerProps} />
                 <CustomSectionsEditor
-                  sections={
-                    (data as unknown as { customSections: CustomSection[] }).customSections || []
-                  }
-                  onUpdate={(secs) =>
-                    onChange({ ...data, customSections: secs } as unknown as CVData)
-                  }
+                  sections={data.customSections || []}
+                  onUpdate={(secs) => onChange({ ...data, customSections: secs })}
                   t={t}
                 />
               </section>

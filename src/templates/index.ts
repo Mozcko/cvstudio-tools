@@ -47,3 +47,6 @@ export const themes: CvTheme[] = [
 ];
 
 export const getThemeById = (id: string) => themes.find((t) => t.id === id) || themes[0];
+
+/** Theme a new CV starts with (and the fallback for unknown ids). */
+export const DEFAULT_THEME_ID = themes[0].id;

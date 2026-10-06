@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import useTranslation from '../../../hooks/useTranslation';
 import Navbar from '../EditorToolbar';
 import { useCVLogic } from './hooks/useCVLogic';
-import { usePDFPreview } from './hooks/usePDFPreview';
+import { usePrintPreview } from './hooks/usePrintPreview';
 import EditorPanel from './components/EditorPanel';
 import PreviewPanel from './components/PreviewPanel';
 import MobileNavigation from './components/MobileNavigation';
@@ -14,13 +14,12 @@ import OptimizeModal from '../OptimizeModal';
 import AIChoiceModal from '../AIChoiceModal';
 import Toast from '../../ui/Toast';
 
+const AUTOSAVE_DELAY_MS = 3000;
+
 export default function CVBuilder() {
   const { t, lang, toggleLang } = useTranslation();
   const safeLang = lang as 'es' | 'en' | 'pt';
   const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
-  const [windowWidth, setWindowWidth] = useState(() =>
-    typeof window !== 'undefined' ? window.innerWidth : 0
-  );
   const [isMounted, setIsMounted] = useState(false);
 
   const cvLogic = useCVLogic(t, safeLang);
@@ -43,6 +42,7 @@ export default function CVBuilder() {
     handleDataChange,
     setMarkdown,
     isDirty,
+    autosavePaused,
     isAtsModalOpen,
     setIsAtsModalOpen,
     handleAtsAnalysis,
@@ -62,30 +62,27 @@ export default function CVBuilder() {
     isPro,
     isAuthModalOpen,
     setIsAuthModalOpen,
+    triggerAuthModal,
     authModalConfig,
     toasts,
     removeToast,
     isInitializing,
   } = cvLogic;
 
-  const pdfPreview = usePDFPreview(markdown, customCSS, mobileTab, windowWidth, cvData);
+  const fileTitle = `${(cvData.personal.name || 'CV').trim().replace(/\s+/g, '_')}_CV`;
+  const printPreview = usePrintPreview(customCSS, fileTitle);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsMounted(true), 0);
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
-  const handlePrint = async () => {
-    if (mobileTab === 'editor' && windowWidth < 1024) {
-      setMobileTab('preview');
-      await new Promise((resolve) => setTimeout(resolve, 300));
+  const handlePrint = () => {
+    if (isGuest) {
+      triggerAuthModal(t.messages.authTitle, t.messages.signInToDownload);
+      return;
     }
-    pdfPreview.generatePDF('save');
+    printPreview.print();
   };
 
   useEffect(() => {
@@ -112,23 +109,25 @@ export default function CVBuilder() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSave, handleUndo, handleRedo]);
 
-  // LÓGICA DE AUTO-GUARDADO (Refinada)
+  // Autosave: only for CVs that already exist in the cloud, and only from the 'idle' state.
+  // After a failed save the status stays 'error' until the next edit, so a broken
+  // connection does not produce a retry (and an error toast) every few seconds.
   useEffect(() => {
-    if (!resumeId || saveStatus === 'saving' || !isDirty) return;
-    const timer = setTimeout(() => handleSave(), 3000);
+    if (!resumeId || isGuest || autosavePaused || !isDirty || saveStatus !== 'idle') return;
+    const timer = setTimeout(() => handleSave(), AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [resumeId, saveStatus, handleSave, isDirty]);
+  }, [resumeId, isGuest, autosavePaused, saveStatus, handleSave, isDirty]);
 
   if (!isMounted || isInitializing)
     return (
       <div className="bg-app-bg flex h-screen items-center justify-center text-slate-400">
-        Cargando...
+        {t.messages.loading}
       </div>
     );
 
   return (
-    <div className="bg-app-bg text-text-main flex h-dvh flex-col overflow-hidden font-sans print:h-auto print:bg-white">
-      {isGuest && <GuestBanner lang={safeLang} onSignUp={() => setIsAuthModalOpen(true)} />}
+    <div className="bg-app-bg text-text-main flex h-dvh flex-col overflow-hidden font-sans">
+      {isGuest && <GuestBanner lang={safeLang} onSignUp={() => triggerAuthModal()} />}
       <div className="bg-panel-bg border-panel-border z-50 shrink-0 border-b">
         <Navbar
           t={t}
@@ -171,13 +170,11 @@ export default function CVBuilder() {
         />
         <PreviewPanel
           customCSS={customCSS}
-          pageCount={pdfPreview.pageCount}
+          pageCount={printPreview.pageCount}
+          sheetHeight={printPreview.sheetHeight}
           t={t}
           markdown={markdown}
-          isPdfLoading={pdfPreview.isPdfLoading}
-          pdfUrl={pdfPreview.pdfUrl}
-          windowWidth={windowWidth}
-          sourceRef={pdfPreview.sourceRef as React.RefObject<HTMLDivElement>}
+          sourceRef={printPreview.sourceRef}
           isVisible={mobileTab === 'preview'}
         />
       </main>
@@ -213,7 +210,7 @@ export default function CVBuilder() {
       <AuthRequiredModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        lang={safeLang}
+        t={t}
         {...authModalConfig}
       />
 

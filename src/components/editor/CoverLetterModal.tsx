@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Translation } from '../../i18n/locales';
+import { printHtml } from '../../utils/printDocument';
 
 interface CoverLetterModalProps {
   isOpen: boolean;
@@ -39,61 +40,25 @@ export default function CoverLetterModal({
   };
 
   const handleDownloadPDF = () => {
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.width = '0px';
-    iframe.style.height = '0px';
-    iframe.style.border = 'none';
-    document.body.appendChild(iframe);
-
+    const escapeHtml = (value: string) =>
+      value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     // Formateo básico para negritas de Markdown si la IA las incluye
-    const formattedText = result.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    const formattedText = escapeHtml(result).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
-    const html = `
-      <html>
-        <head>
-          <title>Cover Letter</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
-            body {
-              font-family: 'Merriweather', 'Times New Roman', serif; /* Harvard Classic Style */
-              line-height: 1.6;
-              color: #000;
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 40px;
-              font-size: 11pt;
-            }
-            .content {
-              white-space: pre-wrap;
-            }
-            @media print {
-              @page { margin: 0; }
-              body { 
-                margin: 2cm;
-                padding: 0;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="content">${formattedText}</div>
-        </body>
-      </html>
-    `;
-
-    const doc = iframe.contentWindow?.document;
-    if (doc) {
-      doc.open();
-      doc.write(html);
-      doc.close();
-
-      setTimeout(() => {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-        setTimeout(() => document.body.removeChild(iframe), 1000);
-      }, 500);
-    }
+    printHtml({
+      title: 'Cover_Letter',
+      css: `
+        @page { margin: 2cm; }
+        body {
+          font-family: 'Merriweather', 'Georgia', 'Times New Roman', serif;
+          line-height: 1.6;
+          color: #000;
+          font-size: 11pt;
+        }
+        .content { white-space: pre-wrap; }
+      `,
+      html: `<div class="content">${formattedText}</div>`,
+    });
   };
 
   return (
