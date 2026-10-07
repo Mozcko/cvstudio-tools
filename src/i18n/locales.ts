@@ -253,7 +253,10 @@ export const locales = {
       confirmDelete: '¿Eliminar este currículum?',
       loadError: 'Error al cargar los CVs',
       limitReached: 'Has alcanzado el límite de CVs del plan gratuito',
-      empty: 'No tienes currículums.',
+      emptyTitle: 'Aún no tienes currículums',
+      emptyDescription: 'Crea el primero en un par de minutos, o trae el que ya tienes.',
+      createFirst: 'Crear mi primer CV',
+      emptyImport: 'o importar un CV existente',
       proAccount: 'Cuenta Pro',
       dismiss: 'Ocultar',
       newResume: {
@@ -782,7 +785,11 @@ export const locales = {
       confirmDelete: 'Delete this resume?',
       loadError: 'Error loading CVs',
       limitReached: 'You have reached the CV limit of the free plan',
-      empty: 'You have no resumes yet.',
+      emptyTitle: 'You have no resumes yet',
+      emptyDescription:
+        'Create your first one in a couple of minutes, or bring the one you already have.',
+      createFirst: 'Create my first CV',
+      emptyImport: 'or import an existing CV',
       proAccount: 'Pro Account',
       dismiss: 'Dismiss',
       newResume: {
@@ -1299,7 +1306,10 @@ export const locales = {
       confirmDelete: 'Excluir este currículo?',
       loadError: 'Erro ao carregar CVs',
       limitReached: 'Você atingiu o limite de CVs do plano gratuito',
-      empty: 'Você ainda não tem currículos.',
+      emptyTitle: 'Você ainda não tem currículos',
+      emptyDescription: 'Crie o primeiro em poucos minutos, ou traga o que você já tem.',
+      createFirst: 'Criar meu primeiro CV',
+      emptyImport: 'ou importar um CV existente',
       proAccount: 'Conta Pro',
       dismiss: 'Ocultar',
       newResume: {
