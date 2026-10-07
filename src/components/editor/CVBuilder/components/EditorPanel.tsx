@@ -58,12 +58,14 @@ export default function EditorPanel({
         <div className="flex rounded-lg border border-slate-700/50 bg-slate-800/50 p-0.5">
           <button
             onClick={() => setEditMode('form')}
+            data-testid="mode-form"
             className={`rounded-md px-3 py-1 text-[10px] font-bold tracking-wider uppercase transition-all ${editMode === 'form' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
           >
             {t.header.visualEditor}
           </button>
           <button
             onClick={() => setEditMode('code')}
+            data-testid="mode-code"
             className={`rounded-md px-3 py-1 text-[10px] font-bold tracking-wider uppercase transition-all ${editMode === 'code' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
           >
             {t.header.codeEditor}

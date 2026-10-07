@@ -70,7 +70,8 @@ Production values for both services are in [`PROD-ENV-CHECKLIST.md`](../PROD-ENV
 | `pnpm format` | Prettier over the repo |
 | `pnpm typecheck` | `tsc --noEmit` over `src/` |
 | `pnpm test` | Vitest unit tests (`src/**/*.test.ts`) |
-| `pnpm test:e2e` | `playwright test` — currently not runnable, see [known-issues.md](./known-issues.md) |
+| `pnpm test:e2e` | Playwright browser tests against the production build (see below) |
+| `pnpm check` | lint + type-check + unit tests + build |
 
 `astro build` does not type-check, so run `pnpm typecheck` as well. Before pushing:
 
@@ -89,6 +90,32 @@ Unit tests (`src/**/*.test.{ts,tsx}`):
 
 The hook test runs in jsdom (`// @vitest-environment jsdom` at the top of the file) with Clerk's
 `useAuth` and the `api` client mocked. Copy its `setup()` helper for new cases.
+
+### End-to-end tests
+
+Playwright drives a real browser against the **production build**. The app cannot render without
+Clerk, so the build needs keys from a Clerk *development* instance in `.env`:
+
+```bash
+pnpm exec playwright install chromium     # once
+pnpm build
+pnpm test:e2e                             # starts the built server itself (port 4399)
+pnpm exec playwright test --ui            # interactive runner
+```
+
+| Spec | Covers |
+| :--- | :--- |
+| `tests/public-pages.spec.ts` | Landing in three locales, `/login`, protected dashboard, locale redirect keeps `?id=`, `/privacy` |
+| `tests/guest-editor.spec.ts` | Typing → preview, undo/redo, draft survives reload, themes, form ↔ Markdown, lossy Markdown refused, dates in es/en/pt, sign-in prompts |
+| `tests/privacy.spec.ts` | Cookie banner and privacy page |
+
+Notes for writing tests: the React islands only hydrate after Clerk has initialised, so wait with
+`waitForEditor(page)` from `tests/helpers.ts`; read the sheet with `sheetText` (themes upper-case
+headings, so `innerText` lies); use the `data-testid`s `mode-form`, `mode-code` and `lang-toggle`
+for controls whose label changes with the language.
+
+In CI the `🎭 End-to-End` job runs when the repository variable `E2E_CLERK_PUBLISHABLE_KEY` and the
+secret `E2E_CLERK_SECRET_KEY` exist; otherwise it passes with a warning.
 
 ## Code style
 

@@ -72,9 +72,10 @@ A pre-commit hook (Husky + lint-staged) lints and formats staged files.
 
 ### Testing in the browser
 
-There are no automated browser tests yet, so for anything in the editor run through the relevant
-part of the checklist in [`docs/development.md`](./docs/development.md#manual-test-checklist), in at
-least two languages and at a narrow (mobile) width. Say what you tried in the pull request.
+`pnpm build && pnpm test:e2e` runs the Playwright suite (public pages and everything a guest can
+do). Signed-in flows are not automated yet, so for those run through the relevant part of the
+checklist in [`docs/development.md`](./docs/development.md#manual-test-checklist), in at least two
+languages and at a narrow (mobile) width. Say what you tried in the pull request.
 
 ### Conventions
 
@@ -93,6 +94,7 @@ Every pull request and every push to `main` runs [`.github/workflows/ci.yml`](.g
 | 🔤 Type Check | `tsc` reports an error |
 | 🧪 Unit Tests | a Vitest test fails |
 | 🏗️ Build | the production build fails |
+| 🎭 End-to-End | a Playwright test fails (skipped with a warning until the Clerk test keys are configured) |
 | ✅ CI passed | any of the above did not succeed — this is the check required to merge |
 | 🔒 Dependency Audit | *informational*: lists known vulnerabilities in production dependencies |
 

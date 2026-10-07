@@ -38,10 +38,13 @@ content height (`usePrintPreview.ts`); the print engine decides the real breaks 
 `ci.yml` runs lint, type-check, unit tests and the build. Browser tests are missing until item 5
 is done, and `pnpm audit --prod` only reports (it does not block merging).
 
-### 5. Playwright is not installed or configured — Read
-`pnpm test:e2e` runs `playwright test`, but `@playwright/test` is not a dependency and there is no
-`playwright.config.*`. Because of that, `tests/` is excluded from `tsconfig.json`; remove the
-exclusion when Playwright is set up.
+### 5. End-to-end tests cover guest flows only, and are not yet running in CI — Ran / Read
+Playwright is set up (`tests/*.spec.ts`, 19 tests: public pages, redirects, the guest editor,
+Markdown round trip in three languages). They pass locally. Two gaps:
+- CI skips them until the Clerk development keys are configured (`E2E_CLERK_PUBLISHABLE_KEY`
+  variable, `E2E_CLERK_SECRET_KEY` secret).
+- Signed-in flows (saving, dashboard, per-CV themes, AI prompts, the printed PDF) are not covered
+  yet; they need a test user and a backend in CI.
 
 ### 6. No component tests — Read
 Vitest covers the utilities (Markdown round trip, dates, drafts, public routes) and the editor's
