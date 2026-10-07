@@ -50,7 +50,8 @@ src/
 │   ├── sign-in.astro, sign-up.astro                  ├── [lang]/sign-in.astro, sign-up.astro
 │   ├── app/dashboard.astro, app/editor.astro         └── [lang]/app/dashboard.astro, editor.astro
 │   ├── privacy.astro        Privacy policy           ├── [lang]/privacy.astro
-│   └── login.astro          Legacy redirect to /sign-in
+│   ├── login.astro          Legacy redirect to /sign-in
+│   └── 404.astro            Not-found page (localized from the URL)
 ├── components/
 │   ├── auth/                GuestSync, UserMenu
 │   ├── dashboard/           Dashboard (+ ResumeCard)
@@ -86,6 +87,7 @@ Spanish is the default locale and has no URL prefix; English and Portuguese live
 | `/app/dashboard` | `/[lang]/app/dashboard` | signed-in | `Dashboard` |
 | `/privacy` | `/[lang]/privacy` | public | Static policy (`PrivacyPolicy.astro`) |
 | `/login` | — | public | Redirects to `/sign-in` |
+| anything else | | public | `404.astro`, status 404. A `[lang]` page asked for with an unknown locale (`/fr/…`) rewrites to it |
 
 The editor takes one query parameter: `/app/editor?id=<cv uuid>` loads that CV from the backend.
 Without `id` it works on whatever is in `localStorage`.
@@ -94,10 +96,12 @@ Without `id` it works on whatever is in `localStorage`.
 
 Two middlewares run in sequence on every request:
 
-1. **Clerk** — if there is no `userId` and the path is not in the `isPublicRoute` list
-   (`src/middleware.ts:4`), redirect to sign-in with a return URL. The public list is an explicit
-   allow-list: a new public page must be added there (in all three locale forms) or it will bounce
-   anonymous visitors.
+1. **Clerk** — if there is no `userId` and `requiresSignIn(path)` (`src/lib/routes.ts`) is true,
+   redirect to sign-in with a return URL. A path requires sign-in when it is in the **app area**
+   (`/app/…`, with or without a first segment before it) and is not on the public list
+   (`isPublicPath`, which is what lets guests into `/app/editor`). Paths outside the app area
+   that match no page are let through so `404.astro` can answer them. **Every page that needs an
+   account must therefore live under `/app`**; `dashboard.astro` also checks `userId` itself.
 2. **Locale redirect** — skipped for `/api`, `/_astro`, any path containing a `.`,
    `/sign-in` / `/sign-up`, and pages that have no `/en` or `/pt` twin (`UNLOCALIZED_PATHS`:
    `/login`). Otherwise it picks a preferred locale (cookie `cvstudio_locale` →

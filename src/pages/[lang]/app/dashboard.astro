@@ -3,8 +3,14 @@ import AppLayout from '../../../layouts/AppLayout.astro';
 import SiteHeader from '../../../components/ui/SiteHeader';
 import UserDashboard from '../../../components/dashboard/Dashboard';
 import { locales } from '../../../i18n/locales';
+import { prefixedLocale } from '../../../lib/routes';
 
 const { lang } = Astro.params;
+
+if (!prefixedLocale(lang)) {
+  return Astro.rewrite('/404');
+}
+
 const { userId } = Astro.locals.auth();
 const pages = (locales[lang as keyof typeof locales] || locales.es).pages;
 

@@ -34,10 +34,7 @@ export default function OptimizeModal({
 
   const optimizeTitle = optimize.title || dropdown.optimize;
   const optimizeDesc = optimize.description || (ai.jobDescriptionPrompt as string);
-  const optimizePlaceholder =
-    optimize.placeholder ||
-    (ai.ats as Record<string, string>)?.placeholder ||
-    'Paste job description here...';
+  const optimizePlaceholder = optimize.placeholder || t.ai.ats.placeholder;
   const optimizeAction = optimize.action || dropdown.optimize;
 
   return (

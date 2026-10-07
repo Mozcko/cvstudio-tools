@@ -2,15 +2,19 @@
 import { SignIn } from '@clerk/astro/components';
 import PublicLayout from '../../layouts/PublicLayout.astro';
 import { locales } from '../../i18n/locales';
+import { prefixedLocale } from '../../lib/routes';
 
 const { lang } = Astro.params;
+
+if (!prefixedLocale(lang)) {
+  return Astro.rewrite('/404');
+}
+
 const pages = (locales[lang as keyof typeof locales] || locales.es).pages;
 ---
 
 <PublicLayout title={`${pages.signIn} | CVStudio`}>
-  <div
-    class="from-app-bg flex flex-1 items-center justify-center bg-gradient-to-b to-slate-900 px-4 py-12"
-  >
+  <div class="from-app-bg flex flex-1 items-center justify-center bg-gradient-to-b to-slate-900 px-4 py-12">
     <SignIn
       appearance={{
         elements: {

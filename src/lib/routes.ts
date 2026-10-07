@@ -23,3 +23,19 @@ const PUBLIC_ROUTES: RegExp[] = [
 
 export const isPublicPath = (pathname: string): boolean =>
   PUBLIC_ROUTES.some((route) => route.test(pathname));
+
+// Everything that needs an account lives under /app (any first segment may precede it, so a
+// mistyped locale such as /fr/app/dashboard is still treated as private)
+const APP_AREA = /^(?:\/[^/]+)?\/app(?:\/.*)?$/;
+
+/**
+ * True when a signed-out visitor must be sent to sign in. Paths that are neither public nor
+ * in the app area do not exist: they are let through so the 404 page can answer them.
+ * New private pages must be created under /app.
+ */
+export const requiresSignIn = (pathname: string): boolean =>
+  APP_AREA.test(pathname) && !isPublicPath(pathname);
+
+/** The locale a [lang] page was requested with, or null when it is not one we serve. */
+export const prefixedLocale = (lang: string | undefined): 'en' | 'pt' | null =>
+  lang === 'en' || lang === 'pt' ? lang : null;

@@ -1,6 +1,11 @@
 ---
 import AppLayout from '../../../layouts/AppLayout.astro';
 import CVBuilder from '../../../components/editor/CVBuilder/CVBuilder.tsx';
+import { prefixedLocale } from '../../../lib/routes';
+
+if (!prefixedLocale(Astro.params.lang)) {
+  return Astro.rewrite('/404');
+}
 ---
 
 <AppLayout title="Editor - CVStudio">

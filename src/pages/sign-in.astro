@@ -1,12 +1,11 @@
 ---
 import { SignIn } from '@clerk/astro/components';
 import PublicLayout from '../layouts/PublicLayout.astro';
+import { locales } from '../i18n/locales';
 ---
 
-<PublicLayout title="Iniciar Sesión | CVStudio">
-  <div
-    class="from-app-bg flex flex-1 items-center justify-center bg-linear-to-b to-slate-900 px-4 py-12"
-  >
+<PublicLayout title={`${locales.es.pages.signIn} | CVStudio`}>
+  <div class="from-app-bg flex flex-1 items-center justify-center bg-linear-to-b to-slate-900 px-4 py-12">
     <SignIn
       appearance={{
         elements: {
