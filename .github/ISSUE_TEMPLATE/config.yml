@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 💬 Ask a Question
-    url: https://github.com/Mozcko/cvstudio-tools/discussions
-    about: Please ask and answer questions here.
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/Mozcko/cvstudio-tools/security/advisories/new
+    about: Please report security problems privately, never in a public issue.
+  - name: ⚙️ Backend / API issues
+    url: https://github.com/Mozcko/cvstudio-tools-backend/issues
+    about: Problems with the API, billing webhooks or the AI services.

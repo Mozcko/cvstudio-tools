@@ -1,0 +1,7 @@
+# Everyone listed here is asked to review pull requests that touch the matching paths.
+*                 @Mozcko
+
+# Changes here affect routing/authentication or the deploy pipeline: review with extra care.
+/src/middleware.ts @Mozcko
+/src/lib/         @Mozcko
+/.github/         @Mozcko

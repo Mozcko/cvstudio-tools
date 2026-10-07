@@ -1,229 +1,130 @@
 <div align="center">
   <p>
-    <a href="#español">🇪🇸 Español</a> | <a href="#english">🇺🇸 English</a>
+    <a href="#english">🇺🇸 English</a> | <a href="#español">🇪🇸 Español</a>
   </p>
 </div>
 
 ---
 
-<div id="español"></div>
-
-# 📄 CV Builder
-
-**CV Builder** es una aplicación web moderna diseñada para crear, editar y exportar currículums profesionales de manera ágil. Combina la velocidad de Astro con la interactividad de React, utilizando inteligencia artificial para asistir en la redacción y Supabase para la gestión de datos.
-
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Status](https://img.shields.io/badge/status-development-orange)
-
-## 🚀 Tecnologías
-
-El proyecto está construido sobre un stack moderno y escalable:
-
-* **Core:** [Astro](https://astro.build/) (v5) - Renderizado híbrido y optimización.
-* **UI Framework:** [React](https://react.dev/) (v19) - Componentes interactivos.
-* **Estilos:** [Tailwind CSS](https://tailwindcss.com/) (v4) - Diseño responsivo y moderno.
-* **Base de Datos & Auth:** [Supabase](https://supabase.com/) - Persistencia de usuarios y CVs.
-* **IA:** [OpenAI API](https://openai.com/) - Asistencia generativa para perfiles y descripciones.
-* **Utilidades:**
-    * `html2pdf.js`: Exportación a PDF.
-    * `react-markdown`: Renderizado de contenido rico.
-
-## 🛠️ Requisitos Previos
-
-Antes de comenzar, asegúrate de tener instalado:
-
-* [Node.js](https://nodejs.org/) (v18 o superior)
-* [pnpm](https://pnpm.io/) (Recomendado para gestionar paquetes)
-
-## ⚡ Instalación y Configuración
-
-Sigue estos pasos para levantar el entorno de desarrollo local:
-
-1.  **Clonar el repositorio:**
-
-    ```bash
-    git clone [https://github.com/tu-usuario/cv-builder.git](https://github.com/tu-usuario/cv-builder.git)
-    cd cv-builder
-    ```
-
-2.  **Instalar dependencias:**
-
-    ```bash
-    pnpm install
-    ```
-
-3.  **Configurar Variables de Entorno:**
-    Renombra el archivo `.env.example` a `.env` y completa tus credenciales.
-
-    ```bash
-    cp .env.example .env
-    ```
-
-    **Variables requeridas:**
-    * `PUBLIC_SUPABASE_URL`: Tu URL de proyecto Supabase.
-    * `PUBLIC_SUPABASE_ANON_KEY`: Tu clave pública anónima de Supabase.
-    * `OPENAI_API_KEY`: Tu clave de API de OpenAI (para funciones de IA).
-
-4.  **Iniciar el servidor de desarrollo:**
-
-    ```bash
-    pnpm dev
-    ```
-
-    La aplicación estará disponible en `http://localhost:4321`.
-
-## 📂 Estructura del Proyecto
-``` text
-/
-├── public/              # Archivos estáticos
-├── src/
-│   ├── components/      # Componentes de React y Astro
-│   │   ├── editor/      # Lógica principal del editor de CV
-│   │   ├── ui/          # Componentes de UI reutilizables
-│   │   └── auth/        # Componentes de autenticación
-│   ├── layouts/         # Plantillas de diseño (App, Public)
-│   ├── lib/             # Clientes de servicios (Supabase)
-│   ├── pages/           # Rutas de la aplicación (File-based routing)
-│   │   ├── api/         # Endpoints de servidor (IA, etc.)
-│   │   └── app/         # Rutas protegidas de la aplicación
-│   ├── templates/       # Definiciones de estilos para los CVs (Classic, Modern, etc.)
-│   └── types/           # Definiciones de tipos TypeScript
-└── package.json
-```
-
-## 🧞 Scripts Disponibles
-
-| Comando          | Acción                                             |
-| :--------------- | :------------------------------------------------- |
-| `pnpm dev`       | Inicia el servidor de desarrollo local.            |
-| `pnpm build`     | Compila el proyecto para producción en `./dist/`.  |
-| `pnpm preview`   | Previsualiza la compilación localmente.            |
-| `pnpm start`     | Ejecuta el servidor de producción (Node adapter).  |
-
-## 🤝 Contribución
-
-¡Las contribuciones son bienvenidas! Para mantener el orden, seguimos este flujo:
-
-1.  Revisa el **Project Board** (Backlog) para ver tareas pendientes.
-2.  Crea un **Fork** del repositorio.
-3.  Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`).
-4.  Haz tus cambios y realiza commits descriptivos.
-5.  Abre un **Pull Request** hacia la rama `main`.
-
-Por favor, revisa el archivo `CONTRIBUTING.md` para más detalles sobre estándares de código.
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT.
-
-
 <div id="english"></div>
 
-# 📄 CV Builder
+# 📄 CVStudio.tools
 
-**CV Builder** is a modern web application designed to create, edit, and export professional resumes quickly and efficiently. It combines the speed of Astro with the interactivity of React, leveraging artificial intelligence to assist in writing and Supabase for data management.
-
+[![CI](https://github.com/Mozcko/cvstudio-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/Mozcko/cvstudio-tools/actions/workflows/ci.yml)
+[![Security](https://github.com/Mozcko/cvstudio-tools/actions/workflows/security.yml/badge.svg)](https://github.com/Mozcko/cvstudio-tools/actions/workflows/security.yml)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Status](https://img.shields.io/badge/status-development-orange)
 
-## 🚀 Technologies
+The web app behind [cvstudio.tools](https://www.cvstudio.tools): build a résumé in a form or in
+Markdown, see it live on an A4 sheet, pick a theme, and download a PDF with real, selectable text.
+Signed-in users keep their CVs in the cloud; Pro users get AI rewriting, job-targeted optimisation,
+translation, ATS simulation and cover letters.
 
-The project is built on a modern and scalable stack:
+> **Documentation:** [`docs/`](./docs/README.md) · **Contributing:** [`CONTRIBUTING.md`](./CONTRIBUTING.md) · **Security:** [`SECURITY.md`](./SECURITY.md)
 
-* **Core:** [Astro](https://astro.build/) (v5) - Hybrid rendering and optimization.
-* **UI Framework:** [React](https://react.dev/) (v19) - Interactive components.
-* **Styles:** [Tailwind CSS](https://tailwindcss.com/) (v4) - Responsive and modern design.
-* **Database & Auth:** [Supabase](https://supabase.com/) - User persistence and CV data.
-* **AI:** [OpenAI API](https://openai.com/) - Generative assistance for profiles and descriptions.
-* **Utilities:**
-    * `html2pdf.js`: Export to PDF.
-    * `react-markdown`: Rich content rendering.
+This repository is the frontend. Data, billing and AI live in the API:
+[`Mozcko/cvstudio-tools-backend`](https://github.com/Mozcko/cvstudio-tools-backend).
 
-## 🛠️ Prerequisites
+## Stack
 
-Before you begin, ensure you have the following installed:
+Astro (server-rendered, Node adapter) · React islands · Tailwind CSS · Clerk for authentication ·
+Vitest · deployed on Railway.
 
-* [Node.js](https://nodejs.org/) (v18 or higher)
-* [pnpm](https://pnpm.io/) (Recommended for package management)
+## Quick start
 
-## ⚡ Installation and Setup
+You need **Node 22.12 or newer** and **pnpm**.
 
-Follow these steps to set up the local development environment:
-
-1.  **Clone the repository:**
-
-    ```bash
-    git clone [https://github.com/your-username/cv-builder.git](https://github.com/your-username/cv-builder.git)
-    cd cv-builder
-    ```
-
-2.  **Install dependencies:**
-
-    ```bash
-    pnpm install
-    ```
-
-3.  **Configure Environment Variables:**
-    Rename the `.env.example` file to `.env` and fill in your credentials.
-
-    ```bash
-    cp .env.example .env
-    ```
-
-    **Required Variables:**
-    * `PUBLIC_SUPABASE_URL`: Your Supabase project URL.
-    * `PUBLIC_SUPABASE_ANON_KEY`: Your Supabase public anonymous key.
-    * `OPENAI_API_KEY`: Your OpenAI API key (for AI features).
-
-4.  **Start the development server:**
-
-    ```bash
-    pnpm dev
-    ```
-
-    The application will be available at `http://localhost:4321`.
-
-## 📂 Project Structure
-
-```text
-/
-├── public/              # Static files
-├── src/
-│   ├── components/      # React and Astro components
-│   │   ├── editor/      # Main logic for the CV editor
-│   │   ├── ui/          # Reusable UI components
-│   │   └── auth/        # Authentication components
-│   ├── layouts/         # Layout templates (App, Public)
-│   ├── lib/             # Service clients (Supabase)
-│   ├── pages/           # Application routes (File-based routing)
-│   │   ├── api/         # Server endpoints (AI, etc.)
-│   │   └── app/         # Protected application routes
-│   ├── templates/       # Style definitions for CVs (Classic, Modern, etc.)
-│   └── types/           # TypeScript type definitions
-└── package.json
+```bash
+pnpm install
+cp .env.example .env      # fill in the three values below
+pnpm dev                  # http://localhost:4321
 ```
 
-## 🧞 Available Scripts
+| Variable | What |
+| :--- | :--- |
+| `PUBLIC_API_URL` | Backend base URL including `/api/v1`, e.g. `http://localhost:8000/api/v1` |
+| `PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (use a development instance locally) |
+| `CLERK_SECRET_KEY` | Clerk secret key for the same instance |
 
-| Command          | Action                                             |
-| :--------------- | :------------------------------------------------- |
-| `pnpm dev`       | Starts the local development server.               |
-| `pnpm build`     | Builds the project for production to `./dist/`.    |
-| `pnpm preview`   | Previews the build locally.                        |
-| `pnpm start`     | Runs the production server (Node adapter).         |
+The editor works as a guest without the backend; saving, the dashboard and the AI tools need it
+running (see the backend repository).
 
-## 🤝 Contribution
+## Scripts
 
-Contributions are welcome! To keep things organized, we follow this flow:
+| Command | Does |
+| :--- | :--- |
+| `pnpm dev` | Development server with hot reload |
+| `pnpm check` | Everything CI checks: lint, type-check, unit tests, build |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` | The individual checks |
+| `pnpm format` | Format with Prettier |
+| `pnpm start` | Run the production build (`node dist/server/entry.mjs`) |
 
-1.  Check the **Project Board** (Backlog) to see pending tasks.
-2.  Create a **Fork** of the repository.
-3.  Create a branch for your feature (`git checkout -b feature/new-feature`).
-4.  Make your changes and write descriptive commits.
-5.  Open a **Pull Request** to the `main` branch.
+## Where things are
 
-Please review the `CONTRIBUTING.md` file for more details on code standards.
+| Path | What |
+| :--- | :--- |
+| `src/pages/` | Routes. Spanish at the root, English and Portuguese under `[lang]/` |
+| `src/components/editor/` | The CV editor: form, Markdown mode, preview, AI tools |
+| `src/utils/` | Markdown generator and parser, print-to-PDF |
+| `src/templates/` | CV themes (CSS) |
+| `src/lib/` | Backend client, local drafts, public-route rules |
+| `src/i18n/` | All translated strings |
+| `docs/` | Architecture, editor, data model, themes and PDF, auth and plans, i18n, development |
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License.
+MIT — see [`LICENSE`](./LICENSE).
+
+---
+
+<div id="español"></div>
+
+# 📄 CVStudio.tools
+
+La aplicación web de [cvstudio.tools](https://www.cvstudio.tools): crea tu currículum con un
+formulario o en Markdown, míralo en vivo sobre una hoja A4, elige un tema y descarga un PDF con
+texto real y seleccionable. Los usuarios registrados guardan sus CVs en la nube; los usuarios Pro
+tienen mejora de redacción con IA, optimización para una vacante, traducción, simulador ATS y
+cartas de presentación.
+
+> **Documentación:** [`docs/`](./docs/README.md) (en inglés) · **Cómo contribuir:** [`CONTRIBUTING.md`](./CONTRIBUTING.md) · **Seguridad:** [`SECURITY.md`](./SECURITY.md)
+
+Este repositorio es el frontend. Los datos, los pagos y la IA viven en la API:
+[`Mozcko/cvstudio-tools-backend`](https://github.com/Mozcko/cvstudio-tools-backend).
+
+## Tecnologías
+
+Astro (renderizado en servidor, adaptador de Node) · islas de React · Tailwind CSS · Clerk para
+autenticación · Vitest · desplegado en Railway.
+
+## Inicio rápido
+
+Necesitas **Node 22.12 o superior** y **pnpm**.
+
+```bash
+pnpm install
+cp .env.example .env      # completa los tres valores de abajo
+pnpm dev                  # http://localhost:4321
+```
+
+| Variable | Qué es |
+| :--- | :--- |
+| `PUBLIC_API_URL` | URL base del backend, con `/api/v1`, p. ej. `http://localhost:8000/api/v1` |
+| `PUBLIC_CLERK_PUBLISHABLE_KEY` | Clave pública de Clerk (usa una instancia de desarrollo en local) |
+| `CLERK_SECRET_KEY` | Clave secreta de Clerk de la misma instancia |
+
+El editor funciona como invitado sin el backend; para guardar, usar el panel y las herramientas de
+IA hace falta tenerlo en marcha (ver el repositorio del backend).
+
+## Scripts
+
+| Comando | Acción |
+| :--- | :--- |
+| `pnpm dev` | Servidor de desarrollo con recarga en caliente |
+| `pnpm check` | Todo lo que revisa el CI: lint, tipos, pruebas unitarias y build |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` | Las revisiones por separado |
+| `pnpm format` | Formatea con Prettier |
+| `pnpm start` | Ejecuta el build de producción (`node dist/server/entry.mjs`) |
+
+## Licencia
+
+MIT — ver [`LICENSE`](./LICENSE).

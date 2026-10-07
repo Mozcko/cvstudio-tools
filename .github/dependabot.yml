@@ -1,15 +1,25 @@
 version: 2
 updates:
-  # Mantener actualizadas las acciones de GitHub (el CI que acabamos de hacer)
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  # npm dependencies (pnpm lockfile)
+  - package-ecosystem: npm
+    directory: /
     schedule:
-      interval: "monthly"
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps
+    groups:
+      # One pull request for the routine minor/patch bumps; majors come one by one
+      minor-and-patch:
+        update-types: [ minor, patch ]
 
-  # Mantener actualizadas las dependencias de npm/pnpm
-  - package-ecosystem: "npm"
-    directory: "/"
+  # Actions used by the workflows
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
-    # Opcional: Para no volverse loco, limitar a 10 PRs abiertos
-    open-pull-requests-limit: 10
+      interval: monthly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: [ '*' ]

@@ -75,7 +75,7 @@ Production values for both services are in [`PROD-ENV-CHECKLIST.md`](../PROD-ENV
 `astro build` does not type-check, so run `pnpm typecheck` as well. Before pushing:
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm test && pnpm build
+pnpm check    # lint, type-check, unit tests, build
 ```
 
 Unit tests cover pure utilities only: the Markdown generator/parser round trip in three languages,
@@ -103,12 +103,14 @@ Conventions visible in the code:
 
 ## Git and CI
 
-- Default branch on GitHub is `master`; a `main` branch also exists and the two are merged into
-  each other. Feature branches follow `feat/<issue>-<slug>`, `fix/<slug>`, `chore/<slug>`.
+- The default and only long-lived branch is `main`. Feature branches follow `feat/<issue>-<slug>`, `fix/<slug>`, `chore/<slug>`.
 - Dependabot: npm weekly (max 10 open PRs), GitHub Actions monthly.
 - Issue templates: bug report and feature request; blank issues are disabled.
-- `.github/workflows/ci.yml` runs `pnpm lint`, `pnpm typecheck`, `pnpm test` and `pnpm build` on
-  Node 22 for pushes and pull requests to `main` and `master`.
+- CI (`.github/workflows/ci.yml`): lint, type-check, unit tests and build on every pull request
+  and push to `main`; `✅ CI passed` is the check required to merge. A dependency audit runs as an
+  informational job. `security.yml` adds CodeQL; `deploy.yml` deploys `main` to Railway after CI,
+  with approval. The contributor workflow and one-time setup are in
+  [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
 ## Deployment
 
