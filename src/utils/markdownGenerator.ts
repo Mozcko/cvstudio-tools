@@ -135,10 +135,13 @@ ${item.description}
     .map((value) => `**${value}**`)
     .join(' | ');
 
+  // A block of its own (not a paragraph) so themes can style it apart from the contact line
+  const roleLine = personal.role ? `<div class="cv-role">${personal.role}</div>\n\n` : '';
+
   let md = `
 # ${personal.name}
 
-${contactLine}
+${roleLine}${contactLine}
 <br>
 ${socialLinksLine}
 

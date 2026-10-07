@@ -15,6 +15,14 @@ export async function openGuestEditor(page: Page, path = '/app/editor') {
   await waitForEditor(page);
 }
 
+/**
+ * The sheet renders before Clerk has reported the visitor as signed out. Actions that depend
+ * on that (save, download, AI imports) do nothing until the guest banner is up.
+ */
+export async function waitForGuestState(page: Page) {
+  await expect(page.getByTestId('guest-banner')).toBeVisible({ timeout: 30_000 });
+}
+
 /** The React islands only hydrate once Clerk has initialised, which can take a few seconds. */
 export async function waitForEditor(page: Page) {
   await expect(page.locator('.cv-preview-content')).toBeAttached({ timeout: 30_000 });

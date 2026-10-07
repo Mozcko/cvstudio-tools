@@ -14,6 +14,15 @@
     margin-bottom: 0;
 }
 
+/* Role / title under the name */
+.cv-preview-content .cv-role {
+    font-size: 1.15em;
+    font-weight: 600;
+    color: #2563eb;
+    margin-top: 0.15em;
+    margin-bottom: 0.5em;
+}
+
 .cv-preview-content p:first-of-type {
     font-size: 0.95em;
     color: #64748b;

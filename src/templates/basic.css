@@ -33,6 +33,14 @@
     margin-top: 20px;
 }
 
+/* Role / title under the name */
+.cv-preview-content .cv-role {
+    text-align: center;
+    font-size: 1em;
+    color: #555;
+    margin-bottom: 6px;
+}
+
 .cv-preview-content h2 {
     font-size: 1em;
     color: #3498db;

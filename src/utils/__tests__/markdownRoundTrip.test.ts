@@ -175,6 +175,47 @@ describe('markdown round trip', () => {
     expect(parsed.interests).toBe(initialCVData.interests);
   });
 
+  it.each(LANGS)('prints the role under the name and reads it back (%s)', (lang) => {
+    const markdown = generateMarkdown(initialCVData, lang);
+    const lines = markdown.split('\n').filter(Boolean);
+    expect(lines[0]).toBe(`# ${initialCVData.personal.name}`);
+    expect(lines[1]).toBe(`<div class="cv-role">${initialCVData.personal.role}</div>`);
+
+    const parsed = roundTrip(initialCVData, lang);
+    expect(parsed.personal.role).toBe(initialCVData.personal.role);
+    // The contact line is still found after it
+    expect(parsed.personal.email).toBe(initialCVData.personal.email);
+    expect(parsed.personal.socials).toHaveLength(initialCVData.personal.socials.length);
+    expect(parsed.personal.summary).toBe(initialCVData.personal.summary);
+  });
+
+  it('leaves no trace of an empty role, and reads documents written before roles were printed', () => {
+    const data: CVData = { ...initialCVData, personal: { ...initialCVData.personal, role: '' } };
+    const markdown = generateMarkdown(data, 'en');
+    expect(markdown).not.toContain('cv-role');
+
+    const parsed = parseMarkdownToCV(markdown).data as CVData;
+    expect(parsed.personal.role).toBe('');
+    expect(parsed.personal.city).toBe(initialCVData.personal.city);
+  });
+
+  it('keeps a role with punctuation and no contact details', () => {
+    const data: CVData = {
+      ...initialCVData,
+      personal: {
+        ...initialCVData.personal,
+        role: 'Sr. Engineer / Tech Lead (C++ & Go)',
+        city: '',
+        email: '',
+        phone: '',
+        socials: [],
+      },
+    };
+    const parsed = roundTrip(data, 'es');
+    expect(parsed.personal.role).toBe('Sr. Engineer / Tech Lead (C++ & Go)');
+    expect(parsed.personal.summary).toBe(initialCVData.personal.summary);
+  });
+
   it('keeps contact details when some are empty', () => {
     const data: CVData = {
       ...initialCVData,

@@ -96,7 +96,9 @@ Rules:
 - Each part of a project's meta line (role, dates, link) is optional and only printed if present.
 - The two-row `<table>` is how company/role and location/dates end up left/right aligned. Every
   theme styles `td:first-child` and `td:last-child`.
-- `personal.role` is **not** rendered anywhere in the document.
+- `personal.role` is printed right under the name as `<div class="cv-role">…</div>` (omitted when
+  empty). It is a `div`, not a paragraph, because themes style the contact line with
+  `p:first-of-type`; each theme styles `.cv-role` itself.
 
 ## The parser (`src/utils/markdownParser.ts`)
 

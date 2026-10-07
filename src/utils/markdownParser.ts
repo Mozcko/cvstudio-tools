@@ -163,6 +163,17 @@ function parseHeader(content: string, warnings: string[]): CVData['personal'] {
 
   skipBlank();
 
+  // Parse the role / title line: <div class="cv-role">Role</div>
+  if (lineIndex < lines.length) {
+    const roleMatch = lines[lineIndex].match(/^<div class="cv-role">(.*)<\/div>$/);
+    if (roleMatch) {
+      personal.role = roleMatch[1].trim();
+      lineIndex++;
+    }
+  }
+
+  skipBlank();
+
   // Parse the contact line: bold parts that are not links
   if (lineIndex < lines.length && !lines[lineIndex].includes('](')) {
     const boldParts = [...lines[lineIndex].matchAll(/\*\*([^*]+)\*\*/g)].map((m) => m[1].trim());

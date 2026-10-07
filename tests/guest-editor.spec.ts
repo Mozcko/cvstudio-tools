@@ -1,5 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { collectErrors, expectSheetToContain, openGuestEditor, waitForEditor } from './helpers';
+import {
+  collectErrors,
+  expectSheetToContain,
+  openGuestEditor,
+  waitForEditor,
+  waitForGuestState,
+} from './helpers';
 
 /**
  * Everything a visitor can do without an account. No backend is needed:
@@ -17,6 +23,32 @@ test.describe('Guest editor', () => {
     await expectSheetToContain(page, 'Ada Lovelace');
 
     expect(errors).toEqual([]);
+  });
+
+  test('the role typed in the form is printed under the name', async ({ page }) => {
+    await openGuestEditor(page);
+    const role = page.locator('.cv-preview-content .cv-role');
+    await expect(role).toHaveText('Software Engineer');
+
+    await page.locator('input[value="Software Engineer"]').first().fill('Staff Data Engineer');
+    await expect(role).toHaveText('Staff Data Engineer');
+    // Directly below the name, above the contact line
+    const order = await page.evaluate(() => {
+      const sheet = document.querySelector('.cv-preview-content')!;
+      const top = (selector: string) => sheet.querySelector(selector)!.getBoundingClientRect().top;
+      return [top('h1'), top('.cv-role'), top('p')];
+    });
+    expect(order[0]).toBeLessThan(order[1]);
+    expect(order[1]).toBeLessThan(order[2]);
+
+    // It survives the trip through Markdown mode
+    await page.getByTestId('mode-code').click();
+    await expect(page.locator('textarea').first()).toHaveValue(/Staff Data Engineer/);
+    await page.getByTestId('mode-form').click();
+    await expect(page.locator('input[value="Staff Data Engineer"]').first()).toBeVisible();
+
+    await page.locator('input[value="Staff Data Engineer"]').first().fill('');
+    await expect(role).toHaveCount(0);
   });
 
   test('undo and redo work on a whole burst of typing', async ({ page }) => {
@@ -150,6 +182,7 @@ test.describe('Guest editor', () => {
 
   test('saving and downloading ask a guest to sign in', async ({ page }) => {
     await openGuestEditor(page);
+    await waitForGuestState(page);
     const signInLink = page.getByRole('link', { name: 'Iniciar sesión' });
 
     await page

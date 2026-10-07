@@ -73,7 +73,6 @@ React components themselves — form, modals, preview — have no automated test
   Clerk development keys exist. See [import.md](./import.md).
 - **Browser dialogs** (`alert`, `confirm`) are still used for delete/reset confirmations and
   dashboard errors.
-- **`personal.role`** is collected by the form but not printed in the CV document.
 
 ## Fixed in the `fix/known-issues` round
 
