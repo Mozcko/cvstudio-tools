@@ -99,14 +99,66 @@ jobs:
             echo "::warning::pnpm audit reports known vulnerabilities in production dependencies (see this job's log)."
           fi
 
-  # End-to-end tests (tests/*.spec.ts) are not run yet: Playwright still has to be added
-  # and configured. See docs/known-issues.md.
+  # Browser tests against the production build. They need keys from a Clerk DEVELOPMENT
+  # instance (the app cannot render without Clerk):
+  #   repository variable  E2E_CLERK_PUBLISHABLE_KEY   pk_test_...
+  #   repository secret    E2E_CLERK_SECRET_KEY        sk_test_...
+  # Until the variable exists the job passes without running anything.
+  e2e:
+    name: 🎭 End-to-End
+    runs-on: ubuntu-latest
+    env:
+      PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.E2E_CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.E2E_CLERK_SECRET_KEY }}
+      PUBLIC_API_URL: http://127.0.0.1:8000/api/v1
+    steps:
+      - name: Check configuration
+        id: cfg
+        run: |
+          if [ -z "$PUBLIC_CLERK_PUBLISHABLE_KEY" ] || [ -z "$CLERK_SECRET_KEY" ]; then
+            echo "::warning::End-to-end tests skipped: set E2E_CLERK_PUBLISHABLE_KEY (variable) and E2E_CLERK_SECRET_KEY (secret). See docs/development.md."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.cfg.outputs.enabled == 'true'
+      - uses: pnpm/action-setup@v4
+        if: steps.cfg.outputs.enabled == 'true'
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
+        if: steps.cfg.outputs.enabled == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install dependencies
+        if: steps.cfg.outputs.enabled == 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Install the browser
+        if: steps.cfg.outputs.enabled == 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Build
+        if: steps.cfg.outputs.enabled == 'true'
+        run: pnpm build
+      - name: Run end-to-end tests
+        if: steps.cfg.outputs.enabled == 'true'
+        run: pnpm test:e2e
+      - name: Upload the report
+        if: failure() && steps.cfg.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
 
   # Single status to require in branch protection: green only if every required job is green.
   ci-passed:
     name: ✅ CI passed
     if: always()
-    needs: [lint, typecheck, unit, build]
+    needs: [lint, typecheck, unit, build, e2e]
     runs-on: ubuntu-latest
     steps:
       - name: Check results

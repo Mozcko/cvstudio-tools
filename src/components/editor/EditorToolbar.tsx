@@ -98,6 +98,7 @@ export default function EditorToolbar({
         {/* Toggle de Banderas (3 Idiomas) */}
         <button
           onClick={toggleLang}
+          data-testid="lang-toggle"
           className="relative flex w-20 cursor-pointer items-center justify-between rounded-full border border-slate-600 bg-slate-800 p-1 shadow-inner transition-all hover:border-slate-500"
           title={
             lang === 'es'
