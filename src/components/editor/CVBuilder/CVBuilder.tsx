@@ -62,6 +62,7 @@ export default function CVBuilder() {
     canRedo,
     isGuest,
     isPro,
+    freeAiRemaining,
     isAuthModalOpen,
     setIsAuthModalOpen,
     triggerAuthModal,
@@ -152,6 +153,7 @@ export default function CVBuilder() {
           canUndo={canUndo}
           canRedo={canRedo}
           isPro={isPro}
+          freeAiRemaining={freeAiRemaining}
         />
       </div>
 

@@ -269,7 +269,7 @@ export default function PricingSection({
             </tr>
             <tr>
               <td className="py-4">{pricing.table.rows.ai}</td>
-              <td className="py-4 text-center">❌</td>
+              <td className="py-4 text-center">{billing.freeAi}</td>
               <td className="py-4 text-center text-white">{pricing.table.rows.aiValue}</td>
             </tr>
             <tr>

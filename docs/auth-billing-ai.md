@@ -104,6 +104,23 @@ answers into the sign-in prompt, the upgrade prompt, a "limit reached" toast or 
 Every request includes the editor language, so results come back in the language the user is
 working in.
 
+### Free weekly allowance
+
+Enhance and Optimize are not strictly Pro: a signed-in free user gets a few runs per rolling week
+(3 by default; the backend's `FREE_AI_WEEKLY_LIMIT` is the authority). `GET /users/me` reports it
+in `usage.free_ai` and each rewrite answers with `free_remaining`.
+
+- `useCVLogic` keeps the number in `freeAi` and exposes `freeAiRemaining` (`null` for Pro).
+- `canUseAi(action)` lets a free user through for `enhance` / `optimize` while runs are left;
+  at zero it opens the upgrade prompt with the date the allowance comes back.
+- `AITools` shows "2 gratis" instead of the PRO tag on those two entries.
+- Translate, ATS and cover letter stay Pro-only. A `403` from the server always wins: it zeroes
+  the local counter and opens the upgrade prompt.
+- Against a backend that does not send `usage` yet, the allowance is 0 and everything behaves as
+  Pro-only.
+
+`useProStatus` (dashboard, pricing, header) returns `isPro`, `plan`, `isPremium` and `usage`.
+
 ### The three "rewrite" actions
 
 ```ts

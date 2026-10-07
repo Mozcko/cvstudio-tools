@@ -10,6 +10,8 @@ interface AIToolsProps {
   onCoverLetter: () => void;
   isProcessing: boolean;
   isPro: boolean;
+  /** Enhance / Optimize runs a free user has left this week; null for Pro. */
+  freeAiRemaining?: number | null;
 }
 
 export default function AITools({
@@ -21,10 +23,25 @@ export default function AITools({
   onCoverLetter,
   isProcessing,
   isPro,
+  freeAiRemaining = null,
 }: AIToolsProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => setIsOpen(!isOpen);
+
+  // Enhance and Optimize: free users see how many runs they have left, then the Pro tag
+  const freeBadge = isPro ? null : freeAiRemaining && freeAiRemaining > 0 ? (
+    <span
+      className="rounded bg-emerald-500/10 px-1 py-0.5 text-[8px] font-bold text-emerald-400 uppercase"
+      data-testid="free-ai-badge"
+    >
+      {t.ai.freeBadge.replace('{n}', String(freeAiRemaining))}
+    </span>
+  ) : (
+    <span className="rounded bg-amber-500/10 px-1 py-0.5 text-[8px] font-bold text-amber-500">
+      PRO
+    </span>
+  );
 
   const handleAction = (action: () => void) => {
     action();
@@ -97,11 +114,7 @@ export default function AITools({
                 <span className="text-purple-400 group-hover:text-purple-300">✨</span>{' '}
                 {t.ai.dropdown.enhance}
               </div>
-              {!isPro && (
-                <span className="rounded bg-amber-500/10 px-1 py-0.5 text-[8px] font-bold text-amber-500">
-                  PRO
-                </span>
-              )}
+              {freeBadge}
             </button>
             <button
               onClick={() => handleAction(onOptimize)}
@@ -111,11 +124,7 @@ export default function AITools({
                 <span className="text-blue-400 group-hover:text-blue-300">🎯</span>{' '}
                 {t.ai.dropdown.optimize}
               </div>
-              {!isPro && (
-                <span className="rounded bg-amber-500/10 px-1 py-0.5 text-[8px] font-bold text-amber-500">
-                  PRO
-                </span>
-              )}
+              {freeBadge}
             </button>
             <button
               onClick={() => handleAction(onTranslate)}

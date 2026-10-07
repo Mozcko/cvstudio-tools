@@ -76,13 +76,32 @@ export interface ATSResult {
 export type RewriteAction = 'enhance' | 'optimize' | 'translate';
 export type PlanType = '7' | '30' | 'lifetime';
 
+export interface Quota {
+  limit: number;
+  remaining: number;
+  /** When the next use becomes available again; only set once a rolling allowance is used up. */
+  resets_at: string | null;
+}
+
+export type Plan = 'free' | 'sprint' | 'active' | 'lifetime';
+
+export interface UserProfile {
+  id: string;
+  is_pro: boolean;
+  pro_expires_at: string | null;
+  // The fields below are missing while an older backend is deployed
+  plan?: Plan;
+  /** Active Hunt and Lifetime: features with a running cost, such as the mock interview. */
+  is_premium?: boolean;
+  premium_until?: string | null;
+  /** What a non-Pro user has left. */
+  usage?: { free_ai: Quota; free_imports: Quota };
+}
+
 export const api = {
   // User Profile
   getUserProfile: (token: string | null) =>
-    apiRequest<{ id: string; is_pro: boolean; pro_expires_at: string | null }>(
-      `/users/me?_t=${Date.now()}`,
-      token
-    ),
+    apiRequest<UserProfile>(`/users/me?_t=${Date.now()}`, token),
 
   // CV CRUD (the server assigns the id)
   getCVs: (token: string | null) => apiRequest<CVRecord[]>(`/cvs/?_t=${Date.now()}`, token),
@@ -117,10 +136,14 @@ export const api = {
     },
     token: string | null
   ) =>
-    apiRequest<{ cv: Record<string, unknown> }>('/ai/rewrite', token, {
-      method: 'POST',
-      body: JSON.stringify(params),
-    }),
+    apiRequest<{ cv: Record<string, unknown>; free_remaining?: number | null }>(
+      '/ai/rewrite',
+      token,
+      {
+        method: 'POST',
+        body: JSON.stringify(params),
+      }
+    ),
 
   // Text of an existing resume → structured CV (free users get a limited number)
   importCV: (

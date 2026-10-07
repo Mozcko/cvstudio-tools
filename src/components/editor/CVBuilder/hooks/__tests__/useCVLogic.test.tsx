@@ -562,6 +562,104 @@ describe('AI actions', () => {
     expect(await free.result.current.handleGenerateCoverLetter('job')).toBeNull();
   });
 
+  describe('free weekly allowance', () => {
+    const asFree = (remaining: number, resetsAt: string | null = null) =>
+      mocked.getUserProfile.mockResolvedValue({
+        id: 'user_1',
+        is_pro: false,
+        pro_expires_at: null,
+        plan: 'free',
+        is_premium: false,
+        usage: {
+          free_ai: { limit: 3, remaining, resets_at: resetsAt },
+          free_imports: { limit: 2, remaining: 2, resets_at: null },
+        },
+      });
+    const rewritten = (freeRemaining: number | null) =>
+      ({ cv: { ...initialCVData }, free_remaining: freeRemaining }) as never;
+
+    it('lets a free user enhance and optimize while runs are left, and counts them down', async () => {
+      asFree(2);
+      mocked.rewriteCV.mockResolvedValueOnce(rewritten(1)).mockResolvedValueOnce(rewritten(0));
+      const { result } = await setup();
+      expect(result.current.freeAiRemaining).toBe(2);
+
+      await act(() => result.current.handleAiAction('enhance'));
+      expect(mocked.rewriteCV).toHaveBeenCalledTimes(1);
+      expect(result.current.isChoiceModalOpen).toBe(true);
+      expect(result.current.freeAiRemaining).toBe(1);
+      expect(result.current.toasts.at(-1)?.message).toBe(t.messages.freeAiLeft.replace('{n}', '1'));
+
+      await act(() => result.current.handleAiAction('optimize', 'Python role'));
+      expect(result.current.freeAiRemaining).toBe(0);
+
+      // Used up: no request, and the prompt explains why
+      await act(() => result.current.handleAiAction('enhance'));
+      expect(mocked.rewriteCV).toHaveBeenCalledTimes(2);
+      expect(result.current.authModalConfig).toMatchObject({
+        mode: 'upgrade',
+        description: t.messages.freeAiUsedUp,
+      });
+    });
+
+    it('says when the allowance comes back', async () => {
+      asFree(0, '2026-10-12T15:00:00Z');
+      const { result } = await setup();
+
+      await act(() => result.current.handleAiAction('enhance'));
+
+      const description = result.current.authModalConfig.description || '';
+      expect(description).toContain('12');
+      expect(description).not.toContain('{date}');
+      expect(mocked.rewriteCV).not.toHaveBeenCalled();
+    });
+
+    it('keeps translate, ATS and cover letter for Pro', async () => {
+      asFree(3);
+      const { result } = await setup();
+
+      await act(() => result.current.handleAiAction('translate'));
+      expect(result.current.authModalConfig).toMatchObject({
+        mode: 'upgrade',
+        description: t.messages.upgradeDescription,
+      });
+      expect(await result.current.handleAtsAnalysis('job')).toBeNull();
+      expect(await result.current.handleGenerateCoverLetter('job')).toBeNull();
+      expect(mocked.rewriteCV).not.toHaveBeenCalled();
+      expect(mocked.simulateATS).not.toHaveBeenCalled();
+    });
+
+    it('trusts the server when it says the allowance is gone', async () => {
+      asFree(1);
+      mocked.rewriteCV.mockRejectedValue(new ApiError('Free AI limit reached', 403));
+      const { result } = await setup();
+
+      await act(() => result.current.handleAiAction('enhance'));
+
+      expect(result.current.freeAiRemaining).toBe(0);
+      expect(result.current.authModalConfig.mode).toBe('upgrade');
+    });
+
+    it('does not show a counter to Pro users, nor break against an older backend', async () => {
+      asPro();
+      mocked.rewriteCV.mockResolvedValue(rewritten(null));
+      const pro = await setup();
+      expect(pro.result.current.freeAiRemaining).toBeNull();
+      await act(() => pro.result.current.handleAiAction('translate'));
+      expect(pro.result.current.toasts).toEqual([]);
+      pro.unmount();
+
+      // Profile without the new fields: behaves as before, everything is Pro-only
+      mocked.getUserProfile.mockResolvedValue({
+        id: 'user_1',
+        is_pro: false,
+        pro_expires_at: null,
+      });
+      const old = await setup();
+      expect(old.result.current.freeAiRemaining).toBe(0);
+    });
+  });
+
   it('sends a structured request and keeps anything the model dropped', async () => {
     asPro();
     const { result } = await setup();

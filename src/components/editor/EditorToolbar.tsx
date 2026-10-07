@@ -27,6 +27,7 @@ interface EditorToolbarProps {
   canUndo: boolean;
   canRedo: boolean;
   isPro: boolean;
+  freeAiRemaining?: number | null;
 }
 
 export default function EditorToolbar({
@@ -49,6 +50,7 @@ export default function EditorToolbar({
   canUndo,
   canRedo,
   isPro,
+  freeAiRemaining = null,
 }: EditorToolbarProps) {
   const langPrefix = lang === 'es' ? '' : `/${lang}`;
 
@@ -185,6 +187,7 @@ export default function EditorToolbar({
           onAtsSimulator={onAtsSimulator}
           onCoverLetter={onCoverLetter}
           isPro={isPro}
+          freeAiRemaining={freeAiRemaining}
         />
 
         {/* 4. Acciones: Reset & Download */}

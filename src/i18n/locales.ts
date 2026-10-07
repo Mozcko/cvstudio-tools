@@ -69,7 +69,7 @@ export const locales = {
             features: [
               'Hasta 3 CVs',
               'Editor profesional',
-              'Mejora de texto con IA (No incluido)',
+              '3 mejoras con IA por semana',
               'Cartas de presentación (No incluido)',
               'Simulador ATS (No incluido)',
             ],
@@ -225,6 +225,11 @@ export const locales = {
       signInToDownload: 'Regístrate gratis para descargar tu currículum en PDF.',
       aiError: 'La IA no pudo procesar la solicitud. Inténtalo de nuevo.',
       aiRateLimited: 'Has alcanzado el límite de uso de IA. Inténtalo más tarde.',
+      freeAiUsedUp:
+        'Ya usaste tus mejoras con IA gratuitas de esta semana. Mejora a Pro para usarlas sin esperar.',
+      freeAiUsedUpUntil:
+        'Ya usaste tus mejoras con IA gratuitas de esta semana. Vuelven el {date}, o mejora a Pro para usarlas sin esperar.',
+      freeAiLeft: 'Mejoras con IA gratuitas restantes esta semana: {n}',
       atsError: 'No se pudo completar el análisis ATS.',
       coverLetterError: 'No se pudo generar la carta.',
       copyCreated: 'Copia creada',
@@ -304,6 +309,7 @@ export const locales = {
       currentPlan: 'Tu Plan Actual',
       paymentError: 'Hubo un error al procesar el pago. Por favor, intenta de nuevo.',
       freeLimit: 'Hasta 3',
+      freeAi: '3 por semana',
       promoTitle: '¿Tienes un código promocional?',
       promoPlaceholder: 'Introduce tu código',
       promoRedeem: 'Canjear',
@@ -369,6 +375,7 @@ export const locales = {
       button: 'Herramientas IA',
       processing: 'Procesando...',
       overlayText: 'Generando mejoras con IA...',
+      freeBadge: '{n} gratis',
       dropdown: {
         enhance: 'Mejorar Redacción',
         optimize: 'Optimizar para Oferta',
@@ -491,7 +498,7 @@ export const locales = {
             features: [
               'Up to 3 CVs',
               'Professional editor',
-              'AI writing enhancement (Not included)',
+              '3 AI improvements per week',
               'Cover letters (Not included)',
               'ATS simulator (Not included)',
             ],
@@ -645,6 +652,11 @@ export const locales = {
       signInToDownload: 'Sign up for free to download your resume as a PDF.',
       aiError: 'The AI could not process the request. Please try again.',
       aiRateLimited: 'You have reached the AI usage limit. Please try again later.',
+      freeAiUsedUp:
+        "You have used this week's free AI improvements. Upgrade to Pro to keep going without waiting.",
+      freeAiUsedUpUntil:
+        "You have used this week's free AI improvements. They come back on {date}, or upgrade to Pro to keep going without waiting.",
+      freeAiLeft: 'Free AI improvements left this week: {n}',
       atsError: 'The ATS analysis could not be completed.',
       coverLetterError: 'The cover letter could not be generated.',
       copyCreated: 'Copy created',
@@ -724,6 +736,7 @@ export const locales = {
       currentPlan: 'Your Current Plan',
       paymentError: 'There was an error processing the payment. Please try again.',
       freeLimit: 'Up to 3',
+      freeAi: '3 per week',
       promoTitle: 'Have a promo code?',
       promoPlaceholder: 'Enter your code',
       promoRedeem: 'Redeem',
@@ -788,6 +801,7 @@ export const locales = {
       button: 'AI Tools',
       processing: 'Processing...',
       overlayText: 'Generating improvements with AI...',
+      freeBadge: '{n} free',
       dropdown: {
         enhance: 'Enhance Writing',
         optimize: 'Optimize for Job Post',
@@ -909,7 +923,7 @@ export const locales = {
             features: [
               'Até 3 CVs',
               'Editor profissional',
-              'Melhoria de texto com IA (Não incluso)',
+              '3 melhorias com IA por semana',
               'Cartas de apresentação (Não incluso)',
               'Simulador ATS (Não incluso)',
             ],
@@ -1054,6 +1068,11 @@ export const locales = {
       signInToDownload: 'Cadastre-se grátis para baixar seu currículo em PDF.',
       aiError: 'A IA não conseguiu processar a solicitação. Tente novamente.',
       aiRateLimited: 'Você atingiu o limite de uso de IA. Tente novamente mais tarde.',
+      freeAiUsedUp:
+        'Você já usou as melhorias com IA gratuitas desta semana. Assine o Pro para continuar sem esperar.',
+      freeAiUsedUpUntil:
+        'Você já usou as melhorias com IA gratuitas desta semana. Elas voltam em {date}, ou assine o Pro para continuar sem esperar.',
+      freeAiLeft: 'Melhorias com IA gratuitas restantes nesta semana: {n}',
       atsError: 'Não foi possível concluir a análise ATS.',
       coverLetterError: 'Não foi possível gerar a carta.',
       copyCreated: 'Cópia criada',
@@ -1133,6 +1152,7 @@ export const locales = {
       currentPlan: 'Seu Plano Atual',
       paymentError: 'Houve um erro ao processar o pagamento. Por favor, tente novamente.',
       freeLimit: 'Até 3',
+      freeAi: '3 por semana',
       promoTitle: 'Tem um código promocional?',
       promoPlaceholder: 'Digite seu código',
       promoRedeem: 'Resgatar',
@@ -1199,6 +1219,7 @@ export const locales = {
       button: 'Ferramentas de IA',
       processing: 'Processando...',
       overlayText: 'Gerando melhorias com IA...',
+      freeBadge: '{n} grátis',
       dropdown: {
         enhance: 'Melhorar Redação',
         optimize: 'Otimizar para Vaga',
