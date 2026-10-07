@@ -123,7 +123,7 @@ export default function CVBuilder() {
 
   return (
     <div className="bg-app-bg text-text-main flex h-dvh flex-col overflow-hidden font-sans">
-      {isGuest && <GuestBanner lang={safeLang} onSignUp={() => triggerAuthModal()} />}
+      {isGuest && <GuestBanner t={t} onSignUp={() => triggerAuthModal()} />}
       <div className="bg-panel-bg border-panel-border z-50 shrink-0 border-b">
         <Navbar
           t={t}
@@ -200,7 +200,6 @@ export default function CVBuilder() {
         onClose={() => setIsChoiceModalOpen(false)}
         onChoice={handleChoiceApplied}
         t={t}
-        lang={safeLang}
       />
 
       <AuthRequiredModal

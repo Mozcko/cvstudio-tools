@@ -66,8 +66,8 @@ React components themselves — form, modals, preview — have no automated test
   on the structured data, not on hand-written Markdown.
 - **Two language settings** (site URL vs editor toggle) are still independent; the editor only
   *defaults* to the URL locale the first time. See [i18n.md](./i18n.md).
-- **Hardcoded strings** remain in `Dashboard`, `GuestBanner`, `AIChoiceModal`, `CookieConsent`
-  and `privacy.astro`; `<html lang>` is always `es`.
+- **Translations of the privacy policy** (`src/i18n/privacy.ts`, en and pt) were written from
+  the Spanish original and have not had a legal review.
 - **Browser dialogs** (`alert`, `confirm`) are still used for delete/reset confirmations and
   dashboard errors.
 - **`personal.role`** is collected by the form but not printed in the CV document.

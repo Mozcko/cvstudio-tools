@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { locales } from '../../i18n/locales';
 
-export default function CookieConsent() {
+export default function CookieConsent({ lang = 'es' }: { lang?: string }) {
   const [isVisible, setIsVisible] = useState(false);
+  const t = (locales[lang as keyof typeof locales] || locales.es).cookies;
+  const privacyHref = lang === 'es' || !(lang in locales) ? '/privacy' : `/${lang}/privacy`;
 
   useEffect(() => {
     // Check if user already consented
@@ -26,12 +29,11 @@ export default function CookieConsent() {
         <div className="relative overflow-hidden rounded-2xl border border-slate-700 bg-slate-900/95 p-5 shadow-2xl backdrop-blur-md md:p-6">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <div className="flex-1 text-center md:text-left">
-              <h3 className="mb-1 text-lg font-bold text-white">🍪 Respetamos tu privacidad</h3>
+              <h3 className="mb-1 text-lg font-bold text-white">🍪 {t.title}</h3>
               <p className="text-sm text-slate-400">
-                Utilizamos cookies para mejorar tu experiencia y analizar el tráfico de forma
-                anónima. Al continuar navegando, aceptas nuestra{' '}
-                <a href="/privacy" className="text-blue-400 underline hover:text-blue-300">
-                  política de privacidad
+                {t.body}{' '}
+                <a href={privacyHref} className="text-blue-400 underline hover:text-blue-300">
+                  {t.policy}
                 </a>
                 .
               </p>
@@ -42,7 +44,7 @@ export default function CookieConsent() {
                 onClick={handleAccept}
                 className="flex w-full items-center justify-center rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-500 active:scale-95 md:w-auto"
               >
-                Entendido
+                {t.accept}
               </button>
             </div>
           </div>

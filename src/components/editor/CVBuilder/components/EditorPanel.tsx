@@ -91,7 +91,7 @@ export default function EditorPanel({
               />
             </svg>
           </button>
-          <ThemeSelector currentTheme={activeThemeId} onSelect={handleThemeChange} />
+          <ThemeSelector currentTheme={activeThemeId} onSelect={handleThemeChange} t={t} />
         </div>
       </div>
 

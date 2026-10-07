@@ -13,7 +13,7 @@ export const CustomSectionsEditor = ({ sections, onUpdate, t }: CustomSectionsEd
   const safeSections = Array.isArray(sections) ? sections : [];
 
   const addSection = () =>
-    onUpdate([...safeSections, { id: Date.now().toString(), title: 'Nueva Sección', items: [] }]);
+    onUpdate([...safeSections, { id: Date.now().toString(), title: t.form.newSection, items: [] }]);
   const removeSection = (idx: number) => {
     if (confirm(t.actions.confirmDelete)) onUpdate(safeSections.filter((_, i) => i !== idx));
   };
@@ -31,7 +31,7 @@ export const CustomSectionsEditor = ({ sections, onUpdate, t }: CustomSectionsEd
             ...section,
             items: [
               ...section.items,
-              { id: Date.now(), title: 'Elemento', subtitle: '', description: '' },
+              { id: Date.now(), title: t.form.newItem, subtitle: '', description: '' },
             ],
           }
         : section

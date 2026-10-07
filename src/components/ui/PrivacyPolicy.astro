@@ -1,0 +1,63 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SiteHeader from './SiteHeader';
+import { privacy } from '../../i18n/privacy';
+
+interface Props {
+  lang: keyof typeof privacy;
+}
+
+const { lang } = Astro.props;
+const p = privacy[lang];
+---
+
+<Layout title={`${p.title} - CVStudio`}>
+  <SiteHeader lang={lang} client:load />
+
+  <main class="container mx-auto max-w-4xl px-4 pt-32 pb-12">
+    <div class="rounded-2xl border border-slate-700 bg-slate-900 p-8 shadow-2xl md:p-12">
+      <h1 class="mb-8 text-4xl font-extrabold tracking-tight text-white">{p.title}</h1>
+
+      <div class="prose prose-invert prose-slate max-w-none space-y-8 text-slate-300">
+        <section>
+          <h2 class="text-2xl font-bold text-white">{p.collection.title}</h2>
+          <p>{p.collection.body}</p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-white">{p.processors.title}</h2>
+          <p>{p.processors.body}</p>
+          <ul class="list-disc space-y-2 pl-6">
+            {
+              p.processors.items.map((item) => (
+                <li>
+                  <strong class="text-white">{item.name}</strong> {item.text}
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+
+        <section class="rounded-xl border border-blue-500/30 bg-blue-900/20 p-6">
+          <h2 class="mb-2 text-2xl font-bold text-white">{p.ai.title}</h2>
+          <p>
+            {p.ai.before}
+            <strong class="text-blue-400">{p.ai.highlight}</strong>{p.ai.after}
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-white">{p.rights.title}</h2>
+          {p.rights.paragraphs.map((text) => <p>{text}</p>)}
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold text-white">{p.cookies.title}</h2>
+          <p>{p.cookies.body}</p>
+        </section>
+
+        <div class="border-t border-slate-800 pt-8 text-sm text-slate-500">{p.updated}</div>
+      </div>
+    </div>
+  </main>
+</Layout>

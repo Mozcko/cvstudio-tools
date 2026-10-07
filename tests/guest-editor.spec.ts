@@ -116,6 +116,38 @@ test.describe('Guest editor', () => {
     });
   }
 
+  test('the English editor shows no Spanish interface text', async ({ page }) => {
+    await openGuestEditor(page, '/en/app/editor');
+
+    await expect(page.getByText('Personal Information').first()).toBeVisible();
+    await expect(page.getByText('You are editing as a guest')).toBeVisible();
+    await expect(page.getByTitle('Change Theme')).toBeVisible();
+    await expect(page.getByText('File Name')).toBeVisible();
+
+    // The sample CV is content, not interface: look only outside the sheet and the inputs
+    const chrome = await page.evaluate(() => {
+      const clone = document.body.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll('.cv-preview-content, script, style').forEach((n) => n.remove());
+      const titles = [...clone.querySelectorAll('[title], [placeholder]')].map(
+        (n) => `${n.getAttribute('title') || ''} ${n.getAttribute('placeholder') || ''}`
+      );
+      return `${clone.textContent} ${titles.join(' ')}`;
+    });
+    for (const spanish of [
+      'Información',
+      'Cambiar',
+      'Nombre',
+      'Guardar',
+      'Descargar',
+      'Secciones',
+      'invitado',
+      'Obligatorio',
+      'Enlace',
+    ]) {
+      expect(chrome, spanish).not.toContain(spanish);
+    }
+  });
+
   test('saving and downloading ask a guest to sign in', async ({ page }) => {
     await openGuestEditor(page);
     const signInLink = page.getByRole('link', { name: 'Iniciar sesión' });

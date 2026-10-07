@@ -1,11 +1,13 @@
 ---
 import { SignIn } from '@clerk/astro/components';
 import PublicLayout from '../../layouts/PublicLayout.astro';
+import { locales } from '../../i18n/locales';
 
 const { lang } = Astro.params;
+const pages = (locales[lang as keyof typeof locales] || locales.es).pages;
 ---
 
-<PublicLayout title={lang === 'en' ? 'Sign In | CVStudio' : 'Entrar | CVStudio'}>
+<PublicLayout title={`${pages.signIn} | CVStudio`}>
   <div
     class="from-app-bg flex flex-1 items-center justify-center bg-gradient-to-b to-slate-900 px-4 py-12"
   >

@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import CookieConsent from '../components/ui/CookieConsent';
+import { getLangFromUrl } from '../i18n/utils';
 // import { ClerkProvider } from '@clerk/astro/components'; // Often handled by integration
 
 interface Props {
@@ -8,10 +9,11 @@ interface Props {
 }
 
 const { title } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={lang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content="CV Builder" />
@@ -21,6 +23,6 @@ const { title } = Astro.props;
   </head>
   <body>
     <slot />
-    <CookieConsent client:load />
+    <CookieConsent lang={lang} client:load />
   </body>
 </html>

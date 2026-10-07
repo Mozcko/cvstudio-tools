@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@clerk/astro/react';
 import { useUiTranslations } from '../../i18n/utils';
-import type { locales } from '../../i18n/locales';
+import { locales } from '../../i18n/locales';
 import useProStatus from '../../hooks/useProStatus';
 import { api } from '../../lib/api';
 
@@ -28,12 +28,12 @@ export default function PricingSection({
   const pricing = (t('pricing') || {}) as Record<string, any>;
   const langPrefix = lang === 'es' ? '' : `/${lang}`;
 
-  const currentPlanLabel =
-    lang === 'es' ? 'Tu Plan Actual' : lang === 'pt' ? 'Seu Plano Atual' : 'Your Current Plan';
+  const billing = (locales[lang] || locales.es).billing;
+  const currentPlanLabel = billing.currentPlan;
 
   const handleAction = async (planType: '7' | '30' | 'lifetime') => {
     if (!userId) {
-      window.location.href = lang === 'es' ? '/sign-in' : `/${lang}/sign-in`;
+      window.location.href = `${langPrefix}/sign-in`;
       return;
     }
 
@@ -49,13 +49,7 @@ export default function PricingSection({
       }
     } catch (error) {
       console.error('Stripe Checkout Error:', error);
-      alert(
-        lang === 'es'
-          ? 'Hubo un error al procesar el pago. Por favor, intenta de nuevo.'
-          : lang === 'pt'
-            ? 'Houve um erro ao processar o pagamento. Por favor, tente novamente.'
-            : 'There was an error processing the payment. Please try again.'
-      );
+      alert(billing.paymentError);
     } finally {
       setLoadingPlan(null);
     }
@@ -69,14 +63,14 @@ export default function PricingSection({
       const token = await getToken();
       const res = await api.redeemPromo(promoCode.trim(), token);
       if (res && res.success) {
-        setPromoMessage({ text: 'Promo redeemed successfully! Reloading...', type: 'success' });
+        setPromoMessage({ text: billing.promoSuccess, type: 'success' });
         setTimeout(() => {
           window.location.reload();
         }, 2000);
       }
     } catch (error: unknown) {
       setPromoMessage({
-        text: (error as { message?: string }).message || 'Invalid promo code',
+        text: (error as { message?: string }).message || billing.promoInvalid,
         type: 'error',
       });
     } finally {
@@ -230,11 +224,11 @@ export default function PricingSection({
       {/* Promo Code Section (Hidden by default) */}
       {isStandalonePage && secretRevealed && (
         <div className="animate-in fade-in zoom-in-95 mx-auto mt-12 max-w-lg rounded-xl border border-slate-700 bg-slate-800/50 p-6 shadow-xl transition-all duration-500">
-          <h4 className="mb-2 text-sm font-bold text-white">Have a Promo Code?</h4>
+          <h4 className="mb-2 text-sm font-bold text-white">{billing.promoTitle}</h4>
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="Enter code (e.g. LIFETIME2026)"
+              placeholder={billing.promoPlaceholder}
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value)}
               className="w-full flex-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
@@ -244,7 +238,7 @@ export default function PricingSection({
               onClick={handleRedeemPromo}
               className="rounded-lg bg-slate-700 px-6 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-600 disabled:opacity-50"
             >
-              {promoLoading ? '...' : 'Redeem'}
+              {promoLoading ? '...' : billing.promoRedeem}
             </button>
           </div>
           {promoMessage && (
@@ -270,9 +264,7 @@ export default function PricingSection({
           <tbody className="divide-y divide-white/5">
             <tr>
               <td className="py-4">{pricing.table.rows.limit}</td>
-              <td className="py-4 text-center">
-                {lang === 'es' ? 'Hasta 3' : lang === 'pt' ? 'Até 3' : 'Up to 3'}
-              </td>
+              <td className="py-4 text-center">{billing.freeLimit}</td>
               <td className="py-4 text-center text-white">{pricing.table.rows.limitValues}</td>
             </tr>
             <tr>

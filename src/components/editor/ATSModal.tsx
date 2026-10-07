@@ -98,7 +98,7 @@ export default function ATSModal({ isOpen, onClose, t, onAnalyze }: ATSModalProp
                 <div className="flex flex-col items-center justify-center rounded-lg border border-slate-700 bg-slate-950/50 p-6 text-center text-purple-400">
                   <span className="text-xl font-bold">{result.tier_classification}</span>
                   <span className="mt-1 text-sm font-medium tracking-wider uppercase">
-                    Nivel Competitivo
+                    {t.ai.ats.tier}
                   </span>
                 </div>
               </div>
@@ -158,7 +158,7 @@ export default function ATSModal({ isOpen, onClose, t, onAnalyze }: ATSModalProp
                 }}
                 className="w-full rounded border border-slate-600 bg-slate-800 py-2 text-slate-300 transition-colors hover:bg-slate-700"
               >
-                ← Analizar otra oferta
+                ← {t.ai.ats.analyzeAnother}
               </button>
             </div>
           )}

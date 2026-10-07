@@ -9,6 +9,7 @@ interface InputProps {
   disabled?: boolean;
   className?: string;
   required?: boolean;
+  requiredTitle?: string;
 }
 
 export const Input = ({
@@ -20,6 +21,7 @@ export const Input = ({
   disabled = false,
   className = '',
   required = false,
+  requiredTitle,
 }: InputProps) => (
   <div className={`w-full ${className}`}>
     {label && (
@@ -28,7 +30,7 @@ export const Input = ({
       >
         {label}{' '}
         {required && (
-          <span className="text-red-400" title="Obligatorio">
+          <span className="text-red-400" title={requiredTitle}>
             *
           </span>
         )}

@@ -7,13 +7,14 @@
 export const PREFIXED_LOCALES = ['en', 'pt'];
 
 // Pages that exist only at the root (no /en or /pt twin under src/pages/[lang])
-export const UNLOCALIZED_PATHS = ['/privacy', '/login'];
+export const UNLOCALIZED_PATHS = ['/login'];
 
 const LOCALE = `(?:/(?:${PREFIXED_LOCALES.join('|')}))?`;
 
 const PUBLIC_ROUTES: RegExp[] = [
   new RegExp(`^${LOCALE}/?$`), // landing
   new RegExp(`^${LOCALE}/pricing/?$`),
+  new RegExp(`^${LOCALE}/privacy/?$`),
   new RegExp(`^${LOCALE}/sign-in(?:/.*)?$`),
   new RegExp(`^${LOCALE}/sign-up(?:/.*)?$`),
   new RegExp(`^${LOCALE}/app/editor(?:/.*)?$`), // guests can try the editor
