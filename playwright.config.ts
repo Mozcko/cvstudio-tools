@@ -6,10 +6,14 @@ import { defineConfig, devices } from '@playwright/test';
  * The app cannot render without Clerk, so the build needs real keys from a Clerk
  * DEVELOPMENT instance:
  *   PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY
+ * The signed-in tests also need E2E_USER_EMAIL (an existing user of that instance) and the
+ * backend listening at PUBLIC_API_URL.
  * See docs/development.md > End-to-end tests.
  */
 const PORT = Number(process.env.E2E_PORT || 4399);
 const baseURL = `http://127.0.0.1:${PORT}`;
+
+const chrome = { ...devices['Desktop Chrome'], viewport: { width: 1400, height: 900 } };
 
 export default defineConfig({
   testDir: './tests',
@@ -30,9 +34,24 @@ export default defineConfig({
   },
   projects: [
     {
+      // Everything a signed-out visitor can do
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1400, height: 900 } },
+      testIgnore: /signed-in\//,
+      use: chrome,
     },
+    // Flows behind sign-in: they need a test user (E2E_USER_EMAIL) and the backend running.
+    // Without the variable they are left out, so the guest suite still runs anywhere.
+    ...(process.env.E2E_USER_EMAIL
+      ? [
+          { name: 'sign-in', testMatch: /signed-in\/auth\.setup\.ts/, use: chrome },
+          {
+            name: 'signed-in',
+            testMatch: /signed-in\/.*\.spec\.ts/,
+            dependencies: ['sign-in'],
+            use: { ...chrome, storageState: 'playwright/.auth/user.json' },
+          },
+        ]
+      : []),
   ],
   webServer: {
     command: 'node dist/server/entry.mjs',

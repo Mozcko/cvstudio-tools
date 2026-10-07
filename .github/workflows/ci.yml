@@ -112,6 +112,28 @@ jobs:
       PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.E2E_CLERK_PUBLISHABLE_KEY }}
       CLERK_SECRET_KEY: ${{ secrets.E2E_CLERK_SECRET_KEY }}
       PUBLIC_API_URL: http://127.0.0.1:8000/api/v1
+      # The test user of the Clerk development instance (created on first use); enables the
+      # signed-in tests
+      E2E_USER_EMAIL: ${{ vars.E2E_USER_EMAIL }}
+      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+      # The backend the signed-in tests talk to (started below, from its main branch)
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/cvstudio_e2e
+      FRONTEND_URL: http://127.0.0.1:4399
+      ENVIRONMENT: test
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cvstudio_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Check configuration
         run: |
@@ -148,8 +170,48 @@ jobs:
         run: pnpm exec playwright install-deps chromium
       - name: Build
         run: pnpm build
+
+      # ── Backend for the signed-in tests ──────────────────────────────────
+      - name: Check out the backend
+        uses: actions/checkout@v7
+        with:
+          repository: Mozcko/cvstudio-tools-backend
+          path: backend
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install the backend
+        run: pip install -r backend/requirements.txt
+      - name: Start the backend
+        working-directory: backend
+        run: |
+          # The instance's address is encoded in the publishable key: pk_test_<base64 of "host$">
+          host=$(echo "${PUBLIC_CLERK_PUBLISHABLE_KEY#pk_test_}" | base64 --decode 2>/dev/null | tr -d '$')
+          if [ -z "$host" ]; then
+            echo "::error::E2E_CLERK_PUBLISHABLE_KEY is not a development key (pk_test_...)"
+            exit 1
+          fi
+          export CLERK_ISSUER="https://$host"
+          alembic upgrade head
+          nohup uvicorn src.main:app --host 127.0.0.1 --port 8000 > ../backend.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/health > /dev/null; then
+              echo "Backend is up (attempt $attempt)"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::The backend did not start"
+          cat ../backend.log
+          exit 1
+
       - name: Run end-to-end tests
         run: pnpm test:e2e
+      - name: Backend log
+        if: failure()
+        run: cat backend.log || true
       - name: Upload the report
         if: failure()
         uses: actions/upload-artifact@v7
