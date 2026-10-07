@@ -80,8 +80,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
-  # Reports known vulnerabilities in production dependencies. Informational for now
-  # (not part of "CI passed"): make it blocking once the report is clean.
+  # Known vulnerabilities in what ships to production block the merge when they are high or
+  # critical. Everything else (lower severity, development-only packages) is reported.
   audit:
     name: 🔒 Dependency Audit
     runs-on: ubuntu-latest
@@ -93,10 +93,13 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Audit production dependencies
+      - name: Production dependencies (blocking from "high")
+        run: pnpm audit --prod --audit-level high
+      - name: All dependencies (report only)
+        if: always()
         run: |
-          if ! pnpm audit --prod; then
-            echo "::warning::pnpm audit reports known vulnerabilities in production dependencies (see this job's log)."
+          if ! pnpm audit; then
+            echo "::warning::pnpm audit reports known vulnerabilities (see this job's log)."
           fi
 
   # Browser tests against the production build. They need keys from a Clerk DEVELOPMENT
@@ -234,12 +237,12 @@ jobs:
   ci-passed:
     name: ✅ CI passed
     if: always()
-    needs: [lint, typecheck, unit, build, e2e]
+    needs: [lint, typecheck, unit, build, audit, e2e]
     runs-on: ubuntu-latest
     steps:
       - name: Check results
         env:
-          REQUIRED: ${{ needs.lint.result }} ${{ needs.typecheck.result }} ${{ needs.unit.result }} ${{ needs.build.result }}
+          REQUIRED: ${{ needs.lint.result }} ${{ needs.typecheck.result }} ${{ needs.unit.result }} ${{ needs.build.result }} ${{ needs.audit.result }}
           E2E: ${{ needs.e2e.result }}
         run: |
           echo "Required jobs: $REQUIRED"
