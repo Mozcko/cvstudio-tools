@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import {
   collectErrors,
   expectSheetToContain,
@@ -11,6 +11,13 @@ import {
  * Everything a visitor can do without an account. No backend is needed:
  * a guest's work lives in the browser.
  */
+/**
+ * The sign-in prompt. Matched by its heading: the toolbar always has a plain "Iniciar Sesión"
+ * link for guests, so looking for a link would pass whether or not the prompt is open.
+ */
+const signInDialog = (page: Page) =>
+  page.getByRole('heading', { name: 'Inicia sesión para continuar' });
+
 test.describe('Guest editor', () => {
   test('shows the sample CV and follows what is typed', async ({ page }) => {
     const errors = collectErrors(page);
@@ -180,19 +187,43 @@ test.describe('Guest editor', () => {
     }
   });
 
+  // Issue #35: autosave used to open the sign-in prompt again and again for guests
+  test('a guest can keep typing without ever being asked to sign in', async ({ page }) => {
+    await openGuestEditor(page);
+    await waitForGuestState(page);
+    const prompt = signInDialog(page);
+    const name = page.locator('input[value="John Doe"]').first();
+
+    await name.fill('Ada');
+    // Well past the autosave delay, twice, with an edit in between
+    await page.waitForTimeout(6000);
+    await expect(prompt).toHaveCount(0);
+    await page.locator('input[value="Ada"]').first().fill('Ada Lovelace');
+    await page.waitForTimeout(6000);
+
+    await expect(prompt).toHaveCount(0);
+    await expectSheetToContain(page, 'Ada Lovelace');
+    // The work is kept locally instead
+    expect(await page.evaluate(() => localStorage.getItem('cv-draft:new') || '')).toContain(
+      'Ada Lovelace'
+    );
+  });
+
   test('saving and downloading ask a guest to sign in', async ({ page }) => {
     await openGuestEditor(page);
     await waitForGuestState(page);
-    const signInLink = page.getByRole('link', { name: 'Iniciar sesión' });
+    const dialog = signInDialog(page);
+    await expect(dialog).toHaveCount(0);
 
     await page
       .getByRole('button', { name: /Descargar PDF/i })
       .first()
       .click();
-    await expect(signInLink.first()).toBeVisible();
+    await expect(dialog).toBeVisible();
     await page.getByRole('button', { name: 'Cerrar' }).last().click();
+    await expect(dialog).toHaveCount(0);
 
     await page.keyboard.press('Control+s');
-    await expect(signInLink.first()).toBeVisible();
+    await expect(dialog).toBeVisible();
   });
 });
