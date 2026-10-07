@@ -72,6 +72,11 @@ React components themselves — form, modals, preview — have no automated test
   data files always go through the AI. See [import.md](./import.md).
 - **The mock interview has not been exercised with a real voice.** Its logic is tested with the
   provider, the microphone and audio playback faked. See [interview.md](./interview.md).
+- **Public pages have no report button or moderation tool.** Anyone with an account can publish
+  text on the site's domain; it is sanitized, `nofollow` and `noindex` by default, but removing a
+  page today means deleting the link in the database.
+- **The editor preview still allows raw HTML** (the public page does not). It only ever shows a
+  user their own content.
 - **Not covered by a browser test:** the PDF download (it ends in the browser's print dialog),
   real payments, and anything that needs a real AI answer — those requests are answered by the
   tests themselves.

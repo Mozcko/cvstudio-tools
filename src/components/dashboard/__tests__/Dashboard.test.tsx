@@ -18,7 +18,20 @@ vi.mock('../../../hooks/useProStatus', () => ({
 }));
 vi.mock('../../../lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../lib/api')>();
-  return { ...actual, api: { getCVs: vi.fn(), createCV: vi.fn(), deleteCV: vi.fn() } };
+  return {
+    ...actual,
+    api: {
+      getCVs: vi.fn(),
+      createCV: vi.fn(),
+      deleteCV: vi.fn(),
+      listLinks: vi.fn(),
+      markLinksSeen: vi.fn(),
+      linkStats: vi.fn(),
+      checkSlug: vi.fn(),
+      saveLink: vi.fn(),
+      deleteLink: vi.fn(),
+    },
+  };
 });
 
 const mocked = vi.mocked(api);
@@ -34,6 +47,8 @@ const cv = (id: string) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  localStorage.clear();
+  mocked.listLinks.mockResolvedValue([]);
   // The CV thumbnails measure themselves; jsdom has no ResizeObserver
   vi.stubGlobal(
     'ResizeObserver',
@@ -108,6 +123,46 @@ describe('Dashboard empty state', () => {
     render(<Dashboard lang="es" />);
     expect(await screen.findByText('Sin conexión')).toBeTruthy();
     expect(screen.queryByTestId('dashboard-empty')).toBeNull();
+  });
+
+  it('shows which CVs are public, their views, and marks new views as seen', async () => {
+    mocked.getCVs.mockResolvedValue([cv('1'), cv('2')] as never);
+    mocked.listLinks.mockResolvedValue([
+      {
+        cv_id: '1',
+        slug: 'ada',
+        is_active: true,
+        paused: false,
+        show_email: true,
+        show_phone: false,
+        indexable: false,
+        views_total: 12,
+        views_new: 3,
+        created_at: '2026-10-07T10:00:00Z',
+      },
+    ]);
+    mocked.markLinksSeen.mockResolvedValue(undefined as never);
+    render(<Dashboard lang="es" />);
+
+    const status = await screen.findByTestId('link-status');
+    expect(status.textContent).toContain(locales.es.share.publicTag);
+    expect(status.textContent).toContain('12 visitas');
+    expect(screen.getByTestId('new-views').textContent).toBe('+3 nuevas');
+    // Only the public CV carries the tag
+    expect(screen.getAllByTestId('link-status')).toHaveLength(1);
+    await waitFor(() => expect(mocked.markLinksSeen).toHaveBeenCalledTimes(1));
+    // The owner's own visits will not be counted
+    expect(JSON.parse(localStorage.getItem('cvstudio:own-links') || '[]')).toEqual(['ada']);
+  });
+
+  it('still lists the CVs when the links cannot be loaded', async () => {
+    mocked.getCVs.mockResolvedValue([cv('1')] as never);
+    mocked.listLinks.mockRejectedValue(new Error('links down'));
+    render(<Dashboard lang="es" />);
+
+    expect(await screen.findByText('CV 1')).toBeTruthy();
+    expect(screen.queryByTestId('link-status')).toBeNull();
+    expect(mocked.markLinksSeen).not.toHaveBeenCalled();
   });
 
   it('comes back when the last CV is deleted', async () => {

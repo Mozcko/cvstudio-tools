@@ -9,6 +9,9 @@ export const PREFIXED_LOCALES = ['en', 'pt'];
 // Pages that exist only at the root (no /en or /pt twin under src/pages/[lang])
 export const UNLOCALIZED_PATHS = ['/login'];
 
+// A published CV: /u/<name>. It has no /en or /pt twin; the page uses the CV's own language
+export const PUBLIC_CV = /^\/u\/[^/]+\/?$/;
+
 const LOCALE = `(?:/(?:${PREFIXED_LOCALES.join('|')}))?`;
 
 const PUBLIC_ROUTES: RegExp[] = [
@@ -19,6 +22,7 @@ const PUBLIC_ROUTES: RegExp[] = [
   new RegExp(`^${LOCALE}/sign-up(?:/.*)?$`),
   new RegExp(`^${LOCALE}/app/editor(?:/.*)?$`), // guests can try the editor
   ...UNLOCALIZED_PATHS.map((path) => new RegExp(`^${path}/?$`)),
+  PUBLIC_CV, // published CVs
 ];
 
 export const isPublicPath = (pathname: string): boolean =>

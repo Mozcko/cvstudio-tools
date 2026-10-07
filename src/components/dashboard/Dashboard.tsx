@@ -2,9 +2,8 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import { useAuth } from '@clerk/astro/react';
-import { api, isApiError, type CVRecord } from '../../lib/api';
+import { api, isApiError, type CVRecord, type PublicLink } from '../../lib/api';
 import { removeDraft } from '../../lib/cvDraft';
-import { generateMarkdown } from '../../utils/markdownGenerator';
 import { DEFAULT_THEME_ID, getThemeById } from '../../templates';
 import { isMarkdownContent, type CVData, type CVLang } from '../../types/cv';
 import useFitScale from '../../hooks/useFitScale';
@@ -13,6 +12,9 @@ import { locales, type Translation } from '../../i18n/locales';
 import useProStatus from '../../hooks/useProStatus';
 import ImportModal from '../editor/ImportModal';
 import EmptyState from './EmptyState';
+import ShareModal from '../share/ShareModal';
+import { rememberOwnLinks } from '../../lib/publicLinks';
+import { cvToMarkdown } from '../../utils/cvMarkdown';
 import type { ImportResult } from '../../lib/import';
 import { importedTitle } from '../../lib/import/messages';
 
@@ -21,10 +23,14 @@ type Resume = CVRecord;
 const ResumeCard = ({
   cv,
   onDelete,
+  onShare,
+  link,
   t,
 }: {
   cv: Resume;
   onDelete: (id: string) => void;
+  onShare: (cv: Resume) => void;
+  link?: PublicLink;
   t: Translation;
 }) => {
   const { containerRef, scale } = useFitScale<HTMLDivElement>(undefined, { initialScale: 0.22 });
@@ -37,34 +43,7 @@ const ResumeCard = ({
 
   const markdownContent = useMemo(() => {
     try {
-      const content = cv.content;
-      if (isMarkdownContent(content)) return content.markdown || '';
-
-      const rawData = (content || {}) as Partial<CVData>;
-      const safeData: CVData = {
-        ...rawData,
-        personal: {
-          name: '',
-          role: '',
-          summary: '',
-          email: '',
-          phone: '',
-          city: '',
-          ...(rawData.personal || {}),
-          socials: rawData.personal?.socials || [],
-        },
-        experience: rawData.experience || [],
-        education: rawData.education || [],
-        skills: rawData.skills || [],
-        certifications: rawData.certifications || [],
-        languages: rawData.languages || '',
-        interests: rawData.interests || '',
-      };
-      const cvLang = (cv.language || 'es').toLowerCase();
-      return generateMarkdown(
-        safeData,
-        (['es', 'en', 'pt'].includes(cvLang) ? cvLang : 'es') as CVLang
-      );
+      return cvToMarkdown(cv.content, cv.language);
     } catch (err) {
       console.error('Error generating markdown for card:', err);
       return '';
@@ -82,6 +61,26 @@ const ResumeCard = ({
       <h3 className="mb-1 truncate text-xl font-bold text-white">
         {cv.title || t.dashboard.untitled}
       </h3>
+      {link && link.is_active && (
+        <p className="mb-2 flex flex-wrap items-center gap-2 text-xs" data-testid="link-status">
+          <span
+            className={`rounded-full px-2 py-0.5 font-bold ${link.paused ? 'bg-amber-500/15 text-amber-400' : 'bg-emerald-500/15 text-emerald-400'}`}
+          >
+            {t.share.publicTag}
+          </span>
+          <span className="text-slate-400">
+            {t.share.viewsCount.replace('{n}', String(link.views_total))}
+          </span>
+          {link.views_new > 0 && (
+            <span
+              className="rounded-full bg-blue-500/20 px-2 py-0.5 font-bold text-blue-300"
+              data-testid="new-views"
+            >
+              {t.share.newViews.replace('{n}', String(link.views_new))}
+            </span>
+          )}
+        </p>
+      )}
 
       <div
         ref={containerRef}
@@ -114,6 +113,28 @@ const ResumeCard = ({
         >
           {t.dashboard.edit}
         </a>
+        <button
+          onClick={() => onShare(cv)}
+          data-testid="share-open"
+          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-700 hover:text-blue-400"
+          title={t.share.button}
+          aria-label={t.share.button}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="h-5 w-5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"
+            />
+          </svg>
+        </button>
         <button
           onClick={() => onDelete(cv.id)}
           className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-700 hover:text-red-400"
@@ -156,7 +177,23 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
 
   const loading = loadingResumes || loadingPro;
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [links, setLinks] = useState<Record<string, PublicLink>>({});
+  const [sharing, setSharing] = useState<Resume | null>(null);
   const cvLang = (['es', 'en', 'pt'].includes(lang) ? lang : 'es') as CVLang;
+
+  /** Public links and their view counts. A failure here must not hide the CVs. */
+  const loadLinks = useCallback(async (token: string | null) => {
+    try {
+      const own = await api.listLinks(token);
+      setLinks(Object.fromEntries(own.map((link) => [link.cv_id, link])));
+      // The owner's own visits to these pages are not counted as views
+      rememberOwnLinks(own.map((link) => link.slug));
+      // What is on screen now has been seen; views after this are "new" next time
+      if (own.some((link) => link.views_new > 0)) await api.markLinksSeen(token);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
 
   const loadResumes = useCallback(async () => {
     if (!userId) return;
@@ -164,6 +201,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
       const token = await getToken();
       const data = await api.getCVs(token);
       setResumes(data || []);
+      loadLinks(token);
     } catch (err: unknown) {
       console.error(err);
       if (err instanceof Error) setError(err.message);
@@ -171,7 +209,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
     } finally {
       setLoadingResumes(false);
     }
-  }, [getToken, userId, t]);
+  }, [getToken, userId, t, loadLinks]);
 
   useEffect(() => {
     if (userId) {
@@ -352,11 +390,44 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {resumes.map((cv) => (
-              <ResumeCard key={cv.id} cv={cv} onDelete={handleDelete} t={t} />
+              <ResumeCard
+                key={cv.id}
+                cv={cv}
+                onDelete={handleDelete}
+                onShare={setSharing}
+                link={links[cv.id]}
+                t={t}
+              />
             ))}
           </div>
         )}
       </div>
+
+      {sharing && (
+        <ShareModal
+          isOpen
+          onClose={() => setSharing(null)}
+          t={t}
+          cvId={sharing.id}
+          personName={
+            isMarkdownContent(sharing.content)
+              ? sharing.title
+              : (sharing.content as Partial<CVData>)?.personal?.name || sharing.title
+          }
+          isMarkdown={isMarkdownContent(sharing.content)}
+          isPro={isPro}
+          getToken={getToken}
+          onChanged={(link) => {
+            setLinks((current) => {
+              const next = { ...current };
+              if (link) next[sharing.id] = link;
+              else delete next[sharing.id];
+              rememberOwnLinks(Object.values(next).map((item) => item.slug));
+              return next;
+            });
+          }}
+        />
+      )}
 
       <ImportModal
         isOpen={isImportOpen}

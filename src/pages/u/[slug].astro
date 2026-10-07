@@ -1,0 +1,170 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PublicCvSheet from '../../components/share/PublicCvSheet';
+import { locales } from '../../i18n/locales';
+import { slugProblem } from '../../lib/publicLinks';
+
+/**
+ * A published CV. Rendered on the server from what the backend is willing to show to anyone;
+ * the page itself runs no application code, only a few lines to count the visit.
+ */
+const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const slug = (Astro.params.slug || '').toLowerCase();
+
+interface PublicCV {
+  slug: string;
+  title: string;
+  language: string;
+  theme: string | null;
+  content: Record<string, unknown>;
+  badge: boolean;
+  indexable: boolean;
+}
+
+// Names that cannot exist are not worth a request
+if (slugProblem(slug) !== null) {
+  return Astro.rewrite('/404');
+}
+
+let cv: PublicCV | null = null;
+let unavailable = false;
+try {
+  const response = await fetch(`${API_URL}/public/cv/${encodeURIComponent(slug)}`, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (response.status === 404) return Astro.rewrite('/404');
+  if (response.ok) cv = await response.json();
+  else unavailable = true;
+} catch {
+  unavailable = true;
+}
+
+const lang = (
+  ['es', 'en', 'pt'].includes((cv?.language || '').toLowerCase())
+    ? cv!.language.toLowerCase()
+    : 'es'
+) as keyof typeof locales;
+const t = locales[lang].share;
+
+const personal = (cv?.content?.personal || {}) as Record<string, unknown>;
+const text = (value: unknown) => (typeof value === 'string' ? value : '');
+const name = text(personal.name) || cv?.title || 'CV';
+const role = text(personal.role);
+const pageTitle = role ? `${name} — ${role}` : name;
+const description = (text(personal.summary) || role || name).replace(/[*_#>`]/g, '').slice(0, 200);
+
+if (unavailable) Astro.response.status = 503;
+// Search engines only when the owner asked for it; never for the error page
+const robots = cv?.indexable ? 'index, follow' : 'noindex, nofollow';
+---
+
+<Layout title={`${pageTitle} | CVStudio`} lang={lang} description={description}>
+  <Fragment slot="head">
+    <meta name="robots" content={robots} />
+    <meta name="referrer" content="no-referrer" />
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={new URL(`/u/${slug}`, Astro.url).href} />
+    <meta property="og:site_name" content="CVStudio" />
+    <meta name="twitter:card" content="summary" />
+  </Fragment>
+
+  <div class="public-cv-page min-h-screen bg-slate-200 print:bg-white">
+    <header class="public-cv-chrome flex items-center justify-between gap-3 bg-slate-900 px-4 py-3 text-sm print:hidden">
+      <a href="/" class="font-bold text-white">
+        CVStudio<span class="text-blue-500">.tools</span>
+      </a>
+      {cv && (
+        <button
+          type="button"
+          id="public-cv-print"
+          class="rounded-lg bg-blue-600 px-4 py-2 font-bold text-white transition-colors hover:bg-blue-500"
+        >
+          {t.download}
+        </button>
+      )}
+    </header>
+
+    <main class="mx-auto max-w-[230mm] px-2 py-6 print:max-w-none print:p-0">
+      {cv ? (
+        <div
+          class="public-cv-paper mx-auto bg-white shadow-xl print:shadow-none"
+          data-testid="public-cv"
+        >
+          <PublicCvSheet content={cv.content} language={cv.language} theme={cv.theme} />
+        </div>
+      ) : (
+        <p class="py-24 text-center text-slate-600" data-testid="public-cv-unavailable">
+          {t.unavailable}
+        </p>
+      )}
+    </main>
+
+    {cv?.badge && (
+      <footer class="public-cv-chrome pb-8 text-center text-sm print:hidden">
+        <a
+          href="/"
+          class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 font-medium text-slate-200 transition-colors hover:text-white"
+          data-testid="public-cv-badge"
+        >
+          {t.madeWith} · <span class="text-blue-400">{t.createYours}</span>
+        </a>
+      </footer>
+    )}
+  </div>
+
+  {cv && <script is:inline define:vars={{ slug, apiUrl: API_URL }}>
+    document.getElementById('public-cv-print')?.addEventListener('click', () => window.print());
+
+    // Count the visit: not for the owner, not for previews, and only once the page was really looked at
+    (() => {
+      if (new URLSearchParams(location.search).has('preview')) return;
+      try {
+        const own = JSON.parse(localStorage.getItem('cvstudio:own-links') || '[]');
+        if (Array.isArray(own) && own.includes(slug)) return;
+      } catch {
+        // No storage: count it
+      }
+      const send = () => {
+        if (document.visibilityState !== 'visible') return;
+        fetch(`${apiUrl}/public/cv/${encodeURIComponent(slug)}/view`, {
+          method: 'POST',
+          keepalive: true,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referrer: document.referrer || null }),
+        }).catch(() => {});
+      };
+      setTimeout(send, 2000);
+    })();
+  </script>}
+</Layout>
+
+<style is:global>
+  /* The sheet: A4 proportions on screen, the whole page on paper */
+  .public-cv-paper {
+    min-height: 297mm;
+    overflow-wrap: anywhere;
+  }
+  .public-cv-paper .cv-preview-content {
+    padding: 1.5cm;
+  }
+  @media (max-width: 640px) {
+    .public-cv-paper .cv-preview-content {
+      padding: 1rem;
+    }
+  }
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+  @media print {
+    .public-cv-paper {
+      min-height: 0;
+    }
+    .public-cv-paper .cv-preview-content {
+      padding: 0;
+    }
+  }
+</style>
