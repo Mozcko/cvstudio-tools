@@ -12,6 +12,7 @@ import { localePrefixFromPath } from '../../i18n/utils';
 import { locales, type Translation } from '../../i18n/locales';
 import useProStatus from '../../hooks/useProStatus';
 import ImportModal from '../editor/ImportModal';
+import EmptyState from './EmptyState';
 import type { ImportResult } from '../../lib/import';
 import { importedTitle } from '../../lib/import/messages';
 
@@ -347,9 +348,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
             {error}
           </div>
         ) : resumes.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-700 p-10 text-slate-500">
-            <p className="mb-4">{t.dashboard.empty}</p>
-          </div>
+          <EmptyState t={t} onCreate={handleCreate} onImport={handleOpenImport} />
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {resumes.map((cv) => (
