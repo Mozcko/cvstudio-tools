@@ -2,6 +2,7 @@
 import PublicLayout from '../../layouts/PublicLayout.astro';
 import HeroActions from '../../components/ui/HeroActions';
 import FeaturesSection from '../../components/ui/FeaturesSection';
+import RecruiterAsk from '../../components/recruiter/RecruiterAsk';
 import PricingSection from '../../components/ui/PricingSection';
 import { useUiTranslations } from '../../i18n/utils';
 import { locales } from '../../i18n/locales';
@@ -30,6 +31,7 @@ const hero = t('hero') as Record<string, string>;
     <p class="mx-auto mb-10 max-w-2xl text-xl leading-relaxed text-slate-400">{hero.description}</p>
 
     <HeroActions lang={lang} client:only="react" />
+    <RecruiterAsk lang={lang} className="mt-6" />
 
     {/* Preview Image */}
     <div class="relative mt-20 w-full max-w-5xl">

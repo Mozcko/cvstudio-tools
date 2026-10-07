@@ -2,6 +2,7 @@
 import Layout from './Layout.astro';
 import SiteHeader from '../components/ui/SiteHeader';
 import { getLangFromUrl, useUiTranslations } from '../i18n/utils';
+import { locales } from '../i18n/locales';
 
 interface Props {
   title: string;
@@ -10,6 +11,8 @@ interface Props {
 const { title } = Astro.props;
 const lang = getLangFromUrl(Astro.url);
 const t = useUiTranslations(lang);
+const recruiter = locales[lang].recruiter;
+const recruitersUrl = `${lang === 'es' ? '' : `/${lang}`}/recruiters`;
 ---
 
 <Layout title={title}>
@@ -21,7 +24,15 @@ const t = useUiTranslations(lang);
 
   <footer class="mt-auto border-t border-white/10 bg-slate-900 py-8 text-center">
     <div class="container mx-auto px-4 text-sm text-slate-500">
-      <p>&copy; {new Date().getFullYear()} CVStudio.tools. {t('footer.rights')}</p>
+      <p class="mb-3">
+        {recruiter.ask}
+        <a href={recruitersUrl} class="font-bold text-violet-300 hover:text-violet-200">
+          {recruiter.askCta} →
+        </a>
+      </p>
+      <p>
+        &copy; {new Date().getFullYear()} CVStudio.tools. {t('footer.rights')}
+      </p>
     </div>
   </footer>
 </Layout>

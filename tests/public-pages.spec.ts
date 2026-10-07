@@ -52,6 +52,32 @@ test.describe('Public pages and routing', () => {
     expect(redirected.headers()['location']).toMatch(/\/en\/privacy$/);
   });
 
+  test('the recruiter page is public in every locale and reachable from the landing', async ({
+    page,
+    request,
+  }) => {
+    for (const path of ['/recruiters', '/en/recruiters', '/pt/recruiters']) {
+      expect((await request.get(path, { maxRedirects: 0 })).status(), path).toBe(200);
+    }
+
+    await page.goto('/');
+    await page.getByTestId('recruiter-ask').first().getByRole('link').click();
+    await expect(page).toHaveURL(/\/recruiters$/);
+    await expect(page.locator('h1')).toContainText('Ordena cien CVs en minutos');
+    await expect(page.getByTestId('recruiter-plan-starter')).toContainText('100 CVs al mes');
+    await expect(page.getByTestId('recruiter-plan-enterprise')).toContainText('Enterprise');
+    await expect(
+      page.getByRole('heading', { name: 'Condiciones para reclutadores' })
+    ).toBeVisible();
+
+    await page.goto('/en/recruiters');
+    await expect(page.locator('h1')).toContainText('Rank a hundred CVs in minutes');
+    await expect(page.getByRole('link', { name: 'Try it free' }).first()).toHaveAttribute(
+      'href',
+      '/en/app/recruiter'
+    );
+  });
+
   test('/login has no localized twin and is not locale-redirected', async ({ request }) => {
     const response = await request.get('/login', {
       maxRedirects: 0,
@@ -98,6 +124,8 @@ test.describe('Public pages and routing', () => {
       '/app/interview',
       '/en/app/interview',
       '/pt/app/interview',
+      '/app/recruiter',
+      '/en/app/recruiter',
       '/en/app/dashboard',
       '/fr/app/dashboard',
       '/fr/app/editor',

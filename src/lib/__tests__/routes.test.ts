@@ -26,6 +26,9 @@ describe('isPublicPath', () => {
     '/en/privacy',
     '/pt/privacy/',
     '/login',
+    '/recruiters',
+    '/en/recruiters',
+    '/pt/recruiters/',
   ])('%s is public', (path) => {
     expect(isPublicPath(path)).toBe(true);
   });

@@ -139,6 +139,78 @@ export interface LinkStats {
   referrers: { host: string | null; views: number }[] | null;
 }
 
+// ── Recruiter area ───────────────────────────────────────────────────────────
+
+export type RecruiterPlan = 'trial' | 'starter' | 'pro' | 'enterprise';
+
+export interface RecruiterStatus {
+  plan: RecruiterPlan;
+  status: 'trial' | 'active' | 'past_due' | 'canceled';
+  can_evaluate: boolean;
+  /** CVs evaluated in the current period (or of the trial). */
+  used: number;
+  /** null is unlimited. */
+  limit: number | null;
+  remaining: number | null;
+  period_end: string | null;
+  /** How long candidate data is kept. */
+  retention_days: number;
+  /** Why evaluating is refused, when it is. */
+  reason: string | null;
+  /** Whether Stripe's "manage subscription" page can be opened. */
+  has_billing: boolean;
+}
+
+export interface Requirement {
+  id: string;
+  text: string;
+  kind: 'must' | 'nice';
+}
+
+export interface Finding extends Requirement {
+  status: 'met' | 'partial' | 'missing';
+  /** A sentence from the CV. */
+  evidence: string;
+  /** Whether that sentence was really found in the CV. */
+  verified: boolean;
+}
+
+export interface Candidate {
+  id: string;
+  rank: number;
+  /** One of the first five. */
+  top: boolean;
+  display_name: string;
+  file_name: string;
+  contact: { emails?: string[]; phones?: string[]; links?: string[] };
+  score: number;
+  missing_musts: number;
+  /** The CV contains text that reads like instructions to an AI. */
+  flagged: boolean;
+  result: { requirements: Finding[]; strengths: string[]; concerns: string[]; summary: string };
+  note: string;
+  created_at: string;
+}
+
+export interface ScreeningSummary {
+  id: string;
+  title: string;
+  language: string;
+  candidates: number;
+  top_score: number | null;
+  created_at: string;
+  /** When the screening and everything in it is deleted. */
+  expires_at: string;
+}
+
+export interface Screening extends ScreeningSummary {
+  job_description: string;
+  rubric: Requirement[];
+  /** The rubric cannot change once a candidate has been evaluated. */
+  rubric_locked: boolean;
+  ranking: Candidate[];
+}
+
 // ── Mock interview ───────────────────────────────────────────────────────────
 
 export interface InterviewTurn {
@@ -279,6 +351,75 @@ export const api = {
   /** The owner has seen the current view counts. */
   markLinksSeen: (token: string | null) =>
     apiRequest<void>('/links/seen', token, { method: 'POST' }),
+
+  // Recruiter area
+  recruiterStatus: (token: string | null) =>
+    apiRequest<RecruiterStatus>(`/recruiter/me?_t=${Date.now()}`, token),
+
+  recruiterCheckout: (plan: 'starter' | 'pro', token: string | null) =>
+    apiRequest<{ url: string }>('/recruiter/billing/checkout', token, {
+      method: 'POST',
+      body: JSON.stringify({ plan }),
+    }),
+
+  recruiterPortal: (token: string | null) =>
+    apiRequest<{ url: string }>('/recruiter/billing/portal', token, { method: 'POST' }),
+
+  listScreenings: (token: string | null) =>
+    apiRequest<ScreeningSummary[]>(`/recruiter/screenings?_t=${Date.now()}`, token),
+
+  createScreening: (
+    params: { title: string; job_description: string; language: CVLang },
+    token: string | null
+  ) =>
+    apiRequest<Screening>('/recruiter/screenings', token, {
+      method: 'POST',
+      body: JSON.stringify(params),
+    }),
+
+  getScreening: (id: string, token: string | null) =>
+    apiRequest<Screening>(`/recruiter/screenings/${id}?_t=${Date.now()}`, token),
+
+  updateScreening: (
+    id: string,
+    changes: { title?: string; rubric?: Partial<Requirement>[] },
+    token: string | null
+  ) =>
+    apiRequest<Screening>(`/recruiter/screenings/${id}`, token, {
+      method: 'PUT',
+      body: JSON.stringify(changes),
+    }),
+
+  deleteScreening: (id: string, token: string | null) =>
+    apiRequest<void>(`/recruiter/screenings/${id}`, token, { method: 'DELETE' }),
+
+  /** Evaluates one CV (as text) and adds it to the ranking. */
+  addCandidate: (
+    screeningId: string,
+    params: { file_name: string; text: string },
+    token: string | null
+  ) =>
+    apiRequest<{ candidate: Candidate; duplicate: boolean }>(
+      `/recruiter/screenings/${screeningId}/candidates`,
+      token,
+      { method: 'POST', body: JSON.stringify(params) }
+    ),
+
+  updateCandidate: (
+    screeningId: string,
+    candidateId: string,
+    changes: { display_name?: string; note?: string },
+    token: string | null
+  ) =>
+    apiRequest<Candidate>(`/recruiter/screenings/${screeningId}/candidates/${candidateId}`, token, {
+      method: 'PUT',
+      body: JSON.stringify(changes),
+    }),
+
+  deleteCandidate: (screeningId: string, candidateId: string, token: string | null) =>
+    apiRequest<void>(`/recruiter/screenings/${screeningId}/candidates/${candidateId}`, token, {
+      method: 'DELETE',
+    }),
 
   // Mock interview (premium plans)
   startInterview: (

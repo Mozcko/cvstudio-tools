@@ -18,6 +18,7 @@ const PUBLIC_ROUTES: RegExp[] = [
   new RegExp(`^${LOCALE}/?$`), // landing
   new RegExp(`^${LOCALE}/pricing/?$`),
   new RegExp(`^${LOCALE}/privacy/?$`),
+  new RegExp(`^${LOCALE}/recruiters/?$`), // what the recruiter area is, and its plans
   new RegExp(`^${LOCALE}/sign-in(?:/.*)?$`),
   new RegExp(`^${LOCALE}/sign-up(?:/.*)?$`),
   new RegExp(`^${LOCALE}/app/editor(?:/.*)?$`), // guests can try the editor
