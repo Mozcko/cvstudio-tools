@@ -337,6 +337,13 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
 
           <div className="flex flex-wrap items-center justify-end gap-2">
             <a
+              href={`${localePrefixFromPath()}/app/recruiter`}
+              data-testid="recruiter-link"
+              className="flex items-center gap-2 rounded-lg border border-violet-500/50 px-4 py-2 font-bold text-violet-200 transition-colors hover:border-violet-400 hover:text-white"
+            >
+              {t.recruiter.nav}
+            </a>
+            <a
               href={`${localePrefixFromPath()}/app/interview`}
               data-testid="interview-link"
               className="flex items-center gap-2 rounded-lg border border-slate-600 px-4 py-2 font-bold text-slate-200 transition-colors hover:border-slate-400 hover:text-white"

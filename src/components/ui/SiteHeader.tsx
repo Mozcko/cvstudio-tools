@@ -7,6 +7,7 @@ import useProStatus from '../../hooks/useProStatus';
 export default function SiteHeader({ lang = 'es' }: { lang?: string }) {
   const { isPro } = useProStatus();
   const t = locales[lang as keyof typeof locales]?.ui.nav || locales.es.ui.nav;
+  const recruiterNav = (locales[lang as keyof typeof locales] || locales.es).recruiter.nav;
   const langPrefix = lang === 'es' ? '' : `/${lang}`;
 
   return (
@@ -43,6 +44,13 @@ export default function SiteHeader({ lang = 'es' }: { lang?: string }) {
             </a>
             <a href={`${langPrefix}/#pricing`} className="transition-colors hover:text-white">
               {t.pricing}
+            </a>
+            <a
+              href={`${langPrefix}/recruiters`}
+              className="text-violet-300 transition-colors hover:text-violet-200"
+              data-testid="recruiters-nav"
+            >
+              {recruiterNav}
             </a>
           </nav>
           <div className="hidden h-4 w-px bg-white/20 lg:block"></div>

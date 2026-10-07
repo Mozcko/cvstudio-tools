@@ -86,6 +86,8 @@ Spanish is the default locale and has no URL prefix; English and Portuguese live
 | `/app/editor` | `/[lang]/app/editor` | **public** (guest mode) | `CVBuilder` |
 | `/app/dashboard` | `/[lang]/app/dashboard` | signed-in | `Dashboard` |
 | `/app/interview` | `/[lang]/app/interview` | signed-in (premium plans use it; others see an upgrade screen) | `InterviewApp` |
+| `/recruiters` | `/[lang]/recruiters` | public | `RecruiterLanding` (server-rendered) |
+| `/app/recruiter` | `/[lang]/app/recruiter` | signed-in (free trial, then a recruiter subscription) | `RecruiterApp` |
 | `/privacy` | `/[lang]/privacy` | public | Static policy (`PrivacyPolicy.astro`) |
 | `/u/<key>/<name>` | — | public | A published CV, rendered on the server (`PublicCvSheet`). See [sharing.md](./sharing.md) |
 | `/login` | — | public | Redirects to `/sign-in` |

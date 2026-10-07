@@ -1,3 +1,5 @@
+import RecruiterAsk from '../recruiter/RecruiterAsk';
+import { getLangFromPath } from '../../i18n/utils';
 import React, { useState } from 'react';
 import type { Translation } from '../../i18n/locales';
 
@@ -162,6 +164,8 @@ export default function ATSModal({ isOpen, onClose, t, onAnalyze }: ATSModalProp
               </button>
             </div>
           )}
+
+          <RecruiterAsk lang={getLangFromPath()} className="text-center" />
         </div>
       </div>
     </div>

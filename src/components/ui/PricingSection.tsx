@@ -1,3 +1,4 @@
+import RecruiterAsk from '../recruiter/RecruiterAsk';
 import React, { useState } from 'react';
 import { useAuth } from '@clerk/astro/react';
 import { useUiTranslations } from '../../i18n/utils';
@@ -300,6 +301,8 @@ export default function PricingSection({
           </tbody>
         </table>
       </div>
+
+      <RecruiterAsk lang={lang} className="mt-10 text-center" />
     </section>
   );
 }

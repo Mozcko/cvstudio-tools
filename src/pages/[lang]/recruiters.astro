@@ -1,0 +1,18 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import RecruiterLanding from '../../components/recruiter/RecruiterLanding';
+import { locales } from '../../i18n/locales';
+import { prefixedLocale } from '../../lib/routes';
+
+const lang = prefixedLocale(Astro.params.lang);
+
+if (!lang) {
+  return Astro.rewrite('/404');
+}
+---
+
+<PublicLayout title={`${locales[lang].recruiter.landing.pageTitle} | CVStudio`}>
+  <main class="from-app-bg flex flex-1 flex-col items-center bg-gradient-to-b to-slate-900 px-4 py-20">
+    <RecruiterLanding lang={lang} />
+  </main>
+</PublicLayout>

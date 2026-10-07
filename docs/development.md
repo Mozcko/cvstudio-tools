@@ -52,6 +52,7 @@ Then point the frontend at it with `PUBLIC_API_URL=http://localhost:8000/api/v1`
 | `PUBLIC_API_URL` | `src/lib/api.ts`, `PricingSection.tsx` | Backend base URL **including** `/api/v1`, no trailing slash |
 | `PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk integration | `pk_test_…` / `pk_live_…` |
 | `CLERK_SECRET_KEY` | Clerk middleware (server) | `sk_test_…` / `sk_live_…` |
+| `PUBLIC_SALES_EMAIL` | Recruiter plans | Optional. Where the Enterprise "Contáctanos" button writes; without it there is no button |
 
 `PUBLIC_`-prefixed variables are inlined into the client bundle; never put a secret behind that
 prefix.

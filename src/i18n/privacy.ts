@@ -54,6 +54,10 @@ export const privacy = {
       title: '6. Enlaces públicos y estadísticas de visitas',
       body: 'Si publicas un currículum con un enlace público, cualquier persona que tenga la dirección podrá verlo; tú decides si se muestran tu correo y tu teléfono, puedes desactivar el enlace en cualquier momento y, por defecto, pedimos a los buscadores que no lo indexen. Para mostrarte cuántas visitas recibe, registramos cada visita con un identificador anónimo que cambia cada día y el sitio web desde el que llegó el visitante. No guardamos direcciones IP ni usamos cookies para ello.',
     },
+    recruiters: {
+      title: '7. Evaluación de candidatos (área de reclutadores)',
+      body: 'Si usas el evaluador de candidatos como reclutador, los currículums que subes pertenecen a otras personas: tú eres responsable de tener una base legal para tratarlos y de informar a los candidatos. Los archivos se leen en tu navegador. Para evaluarlos enviamos a nuestro proveedor de IA (OpenAI) una copia del texto sin el nombre, el correo, el teléfono ni los enlaces; la eliminación del nombre no puede garantizarse en todos los casos. Guardamos el nombre, los datos de contacto y el resultado de cada evaluación, no el texto del currículum, y lo eliminamos automáticamente al terminar el periodo de conservación del plan (90 días por defecto) o antes si el reclutador lo borra. La puntuación es una ayuda para ordenar candidaturas: ninguna decisión se toma de forma automática. Si eres candidato y quieres acceder a tus datos o eliminarlos, dirígete al reclutador que recibió tu currículum.',
+    },
     updated: 'Última actualización: 7 de octubre de 2026',
   },
   en: {
@@ -107,6 +111,10 @@ export const privacy = {
       title: '6. Public Links and View Statistics',
       body: 'If you publish a resume with a public link, anyone who has the address can see it; you decide whether your email address and phone number are shown, you can switch the link off at any time and, by default, we ask search engines not to index it. To show you how many visits it gets, we record each visit with an anonymous identifier that changes every day and the website the visitor came from. We do not store IP addresses or use cookies for this.',
     },
+    recruiters: {
+      title: '7. Candidate Screening (Recruiter Area)',
+      body: "If you use candidate screening as a recruiter, the CVs you upload belong to other people: you are responsible for having a legal basis to process them and for informing the candidates. Files are read in your browser. To evaluate them we send our AI provider (OpenAI) a copy of the text without the name, email, phone or links; removing the name cannot be guaranteed in every case. We keep the name, the contact details and the result of each evaluation, not the text of the CV, and delete them automatically at the end of the plan's retention period (90 days by default), or sooner if the recruiter deletes them. The score is an aid for ordering applications: no decision is made automatically. If you are a candidate and want to access or delete your data, contact the recruiter who received your CV.",
+    },
     updated: 'Last updated: 7 October 2026',
   },
   pt: {
@@ -159,6 +167,10 @@ export const privacy = {
     publicLinks: {
       title: '6. Links Públicos e Estatísticas de Visitas',
       body: 'Se você publicar um currículo com um link público, qualquer pessoa que tenha o endereço poderá vê-lo; você decide se o seu e-mail e o seu telefone são exibidos, pode desativar o link a qualquer momento e, por padrão, pedimos aos buscadores que não o indexem. Para mostrar quantas visitas ele recebe, registramos cada visita com um identificador anônimo que muda a cada dia e o site de onde o visitante veio. Não armazenamos endereços IP nem usamos cookies para isso.',
+    },
+    recruiters: {
+      title: '7. Avaliação de Candidatos (Área de Recrutadores)',
+      body: 'Se você usa o avaliador de candidatos como recrutador, os currículos que envia pertencem a outras pessoas: você é responsável por ter uma base legal para tratá-los e por informar os candidatos. Os arquivos são lidos no seu navegador. Para avaliá-los enviamos ao nosso provedor de IA (OpenAI) uma cópia do texto sem o nome, o e-mail, o telefone nem os links; a remoção do nome não pode ser garantida em todos os casos. Guardamos o nome, os dados de contato e o resultado de cada avaliação, não o texto do currículo, e os excluímos automaticamente ao fim do período de retenção do plano (90 dias por padrão) ou antes, se o recrutador os excluir. A pontuação é uma ajuda para ordenar candidaturas: nenhuma decisão é tomada automaticamente. Se você é candidato e quer acessar ou excluir seus dados, procure o recrutador que recebeu seu currículo.',
     },
     updated: 'Última atualização: 7 de outubro de 2026',
   },

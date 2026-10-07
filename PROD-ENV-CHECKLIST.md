@@ -33,6 +33,7 @@ The container applies database migrations on start (`alembic upgrade head`) and 
 | `PUBLIC_API_URL` | The live URL of your backend + `/api/v1`. | e.g., `https://api.cvstudio.tools/api/v1` |
 | `PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk Publishable Key for production. | Clerk Dashboard -> API Keys (Live Mode). Starts with `pk_live_`. |
 | `CLERK_SECRET_KEY` | Clerk Secret Key for production. | Clerk Dashboard -> API Keys. Required for server-side auth checks. |
+| `PUBLIC_SALES_EMAIL` | Address the recruiter Enterprise plan's "Contact us" button writes to. | Optional; without it the button is not shown. Public: it ends up in the page. |
 
 ---
 
