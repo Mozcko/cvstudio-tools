@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { parsePublicRef, publicRef, publicUrl, slugProblem, suggestSlug } from '../publicLinks';
+import {
+  isLinkKey,
+  keyFromAddress,
+  publicRef,
+  publicUrl,
+  slugProblem,
+  suggestSlug,
+} from '../publicLinks';
 
 describe('slugProblem', () => {
   it.each(['abc', 'juan-perez', 'ana-2', 'a'.repeat(40), '  Juan-Perez  ', 'admin', 'pricing'])(
@@ -43,33 +50,29 @@ describe('suggestSlug', () => {
 describe('addresses', () => {
   const link = { slug: 'juan-perez', key: 'k7f2m9qx' };
 
-  it('are the name followed by the key', () => {
-    expect(publicRef(link)).toBe('juan-perez-k7f2m9qx');
+  it('are the key, then the name', () => {
+    expect(publicRef(link)).toBe('k7f2m9qx/juan-perez');
     expect(publicUrl(link, 'https://www.cvstudio.tools')).toBe(
-      'https://www.cvstudio.tools/u/juan-perez-k7f2m9qx'
+      'https://www.cvstudio.tools/u/k7f2m9qx/juan-perez'
     );
   });
 
   it.each([
-    ['juan-perez-k7f2m9qx', { name: 'juan-perez', key: 'k7f2m9qx' }],
-    ['JUAN-PEREZ-K7F2M9QX', { name: 'juan-perez', key: 'k7f2m9qx' }],
-    ['k7f2m9qx', { name: '', key: 'k7f2m9qx' }],
-    ['a-b-c-abcd2345', { name: 'a-b-c', key: 'abcd2345' }],
-    // Round trip
-    [publicRef(link), { name: link.slug, key: link.key }],
-  ])('%j is understood', (ref, expected) => {
-    expect(parsePublicRef(ref)).toEqual(expected);
+    ['k7f2m9qx', 'k7f2m9qx'],
+    ['K7F2M9QX', 'k7f2m9qx'],
+    [' k7f2m9qx ', 'k7f2m9qx'],
+    // The earlier shape, <name>-<key>, is still understood
+    ['juan-perez-k7f2m9qx', 'k7f2m9qx'],
+    ['a-b-c-abcd2345', 'abcd2345'],
+  ])('the key of %j is %s', (segment, key) => {
+    expect(keyFromAddress(segment)).toBe(key);
+    expect(isLinkKey(key)).toBe(true);
   });
 
-  it.each([
-    'juan-perez',
-    'juan-perez-short',
-    'juan-perez-toolongkey9',
-    'juan-k7f2_9qx',
-    '',
-    '-',
-    'a/b-k7f2m9qx/',
-  ])('%j has no valid key', (ref) => {
-    expect(parsePublicRef(ref)).toBeNull();
-  });
+  it.each(['juan-perez', 'short', 'toolongkey9', 'k7f2_9qx', '', '-', 'juan-perez-short'])(
+    '%j has no valid key',
+    (segment) => {
+      expect(keyFromAddress(segment)).toBeNull();
+    }
+  );
 });
