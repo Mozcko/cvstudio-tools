@@ -107,6 +107,9 @@ export interface UserProfile {
 
 export interface PublicLink {
   cv_id: string;
+  /** Identifies the link; the address is /u/<slug>-<key>. */
+  key: string;
+  /** The readable name chosen by the owner. Not unique. */
   slug: string;
   is_active: boolean;
   /** Switched on, but offline because the plan allows fewer links. */
@@ -260,12 +263,6 @@ export const api = {
 
   // Public links
   listLinks: (token: string | null) => apiRequest<PublicLink[]>(`/links?_t=${Date.now()}`, token),
-
-  checkSlug: (slug: string, cvId: string, token: string | null) =>
-    apiRequest<{ slug: string; available: boolean; reason: string | null }>(
-      `/links/check?slug=${encodeURIComponent(slug)}&cv_id=${encodeURIComponent(cvId)}`,
-      token
-    ),
 
   saveLink: (cvId: string, settings: PublicLinkSettings, token: string | null) =>
     apiRequest<PublicLink>(`/cvs/${cvId}/link`, token, {

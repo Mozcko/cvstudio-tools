@@ -11,7 +11,6 @@ vi.mock('../../../lib/api', async (importOriginal) => {
     ...actual,
     api: {
       listLinks: vi.fn(),
-      checkSlug: vi.fn(),
       saveLink: vi.fn(),
       deleteLink: vi.fn(),
       linkStats: vi.fn(),
@@ -25,6 +24,7 @@ const getToken = async () => 'token';
 
 const link = (overrides: Partial<PublicLink> = {}): PublicLink => ({
   cv_id: 'cv-1',
+  key: 'k7f2m9qx',
   slug: 'ada-lovelace',
   is_active: true,
   paused: false,
@@ -56,7 +56,6 @@ const nameInput = () => screen.getByLabelText(t.share.name) as HTMLInputElement;
 beforeEach(() => {
   vi.clearAllMocks();
   mocked.listLinks.mockResolvedValue([]);
-  mocked.checkSlug.mockResolvedValue({ slug: 'x', available: true, reason: null });
   mocked.linkStats.mockResolvedValue({
     views_total: 0,
     visitors_total: 0,
@@ -79,9 +78,7 @@ describe('ShareModal', () => {
 
     await waitFor(() => expect(nameInput().value).toBe('ada-lovelace'));
     expect(screen.queryByTestId('share-url')).toBeNull();
-    await waitFor(() =>
-      expect(screen.getByTestId('share-name-state').textContent).toBe(t.share.available)
-    );
+    expect(screen.getByTestId('share-name-state').textContent).toBe(t.share.nameHint);
 
     fireEvent.click(screen.getByRole('button', { name: t.share.publish }));
 
@@ -96,9 +93,12 @@ describe('ShareModal', () => {
         indexable: false,
       },
     ]);
-    expect((await screen.findByTestId('share-url')).textContent).toContain('/u/ada-lovelace');
+    // The address carries the key the server assigned
+    expect((await screen.findByTestId('share-url')).textContent).toContain(
+      '/u/ada-lovelace-k7f2m9qx'
+    );
     expect(screen.getByTestId('share-url').getAttribute('href')).toContain(
-      '/u/ada-lovelace?preview=1'
+      '/u/ada-lovelace-k7f2m9qx?preview=1'
     );
     expect(onChanged).toHaveBeenCalledWith(expect.objectContaining({ slug: 'ada-lovelace' }));
     expect(screen.getByTestId('share-message').textContent).toContain(t.share.saved);
@@ -106,7 +106,7 @@ describe('ShareModal', () => {
 
   it('shows an existing link with its settings and totals', async () => {
     mocked.listLinks.mockResolvedValue([
-      link({ cv_id: 'other', slug: 'other' }),
+      link({ cv_id: 'other', key: 'otherkey' }),
       link({ show_phone: true }),
     ]);
     mocked.linkStats.mockResolvedValue({
@@ -117,7 +117,9 @@ describe('ShareModal', () => {
     });
     open();
 
-    expect((await screen.findByTestId('share-url')).textContent).toContain('/u/ada-lovelace');
+    expect((await screen.findByTestId('share-url')).textContent).toContain(
+      '/u/ada-lovelace-k7f2m9qx'
+    );
     expect(nameInput().value).toBe('ada-lovelace');
     expect((screen.getByLabelText(t.share.showPhone) as HTMLInputElement).checked).toBe(true);
     const stats = await screen.findByTestId('share-stats');
@@ -151,36 +153,34 @@ describe('ShareModal', () => {
     expect(stats.textContent).not.toContain(t.share.proStats);
   });
 
-  it('validates the name while typing and blocks saving a bad one', async () => {
+  it('validates the name while typing; any well-formed name is accepted', async () => {
     open();
     await waitFor(() => expect(nameInput().value).toBe('ada-lovelace'));
     const publish = screen.getByRole('button', { name: t.share.publish }) as HTMLButtonElement;
+    const state = () => screen.getByTestId('share-name-state').textContent;
 
     fireEvent.change(nameInput(), { target: { value: 'ab' } });
-    await waitFor(() =>
-      expect(screen.getByTestId('share-name-state').textContent).toBe(t.share.problems.length)
-    );
+    expect(state()).toBe(t.share.problems.length);
     expect(publish.disabled).toBe(true);
 
-    fireEvent.change(nameInput(), { target: { value: 'Admin' } });
-    await waitFor(() =>
-      expect(screen.getByTestId('share-name-state').textContent).toBe(t.share.problems.reserved)
-    );
-
-    mocked.checkSlug.mockResolvedValue({ slug: 'taken-name', available: false, reason: 'taken' });
-    fireEvent.change(nameInput(), { target: { value: 'taken-name' } });
-    await waitFor(() =>
-      expect(screen.getByTestId('share-name-state').textContent).toBe(t.share.problems.taken)
-    );
+    fireEvent.change(nameInput(), { target: { value: 'bad name!' } });
+    expect(state()).toBe(t.share.problems.format);
     expect(publish.disabled).toBe(true);
+
+    // Names other people use, or that look like pages of the site, are fine: the key
+    // makes the address unique
+    for (const name of ['juan-perez', 'admin', 'Pricing']) {
+      fireEvent.change(nameInput(), { target: { value: name } });
+      expect(state()).toBe(t.share.nameHint);
+      expect(publish.disabled).toBe(false);
+    }
+    expect(nameInput().value).toBe('pricing');
     expect(mocked.saveLink).not.toHaveBeenCalled();
   });
 
-  it('explains the free-plan limit and a name taken in the meantime', async () => {
+  it('explains the free-plan limit, and a name the server refuses', async () => {
     open();
-    await waitFor(() =>
-      expect(screen.getByTestId('share-name-state').textContent).toBe(t.share.available)
-    );
+    await waitFor(() => expect(nameInput().value).toBe('ada-lovelace'));
 
     mocked.saveLink.mockRejectedValueOnce(new ApiError('Free plan allows one public link', 403));
     fireEvent.click(screen.getByRole('button', { name: t.share.publish }));
@@ -188,10 +188,10 @@ describe('ShareModal', () => {
     expect(message.textContent).toContain(t.share.limit);
     expect(message.querySelector('a')?.getAttribute('href')).toBe('/pricing');
 
-    mocked.saveLink.mockRejectedValueOnce(new ApiError('That name is already taken.', 409));
+    mocked.saveLink.mockRejectedValueOnce(new ApiError('Use lowercase letters', 422));
     fireEvent.click(screen.getByRole('button', { name: t.share.publish }));
     await waitFor(() =>
-      expect(screen.getByTestId('share-name-state').textContent).toBe(t.share.problems.taken)
+      expect(screen.getByTestId('share-message').textContent).toContain(t.share.problems.format)
     );
   });
 

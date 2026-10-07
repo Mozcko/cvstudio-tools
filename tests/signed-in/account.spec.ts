@@ -367,14 +367,19 @@ test.describe('Mock interview', () => {
 });
 
 test.describe('Public links', () => {
-  /** Removes whatever link the test user still has, so names and the free limit start clean. */
+  /** Removes whatever link the test user still has, so the free limit starts clean. */
   const clearLinks = async (page: Page) => {
     for (const link of (await backend(page, '/links')).data) {
       await backend(page, `/cvs/${link.cv_id}/link`, { method: 'DELETE' });
     }
   };
-  // Unique per run: link names are global, and a local database keeps old ones
-  const unique = (base: string) => `${base}-${Date.now().toString(36)}`;
+  /** What follows /u/ for a link the backend returned: "<name>-<key>". */
+  const addressOf = (link: { slug: string; key: string }) => `${link.slug}-${link.key}`;
+  const publish = async (page: Page, cvId: string, slug: string) => {
+    const saved = await backend(page, `/cvs/${cvId}/link`, { method: 'PUT', body: { slug } });
+    expect(saved.status, JSON.stringify(saved.data)).toBe(200);
+    return saved.data as { slug: string; key: string };
+  };
 
   test('publish from the dashboard, read it signed out, see the view counted, switch it off', async ({
     page,
@@ -382,20 +387,21 @@ test.describe('Public links', () => {
   }) => {
     await clearLinks(page);
     await seedCv(page, 'CV público');
-    const slug = unique('e2e-publico');
     await page.reload();
 
     await page.getByTestId('share-open').click();
     await expect(page.getByTestId('share-modal')).toBeVisible();
-    await page.getByLabel('Nombre del enlace').fill(slug);
-    await expect(page.getByTestId('share-name-state')).toHaveText('Disponible');
+    // Suggested from the person's name. A very common name is fine: the key makes it unique
+    await expect(page.getByLabel('Nombre del enlace')).toHaveValue('seeded-person');
+    await page.getByLabel('Nombre del enlace').fill('juan-perez');
     await page.getByTestId('share-save').click();
-    await expect(page.getByTestId('share-url')).toContainText(`/u/${slug}`);
+    await expect(page.getByTestId('share-url')).toContainText(/\/u\/juan-perez-[a-z0-9]{8}$/);
+    const address = addressOf((await backend(page, '/links')).data[0]);
 
     // Someone else, with no session, opens the link
     const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const visitor = await context.newPage();
-    const response = await visitor.goto(`/u/${slug}`);
+    const response = await visitor.goto(`/u/${address}`);
     expect(response?.status()).toBe(200);
     const sheet = visitor.getByTestId('public-cv');
     await expect(sheet.getByRole('heading', { name: 'Seeded Person' })).toBeVisible();
@@ -434,18 +440,62 @@ test.describe('Public links', () => {
     await page.getByTestId('share-save').click();
     await expect(page.getByTestId('share-message')).toContainText('Enlace guardado');
     await expect
-      .poll(async () => (await visitor.goto(`/u/${slug}?${Date.now()}`))?.status(), {
+      .poll(async () => (await visitor.goto(`/u/${address}?${Date.now()}`))?.status(), {
         timeout: 90_000,
       })
       .toBe(404);
     await context.close();
   });
 
+  test('renaming keeps old addresses working: they lead to the current one', async ({
+    page,
+    request,
+  }) => {
+    await clearLinks(page);
+    const id = await seedCv(page, 'Renombrado');
+    const first = await publish(page, id, 'nombre-viejo');
+    const renamed = await publish(page, id, 'nombre-nuevo');
+    expect(renamed.key).toBe(first.key);
+    const current = `/u/nombre-nuevo-${first.key}`;
+
+    for (const old of [
+      `/u/nombre-viejo-${first.key}`,
+      `/u/${first.key}`,
+      `/u/NOMBRE-NUEVO-${first.key.toUpperCase()}`,
+    ]) {
+      const response = await request.get(old, { maxRedirects: 0 });
+      expect(response.status(), old).toBe(301);
+      expect(response.headers()['location'], old).toBe(current);
+    }
+    expect((await request.get(current, { maxRedirects: 0 })).status()).toBe(200);
+    // The preview flag survives the redirect, so the owner's preview is still not counted
+    const preview = await request.get(`/u/nombre-viejo-${first.key}?preview=1`, {
+      maxRedirects: 0,
+    });
+    expect(preview.headers()['location']).toBe(`${current}?preview=1`);
+  });
+
+  test('the same name can be used again: each link has its own address', async ({
+    page,
+    request,
+  }) => {
+    await clearLinks(page);
+    const id = await seedCv(page, 'Mismo nombre');
+    const before = await publish(page, id, 'juan-perez');
+    await backend(page, `/cvs/${id}/link`, { method: 'DELETE' });
+    const after = await publish(page, id, 'juan-perez');
+
+    expect(after.slug).toBe(before.slug);
+    expect(after.key).not.toBe(before.key);
+    expect((await request.get(`/u/${addressOf(before)}`, { maxRedirects: 0 })).status()).toBe(404);
+    expect((await request.get(`/u/${addressOf(after)}`, { maxRedirects: 0 })).status()).toBe(200);
+  });
+
   test('the owner looking at their own page is not a view, and the phone stays private', async ({
     page,
   }) => {
     await clearLinks(page);
-    const id = await backend(page, '/cvs/', {
+    const created = await backend(page, '/cvs/', {
       method: 'POST',
       body: {
         title: 'Con teléfono',
@@ -457,14 +507,12 @@ test.describe('Public links', () => {
         },
       },
     });
-    const slug = unique('e2e-telefono');
-    const saved = await backend(page, `/cvs/${id.data.id}/link`, { method: 'PUT', body: { slug } });
-    expect(saved.status).toBe(200);
+    const address = addressOf(await publish(page, created.data.id, 'e2e-telefono'));
     // The dashboard is where the browser learns which links are the user's own
     await openDashboard(page);
     await expect(page.getByTestId('link-status')).toBeVisible();
 
-    await page.goto(`/u/${slug}`);
+    await page.goto(`/u/${address}`);
     const sheet = page.getByTestId('public-cv');
     await expect(sheet.getByRole('heading', { name: 'Phone Owner' })).toBeVisible();
     await expect(sheet).not.toContainText('1234 5678');
@@ -505,12 +553,11 @@ test.describe('Public links', () => {
       method: 'POST',
       body: { title: 'Hostil', content: hostile, language: 'ES' },
     });
-    const slug = unique('e2e-hostil');
-    await backend(page, `/cvs/${created.data.id}/link`, { method: 'PUT', body: { slug } });
+    const address = addressOf(await publish(page, created.data.id, 'e2e-hostil'));
 
     const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const visitor = await context.newPage();
-    await visitor.goto(`/u/${slug}`);
+    await visitor.goto(`/u/${address}`);
     const sheet = visitor.getByTestId('public-cv');
 
     await expect(sheet).toContainText('Mallory');
@@ -523,37 +570,32 @@ test.describe('Public links', () => {
     await context.close();
   });
 
-  test('the free plan shares one CV; unknown and badly named links are plain 404s', async ({
+  test('the free plan shares one CV; addresses that cannot exist are plain 404s', async ({
     page,
     request,
   }) => {
     await clearLinks(page);
     const first = await seedCv(page, 'Primero');
-    const second = await seedCv(page, 'Segundo');
-    const one = await backend(page, `/cvs/${first}/link`, {
-      method: 'PUT',
-      body: { slug: unique('e2e-uno') },
-    });
-    expect(one.status).toBe(200);
+    await seedCv(page, 'Segundo');
+    const one = await publish(page, first, 'e2e-uno');
     await page.reload();
 
-    // The second CV's share button is the second one on the page (newest first)
+    // "Segundo" is the newest CV, so its share button comes first
     await page.getByTestId('share-open').first().click();
-    await page.getByLabel('Nombre del enlace').fill(unique('e2e-dos'));
-    await expect(page.getByTestId('share-name-state')).toHaveText('Disponible');
+    await page.getByLabel('Nombre del enlace').fill('e2e-dos');
     await page.getByTestId('share-save').click();
     await expect(page.getByTestId('share-message')).toContainText(
       'El plan gratuito incluye un enlace público'
     );
     expect((await backend(page, '/links')).data).toHaveLength(1);
-    expect(second).toBeTruthy();
 
     for (const path of [
-      '/u/no-existe-este-enlace',
-      '/u/admin',
+      '/u/juan-perez', // a name without a key
+      '/u/juan-perez-aaaaaaaa', // a key nobody has
+      '/u/aaaaaaaa',
       '/u/x',
       '/u/UPPER_case!',
-      '/en/u/whatever',
+      `/en/u/${addressOf(one)}`,
     ]) {
       expect((await request.get(path, { maxRedirects: 0 })).status(), path).toBe(404);
     }

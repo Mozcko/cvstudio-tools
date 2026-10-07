@@ -187,7 +187,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
       const own = await api.listLinks(token);
       setLinks(Object.fromEntries(own.map((link) => [link.cv_id, link])));
       // The owner's own visits to these pages are not counted as views
-      rememberOwnLinks(own.map((link) => link.slug));
+      rememberOwnLinks(own.map((link) => link.key));
       // What is on screen now has been seen; views after this are "new" next time
       if (own.some((link) => link.views_new > 0)) await api.markLinksSeen(token);
     } catch (err) {
@@ -422,7 +422,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
               const next = { ...current };
               if (link) next[sharing.id] = link;
               else delete next[sharing.id];
-              rememberOwnLinks(Object.values(next).map((item) => item.slug));
+              rememberOwnLinks(Object.values(next).map((item) => item.key));
               return next;
             });
           }}
