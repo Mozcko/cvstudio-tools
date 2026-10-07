@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Editor from 'react-simple-code-editor';
+import SimpleCodeEditor from 'react-simple-code-editor';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-markdown';
 import 'prismjs/themes/prism-tomorrow.css';
@@ -8,6 +8,13 @@ import type { CvTheme } from '../../../../templates';
 import ThemeSelector from '../../ThemeSelector';
 import type { CVData } from '../../../../types/cv';
 import type { Translation } from '../../../../i18n/locales';
+
+// react-simple-code-editor is a CommonJS package. Depending on the bundler, its default export
+// arrives either as the component itself or wrapped as { default: Component }; rendering the
+// wrapper object crashes React ("element type is invalid"), so unwrap it here.
+type CodeEditorComponent = typeof SimpleCodeEditor;
+const Editor: CodeEditorComponent =
+  (SimpleCodeEditor as unknown as { default?: CodeEditorComponent }).default ?? SimpleCodeEditor;
 
 interface EditorPanelProps {
   editMode: 'form' | 'code';
