@@ -722,6 +722,12 @@ export function useCVLogic(t: Translation, lang: CVLang) {
     }
   };
 
+  // Autosave only for CVs that already exist in the cloud, and only from the 'idle' state:
+  // after a failed save the status stays 'error' until the next edit, so a broken connection
+  // does not produce a retry (and an error toast) every few seconds.
+  const shouldAutosave =
+    !!resumeId && !isGuest && !autosavePaused && isDirty && saveStatus === 'idle';
+
   return {
     cvData,
     handleDataChange,
@@ -742,6 +748,7 @@ export function useCVLogic(t: Translation, lang: CVLang) {
     resumeId,
     isDirty,
     autosavePaused,
+    shouldAutosave,
     isAtsModalOpen,
     setIsAtsModalOpen,
     handleAtsAnalysis,

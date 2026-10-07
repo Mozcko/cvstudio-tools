@@ -24,7 +24,6 @@ export default function CVBuilder() {
 
   const cvLogic = useCVLogic(t, safeLang);
   const {
-    resumeId,
     saveStatus,
     handleSave,
     cvData,
@@ -41,8 +40,7 @@ export default function CVBuilder() {
     handleThemeChange,
     handleDataChange,
     setMarkdown,
-    isDirty,
-    autosavePaused,
+    shouldAutosave,
     isAtsModalOpen,
     setIsAtsModalOpen,
     handleAtsAnalysis,
@@ -109,14 +107,12 @@ export default function CVBuilder() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSave, handleUndo, handleRedo]);
 
-  // Autosave: only for CVs that already exist in the cloud, and only from the 'idle' state.
-  // After a failed save the status stays 'error' until the next edit, so a broken
-  // connection does not produce a retry (and an error toast) every few seconds.
+  // Autosave a few seconds after the last change (the hook decides when it is allowed)
   useEffect(() => {
-    if (!resumeId || isGuest || autosavePaused || !isDirty || saveStatus !== 'idle') return;
+    if (!shouldAutosave) return;
     const timer = setTimeout(() => handleSave(), AUTOSAVE_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [resumeId, isGuest, autosavePaused, saveStatus, handleSave, isDirty]);
+  }, [shouldAutosave, handleSave]);
 
   if (!isMounted || isInitializing)
     return (
