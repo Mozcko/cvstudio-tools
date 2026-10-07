@@ -10,7 +10,7 @@ const { lang } = Astro.params;
 
 // Safety check for dynamic routes
 if (!['en', 'pt'].includes(lang || '')) {
-  return Astro.redirect('/404');
+  return Astro.rewrite('/404');
 }
 
 const t = useUiTranslations(lang as keyof typeof locales);
@@ -18,33 +18,24 @@ const hero = t('hero') as Record<string, string>;
 ---
 
 <PublicLayout title={`${hero.title} ${hero.titleAccent} | CVStudio`}>
-  <main
-    class="from-app-bg flex flex-1 flex-col items-center justify-center bg-gradient-to-b to-slate-900 px-4 py-20 text-center"
-  >
+  <main class="from-app-bg flex flex-1 flex-col items-center justify-center bg-gradient-to-b to-slate-900 px-4 py-20 text-center">
     <h1 class="mb-6 max-w-4xl text-5xl font-bold tracking-tight text-white md:text-7xl">
       {hero.title}
       <br />
-      <span class="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
-        >{hero.titleAccent}</span
-      >
+      <span class="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+        {hero.titleAccent}
+      </span>
     </h1>
 
-    <p class="mx-auto mb-10 max-w-2xl text-xl leading-relaxed text-slate-400">
-      {hero.description}
-    </p>
+    <p class="mx-auto mb-10 max-w-2xl text-xl leading-relaxed text-slate-400">{hero.description}</p>
 
     <HeroActions lang={lang} client:only="react" />
 
     {/* Preview Image */}
     <div class="relative mt-20 w-full max-w-5xl">
-      <div
-        class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 opacity-20 blur"
-      >
-      </div>
-      <div
-        class="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900 shadow-2xl"
-      >
-        <img src="/editor-preview.png" alt="CVStudio Editor Preview" class="block h-auto w-full" />
+      <div class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 opacity-20 blur"></div>
+      <div class="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900 shadow-2xl">
+        <img src="/editor-preview.png" alt={hero.previewAlt} class="block h-auto w-full" />
       </div>
     </div>
 

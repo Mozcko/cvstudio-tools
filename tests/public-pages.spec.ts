@@ -72,6 +72,39 @@ test.describe('Public pages and routing', () => {
     }
   });
 
+  test('unknown pages get the 404 page in the visitor language', async ({ page, request }) => {
+    const response = await page.goto('/no-existe/para-nada');
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole('heading', { name: 'Oops, página no encontrada' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Volver al Inicio' })).toHaveAttribute('href', '/');
+
+    const english = await page.goto('/en/not-a-page');
+    expect(english?.status()).toBe(404);
+    await expect(page.getByRole('heading', { name: 'Oops, page not found' })).toBeVisible();
+    await page.getByRole('link', { name: 'Back to Home' }).click();
+    await expect(page).toHaveURL(/\/en\/?$/);
+
+    // Signed-out visitors are not bounced to sign-in for pages that do not exist
+    for (const path of ['/nope', '/pt/nope', '/fr', '/fr/pricing', '/fr/sign-in']) {
+      const answer = await request.get(path, { maxRedirects: 0 });
+      expect(answer.status(), path).toBe(404);
+    }
+  });
+
+  test('the app area stays private, also behind a mistyped locale', async ({ request }) => {
+    for (const path of [
+      '/app',
+      '/app/settings',
+      '/en/app/dashboard',
+      '/fr/app/dashboard',
+      '/fr/app/editor',
+    ]) {
+      const answer = await request.get(path, { maxRedirects: 0 });
+      expect([302, 307], path).toContain(answer.status());
+      expect(answer.headers()['location'], path).toContain('sign-in');
+    }
+  });
+
   test('the editor is reachable without an account in every locale', async ({ request }) => {
     for (const path of ['/app/editor', '/en/app/editor', '/pt/app/editor']) {
       expect((await request.get(path, { maxRedirects: 0 })).status(), path).toBe(200);

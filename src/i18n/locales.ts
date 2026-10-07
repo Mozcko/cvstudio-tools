@@ -8,7 +8,7 @@ export const locales = {
         dashboard: 'Mis CVs',
         signIn: 'Iniciar Sesión',
         login: 'Iniciar Sesión',
-        upgrade: 'Upgrade to Pro 🚀',
+        upgrade: 'Mejorar a Pro 🚀',
       },
       hero: {
         badge: '✨ Potenciado por IA',
@@ -17,6 +17,7 @@ export const locales = {
         description:
           'Deja que la IA corrija tu redacción, traduzca tu perfil y optimice tus habilidades para pasar los filtros ATS. Sin complicaciones.',
         cta: 'Crear mi CV Gratis →',
+        previewAlt: 'Vista previa del editor de CVStudio',
       },
       features: {
         title: 'Potencia tu búsqueda de empleo',
@@ -140,7 +141,7 @@ export const locales = {
       preview: 'Vista Previa',
       editor: 'Editor',
       emptyFieldsNotice: 'Los campos vacíos se ocultarán automáticamente en el documento.',
-      showHelp: 'Mostrar Help',
+      showHelp: 'Mostrar ayuda',
       reorder: 'Acomodar Secciones',
     },
     sections: {
@@ -357,6 +358,13 @@ export const locales = {
         failed: 'No se pudo completar la importación. Inténtalo de nuevo.',
       },
     },
+    notFound: {
+      title: 'Página no encontrada',
+      heading: 'Oops, página no encontrada',
+      description: 'La página que buscas no existe o cambió de dirección.',
+      home: 'Volver al Inicio',
+      editor: 'Crear mi CV',
+    },
     ai: {
       button: 'Herramientas IA',
       processing: 'Procesando...',
@@ -398,7 +406,7 @@ export const locales = {
         analyzeAnother: 'Analizar otra oferta',
       },
       coverLetter: {
-        button: 'Generar Cover Letter',
+        button: 'Generar Carta de Presentación',
         title: 'Generador de Carta de Presentación',
         description:
           'La IA redactará una carta personalizada conectando tu experiencia con los requisitos de la oferta.',
@@ -431,6 +439,7 @@ export const locales = {
         description:
           'Let AI correct your writing, translate your profile, and optimize your skills to pass ATS filters. No complications.',
         cta: 'Create my CV Free →',
+        previewAlt: 'Preview of the CVStudio editor',
       },
       features: {
         title: 'Power your job search',
@@ -768,6 +777,13 @@ export const locales = {
         failed: 'The import could not be completed. Please try again.',
       },
     },
+    notFound: {
+      title: 'Page not found',
+      heading: 'Oops, page not found',
+      description: 'The page you are looking for does not exist or has moved.',
+      home: 'Back to Home',
+      editor: 'Create my CV',
+    },
     ai: {
       button: 'AI Tools',
       processing: 'Processing...',
@@ -841,6 +857,7 @@ export const locales = {
         description:
           'Deixe a IA corrigir sua redação, traduzir seu perfil e otimizar suas habilidades para passar os filtros ATS. Sem complicações.',
         cta: 'Criar meu CV Grátis →',
+        previewAlt: 'Prévia do editor do CVStudio',
       },
       features: {
         title: 'Potencialize sua busca de emprego',
@@ -1170,6 +1187,13 @@ export const locales = {
         rateLimited: 'Você atingiu o limite de uso de IA. Tente novamente mais tarde.',
         failed: 'Não foi possível concluir a importação. Tente novamente.',
       },
+    },
+    notFound: {
+      title: 'Página não encontrada',
+      heading: 'Ops, página não encontrada',
+      description: 'A página que você procura não existe ou mudou de endereço.',
+      home: 'Voltar ao Início',
+      editor: 'Criar meu CV',
     },
     ai: {
       button: 'Ferramentas de IA',

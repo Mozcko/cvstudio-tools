@@ -1,0 +1,85 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import { locales } from '../i18n/locales';
+import { getLangFromUrl, localePrefixFromPath } from '../i18n/utils';
+
+// The URL is the one that was not found, so /en/anything gets the English page
+const lang = getLangFromUrl(Astro.url);
+const t = locales[lang].notFound;
+const prefix = localePrefixFromPath(Astro.url.pathname);
+
+Astro.response.status = 404;
+---
+
+<PublicLayout title={`${t.title} | CVStudio`}>
+  <main class="from-app-bg flex flex-1 flex-col items-center justify-center bg-linear-to-b to-slate-900 px-4 py-20 text-center">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 240 180"
+      class="mb-8 h-44 w-auto"
+      role="img"
+      aria-label="404"
+    >
+      <!-- A CV sheet with a missing section -->
+      <rect
+        x="62"
+        y="14"
+        width="116"
+        height="152"
+        rx="8"
+        fill="#1e293b"
+        stroke="#334155"
+        stroke-width="2"
+      ></rect>
+      <circle cx="88" cy="42" r="10" fill="#3b82f6"></circle>
+      <rect x="106" y="34" width="52" height="6" rx="3" fill="#64748b"></rect>
+      <rect x="106" y="46" width="34" height="5" rx="2.5" fill="#475569"></rect>
+      <rect x="78" y="68" width="84" height="5" rx="2.5" fill="#475569"></rect>
+      <rect x="78" y="80" width="66" height="5" rx="2.5" fill="#475569"></rect>
+      <rect
+        x="78"
+        y="98"
+        width="84"
+        height="34"
+        rx="6"
+        fill="none"
+        stroke="#3b82f6"
+        stroke-width="2"
+        stroke-dasharray="6 5"
+      ></rect>
+      <text
+        x="120"
+        y="121"
+        text-anchor="middle"
+        font-family="ui-sans-serif, system-ui, sans-serif"
+        font-size="18"
+        font-weight="800"
+        fill="#60a5fa"
+      >
+        404
+      </text>
+      <rect x="78" y="144" width="48" height="5" rx="2.5" fill="#475569"></rect>
+      <circle cx="196" cy="40" r="5" fill="#a855f7" opacity="0.7"></circle>
+      <circle cx="40" cy="128" r="7" fill="#3b82f6" opacity="0.4"></circle>
+      <circle cx="206" cy="132" r="3" fill="#60a5fa" opacity="0.8"></circle>
+    </svg>
+
+    <h1 class="mb-4 text-4xl font-bold tracking-tight text-white md:text-5xl">{t.heading}</h1>
+    <p class="mx-auto mb-10 max-w-md text-lg text-slate-400">{t.description}</p>
+
+    <div class="flex flex-col items-center gap-3 sm:flex-row">
+      <a
+        href={`${prefix}/`}
+        class="rounded-lg bg-blue-600 px-6 py-3 font-bold text-white shadow-lg shadow-blue-900/30 transition-colors hover:bg-blue-500"
+      >
+        {t.home}
+      </a>
+      <a
+        href={`${prefix}/app/editor`}
+        class="rounded-lg border border-slate-600 px-6 py-3 font-bold text-slate-200 transition-colors hover:border-slate-400 hover:text-white"
+      >
+        {t.editor}
+      </a>
+    </div>
+  </main>
+</PublicLayout>

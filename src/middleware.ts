@@ -1,6 +1,6 @@
 import { clerkMiddleware } from '@clerk/astro/server';
 import { defineMiddleware, sequence } from 'astro/middleware';
-import { isPublicPath, PREFIXED_LOCALES, UNLOCALIZED_PATHS } from './lib/routes';
+import { PREFIXED_LOCALES, requiresSignIn, UNLOCALIZED_PATHS } from './lib/routes';
 
 const i18nMiddleware = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect } = context;
@@ -18,6 +18,7 @@ const i18nMiddleware = defineMiddleware(async (context, next) => {
     pathname.includes('.') ||
     pathname.startsWith('/sign-in') ||
     pathname.startsWith('/sign-up') ||
+    pathname === '/404' ||
     UNLOCALIZED_PATHS.includes(pathname.replace(/\/$/, ''))
   ) {
     return next();
@@ -54,7 +55,7 @@ export const onRequest = sequence(
   clerkMiddleware((auth, context, next) => {
     const { userId, redirectToSignIn } = auth();
 
-    if (!userId && !isPublicPath(new URL(context.request.url).pathname)) {
+    if (!userId && requiresSignIn(new URL(context.request.url).pathname)) {
       return redirectToSignIn({ returnBackUrl: context.request.url });
     }
     return next();

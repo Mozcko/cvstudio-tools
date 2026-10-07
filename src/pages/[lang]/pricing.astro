@@ -8,7 +8,7 @@ import { locales } from '../../i18n/locales';
 const { lang } = Astro.params;
 
 if (!['en', 'pt'].includes(lang)) {
-  return Astro.redirect('/404');
+  return Astro.rewrite('/404');
 }
 
 const t = useUiTranslations(lang as keyof typeof locales);
