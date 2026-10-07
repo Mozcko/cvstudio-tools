@@ -27,7 +27,6 @@ vi.mock('../../../lib/api', async (importOriginal) => {
       listLinks: vi.fn(),
       markLinksSeen: vi.fn(),
       linkStats: vi.fn(),
-      checkSlug: vi.fn(),
       saveLink: vi.fn(),
       deleteLink: vi.fn(),
     },
@@ -130,6 +129,7 @@ describe('Dashboard empty state', () => {
     mocked.listLinks.mockResolvedValue([
       {
         cv_id: '1',
+        key: 'k7f2m9qx',
         slug: 'ada',
         is_active: true,
         paused: false,
@@ -152,7 +152,7 @@ describe('Dashboard empty state', () => {
     expect(screen.getAllByTestId('link-status')).toHaveLength(1);
     await waitFor(() => expect(mocked.markLinksSeen).toHaveBeenCalledTimes(1));
     // The owner's own visits will not be counted
-    expect(JSON.parse(localStorage.getItem('cvstudio:own-links') || '[]')).toEqual(['ada']);
+    expect(JSON.parse(localStorage.getItem('cvstudio:own-links') || '[]')).toEqual(['k7f2m9qx']);
   });
 
   it('still lists the CVs when the links cannot be loaded', async () => {
