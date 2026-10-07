@@ -1,0 +1,27 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import SiteHeader from '../../../components/ui/SiteHeader';
+import InterviewApp from '../../../components/interview/InterviewApp';
+import { locales } from '../../../i18n/locales';
+import { prefixedLocale } from '../../../lib/routes';
+
+const lang = prefixedLocale(Astro.params.lang);
+
+if (!lang) {
+  return Astro.rewrite('/404');
+}
+
+const { userId } = Astro.locals.auth();
+
+if (!userId) {
+  return Astro.redirect(`/${lang}/sign-in`);
+}
+---
+
+<AppLayout title={`${locales[lang].interview.pageTitle} - CVStudio`}>
+  <SiteHeader lang={lang} client:only="react" />
+
+  <main class="container mx-auto px-4 pt-24 pb-12">
+    <InterviewApp lang={lang} client:only="react" />
+  </main>
+</AppLayout>

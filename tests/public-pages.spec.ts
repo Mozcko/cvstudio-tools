@@ -95,6 +95,9 @@ test.describe('Public pages and routing', () => {
     for (const path of [
       '/app',
       '/app/settings',
+      '/app/interview',
+      '/en/app/interview',
+      '/pt/app/interview',
       '/en/app/dashboard',
       '/fr/app/dashboard',
       '/fr/app/editor',

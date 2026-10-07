@@ -71,6 +71,8 @@ React components themselves — form, modals, preview — have no automated test
 - **Import has limits by design.** Scanned PDFs (no OCR) and DOCX are not read; XML and unknown
   data files always go through the AI; the signed-in AI path has no browser test until the
   Clerk development keys exist. See [import.md](./import.md).
+- **The mock interview has not been exercised with a real voice.** Its logic is tested with the
+  provider, the microphone and audio playback faked. See [interview.md](./interview.md).
 - **Browser dialogs** (`alert`, `confirm`) are still used for delete/reset confirmations and
   dashboard errors.
 

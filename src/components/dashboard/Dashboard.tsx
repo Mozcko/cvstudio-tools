@@ -296,7 +296,14 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
             <p className="text-slate-400">{t.dashboard.subtitle}</p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <a
+              href={`${localePrefixFromPath()}/app/interview`}
+              data-testid="interview-link"
+              className="flex items-center gap-2 rounded-lg border border-slate-600 px-4 py-2 font-bold text-slate-200 transition-colors hover:border-slate-400 hover:text-white"
+            >
+              🎙️ {t.interview.navLink}
+            </a>
             <button
               onClick={handleOpenImport}
               data-testid="import-open"

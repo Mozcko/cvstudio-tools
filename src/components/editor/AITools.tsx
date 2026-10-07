@@ -12,6 +12,8 @@ interface AIToolsProps {
   isPro: boolean;
   /** Enhance / Optimize runs a free user has left this week; null for Pro. */
   freeAiRemaining?: number | null;
+  /** Where the mock interview lives (carries the open CV when it is saved). */
+  interviewHref?: string;
 }
 
 export default function AITools({
@@ -24,6 +26,7 @@ export default function AITools({
   isProcessing,
   isPro,
   freeAiRemaining = null,
+  interviewHref,
 }: AIToolsProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -171,6 +174,19 @@ export default function AITools({
                 </span>
               )}
             </button>
+            {interviewHref && (
+              <a
+                href={interviewHref}
+                className="group flex w-full items-center justify-between rounded px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-slate-700"
+              >
+                <div className="flex items-center gap-2">
+                  <span>🎙️</span> {t.interview.menuItem}
+                </div>
+                <span className="rounded bg-purple-500/10 px-1 py-0.5 text-[8px] font-bold text-purple-300">
+                  {t.interview.premiumBadge}
+                </span>
+              </a>
+            )}
           </div>
           <div className="border-t border-slate-700/50 bg-slate-900/50 p-2 text-center text-[10px] text-slate-500">
             {t.ai.dropdown.poweredBy}

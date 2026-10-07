@@ -283,6 +283,11 @@ export default function PricingSection({
               <td className="py-4 text-center text-emerald-400 text-white">✅</td>
             </tr>
             <tr>
+              <td className="py-4">{pricing.table.rows.interview}</td>
+              <td className="py-4 text-center">❌</td>
+              <td className="py-4 text-center text-white">{pricing.table.rows.interviewValue}</td>
+            </tr>
+            <tr>
               <td className="py-4">{pricing.table.rows.pdf}</td>
               <td className="py-4 text-center">✅</td>
               <td className="py-4 text-center text-white">✅ {pricing.table.rows.watermark}</td>

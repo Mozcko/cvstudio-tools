@@ -23,7 +23,7 @@ export const privacy = {
         },
         {
           name: 'Inteligencia Artificial (OpenAI):',
-          text: 'Potencia nuestras herramientas de mejora de texto y análisis.',
+          text: 'Potencia nuestras herramientas de mejora de texto y análisis, y la voz de la entrevista simulada (transcripción y síntesis).',
         },
       ],
     },
@@ -33,7 +33,11 @@ export const privacy = {
         'Tu privacidad es nuestra prioridad. Antes de enviar cualquier dato de tu currículum a nuestros proveedores de IA, nuestro sistema aplica una capa de',
       highlight: 'anonimización automática',
       after:
-        '. Tu correo electrónico, número de teléfono y direcciones exactas son reemplazados por etiquetas genéricas para que los modelos de lenguaje nunca procesen tu Información de Identificación Personal (PII).',
+        '. En las herramientas que trabajan sobre tu currículum (mejora, optimización, traducción, simulador ATS, carta de presentación y preparación de la entrevista), tu correo electrónico, teléfono, ciudad y enlaces se reemplazan por etiquetas genéricas antes de enviarlo.',
+      paragraphs: [
+        'Hay contenido que no puede anonimizarse de forma fiable y se envía tal como es: tu nombre y el texto de tu experiencia; el texto de un PDF que importas (en él se enmascaran correos, teléfonos y enlaces, pero no direcciones postales); y lo que dices o escribes como respuesta en una entrevista simulada.',
+        'En la entrevista simulada, tu voz se envía a OpenAI para transcribirla y no se almacena. Guardamos la transcripción, la oferta que pegaste y el informe hasta que elimines la entrevista o tu cuenta.',
+      ],
     },
     rights: {
       title: '4. Derechos de los Usuarios (Derecho al Olvido)',
@@ -46,7 +50,7 @@ export const privacy = {
       title: '5. Cookies',
       body: 'Utilizamos cookies técnicas esenciales para mantener tu sesión activa y cookies de análisis para entender cómo mejorar nuestra herramienta. Puedes gestionar tu consentimiento a través de nuestro banner informativo.',
     },
-    updated: 'Última actualización: 6 de octubre de 2026',
+    updated: 'Última actualización: 7 de octubre de 2026',
   },
   en: {
     title: 'Privacy Policy',
@@ -68,7 +72,7 @@ export const privacy = {
         },
         {
           name: 'Artificial Intelligence (OpenAI):',
-          text: 'Powers our text improvement and analysis tools.',
+          text: 'Powers our text improvement and analysis tools, and the voice of the mock interview (transcription and speech).',
         },
       ],
     },
@@ -78,7 +82,11 @@ export const privacy = {
         'Your privacy is our priority. Before any data from your resume is sent to our AI providers, our system applies a layer of',
       highlight: 'automatic anonymisation',
       after:
-        '. Your email address, phone number and exact addresses are replaced with generic placeholders so that language models never process your Personally Identifiable Information (PII).',
+        '. In the tools that work on your resume (enhance, optimise, translate, ATS simulator, cover letter and interview preparation), your email address, phone number, city and links are replaced with generic placeholders before it is sent.',
+      paragraphs: [
+        'Some content cannot be reliably anonymised and is sent as it is: your name and the text of your experience; the text of a PDF you import (email addresses, phone numbers and links in it are masked, but postal addresses are not); and what you say or type as an answer in a mock interview.',
+        'In the mock interview, your voice is sent to OpenAI to be transcribed and is not stored. We keep the transcript, the job posting you pasted and the report until you delete the interview or your account.',
+      ],
     },
     rights: {
       title: '4. Your Rights (Right to Be Forgotten)',
@@ -91,7 +99,7 @@ export const privacy = {
       title: '5. Cookies',
       body: 'We use essential technical cookies to keep your session active and analytics cookies to understand how to improve our tool. You can manage your consent through our information banner.',
     },
-    updated: 'Last updated: 6 October 2026',
+    updated: 'Last updated: 7 October 2026',
   },
   pt: {
     title: 'Política de Privacidade',
@@ -113,7 +121,7 @@ export const privacy = {
         },
         {
           name: 'Inteligência Artificial (OpenAI):',
-          text: 'Alimenta nossas ferramentas de melhoria de texto e análise.',
+          text: 'Alimenta nossas ferramentas de melhoria de texto e análise, e a voz da entrevista simulada (transcrição e síntese).',
         },
       ],
     },
@@ -123,7 +131,11 @@ export const privacy = {
         'Sua privacidade é nossa prioridade. Antes de enviar qualquer dado do seu currículo aos nossos provedores de IA, nosso sistema aplica uma camada de',
       highlight: 'anonimização automática',
       after:
-        '. Seu e-mail, número de telefone e endereços exatos são substituídos por marcadores genéricos para que os modelos de linguagem nunca processem suas Informações de Identificação Pessoal (PII).',
+        '. Nas ferramentas que trabalham sobre o seu currículo (melhoria, otimização, tradução, simulador ATS, carta de apresentação e preparação da entrevista), seu e-mail, telefone, cidade e links são substituídos por marcadores genéricos antes do envio.',
+      paragraphs: [
+        'Há conteúdo que não pode ser anonimizado de forma confiável e é enviado como está: seu nome e o texto da sua experiência; o texto de um PDF que você importa (nele, e-mails, telefones e links são mascarados, mas endereços postais não); e o que você diz ou digita como resposta em uma entrevista simulada.',
+        'Na entrevista simulada, sua voz é enviada à OpenAI para transcrição e não é armazenada. Guardamos a transcrição, a vaga que você colou e o relatório até que você exclua a entrevista ou a sua conta.',
+      ],
     },
     rights: {
       title: '4. Direitos dos Usuários (Direito ao Esquecimento)',
@@ -136,7 +148,7 @@ export const privacy = {
       title: '5. Cookies',
       body: 'Utilizamos cookies técnicos essenciais para manter sua sessão ativa e cookies de análise para entender como melhorar nossa ferramenta. Você pode gerenciar seu consentimento por meio do nosso banner informativo.',
     },
-    updated: 'Última atualização: 6 de outubro de 2026',
+    updated: 'Última atualização: 7 de outubro de 2026',
   },
 };
 
