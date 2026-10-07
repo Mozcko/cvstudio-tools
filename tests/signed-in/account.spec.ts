@@ -368,8 +368,9 @@ test.describe('Mock interview', () => {
 
 test.describe('Signing in with work in progress', () => {
   test('what a guest wrote becomes a CV in their account', async ({ page, browser }) => {
-    // A second, signed-out browser: the visitor before they have an account session
-    const context = await browser.newContext({ locale: 'es-MX' });
+    // A second browser with no session: the visitor before they sign in. The empty storage
+    // state is explicit because new contexts inherit this project's signed-in one.
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const guest = await context.newPage();
     await setupClerkTestingToken({ page: guest });
     await guest.goto('/app/editor');
