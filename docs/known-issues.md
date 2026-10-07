@@ -73,6 +73,9 @@ React components themselves — form, modals, preview — have no automated test
   Clerk development keys exist. See [import.md](./import.md).
 - **The mock interview has not been exercised with a real voice.** Its logic is tested with the
   provider, the microphone and audio playback faked. See [interview.md](./interview.md).
+- **Browser tests do not run in CI yet.** The job is skipped until a Clerk development instance
+  exists, and nothing behind login has a browser test. Tracked in
+  [#106](https://github.com/Mozcko/cvstudio-tools/issues/106).
 - **Browser dialogs** (`alert`, `confirm`) are still used for delete/reset confirmations and
   dashboard errors.
 
