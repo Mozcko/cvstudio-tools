@@ -55,19 +55,39 @@ const tidy = (text: string): string =>
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
+/**
+ * Drops everything between `<` and `>`. Done by walking the text once rather than with a
+ * replacement, so no `<` can survive (a replacement can leave one behind: `<<a>b>`). An
+ * unclosed tag swallows the rest.
+ */
+function withoutTags(xml: string): string {
+  let out = '';
+  let at = 0;
+  while (at < xml.length) {
+    const open = xml.indexOf('<', at);
+    if (open === -1) return out + xml.slice(at);
+    out += xml.slice(at, open);
+    const close = xml.indexOf('>', open);
+    if (close === -1) return out;
+    at = close + 1;
+  }
+  return out;
+}
+
 /** Text of a Word document body (`word/document.xml`). */
 export function docxXmlToText(xml: string): string {
   return tidy(
     decodeEntities(
-      xml
-        // Deleted text and field instructions are not what the reader sees
-        .replace(/<w:delText[\s\S]*?<\/w:delText>/g, '')
-        .replace(/<w:instrText[\s\S]*?<\/w:instrText>/g, '')
-        .replace(/<w:tab\b[^>]*\/>/g, '\t')
-        .replace(/<w:(?:br|cr)\b[^>]*\/>/g, '\n')
-        .replace(/<\/w:tc>/g, '\t')
-        .replace(/<\/w:(?:p|tr)>/g, '\n')
-        .replace(/<[^>]+>/g, '')
+      withoutTags(
+        xml
+          // Deleted text and field instructions are not what the reader sees
+          .replace(/<w:delText[\s\S]*?<\/w:delText>/g, '')
+          .replace(/<w:instrText[\s\S]*?<\/w:instrText>/g, '')
+          .replace(/<w:tab\b[^>]*\/>/g, '\t')
+          .replace(/<w:(?:br|cr)\b[^>]*\/>/g, '\n')
+          .replace(/<\/w:tc>/g, '\t')
+          .replace(/<\/w:(?:p|tr)>/g, '\n')
+      )
     )
   );
 }
@@ -77,14 +97,15 @@ export function odtXmlToText(xml: string): string {
   const body = xml.includes('<office:body') ? xml.slice(xml.indexOf('<office:body')) : xml;
   return tidy(
     decodeEntities(
-      body
-        .replace(/<text:tracked-changes[\s\S]*?<\/text:tracked-changes>/g, '')
-        .replace(/<text:tab\b[^>]*\/>/g, '\t')
-        .replace(/<text:line-break\b[^>]*\/>/g, '\n')
-        .replace(/<text:s\b[^>]*\/>/g, ' ')
-        .replace(/<\/table:table-cell>/g, '\t')
-        .replace(/<\/(?:text:p|text:h|table:table-row|text:list-item)>/g, '\n')
-        .replace(/<[^>]+>/g, '')
+      withoutTags(
+        body
+          .replace(/<text:tracked-changes[\s\S]*?<\/text:tracked-changes>/g, '')
+          .replace(/<text:tab\b[^>]*\/>/g, '\t')
+          .replace(/<text:line-break\b[^>]*\/>/g, '\n')
+          .replace(/<text:s\b[^>]*\/>/g, ' ')
+          .replace(/<\/table:table-cell>/g, '\t')
+          .replace(/<\/(?:text:p|text:h|table:table-row|text:list-item)>/g, '\n')
+      )
     )
   );
 }

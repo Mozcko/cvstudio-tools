@@ -46,6 +46,14 @@ const odt = (paragraphs: string[]) =>
     ),
   });
 
+describe('markup never survives', () => {
+  it('leaves no tag behind, however they are nested or broken', () => {
+    const tricky = '<w:p><w:t>Ada <<b>script>alert(1)</script> &lt;ok&gt;</w:t></w:p><w:t>end<w:t';
+    expect(docxXmlToText(tricky)).toBe('Ada script>alert(1) <ok>\nend');
+    expect(odtXmlToText('<text:p>Uno <<i>dos></text:p><text:p>tres')).toBe('Uno dos>\ntres');
+  });
+});
+
 describe('document text', () => {
   it('reads Word XML: paragraphs, tabs, breaks, tables, entities; skips deleted text', () => {
     const xml =
