@@ -1,30 +1,6 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/astro/server';
+import { clerkMiddleware } from '@clerk/astro/server';
 import { defineMiddleware, sequence } from 'astro/middleware';
-
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/en',
-  '/pt',
-  '/en/',
-  '/pt/',
-  '/pricing',
-  '/en/pricing',
-  '/pt/pricing',
-  '/privacy',
-  '/login',
-  '/sign-in(.*)',
-  '/en/sign-in(.*)',
-  '/pt/sign-in(.*)',
-  '/sign-up(.*)',
-  '/en/sign-up(.*)',
-  '/pt/sign-up(.*)',
-  '/app/editor(.*)',
-  '/en/app/editor(.*)',
-  '/pt/app/editor(.*)',
-]);
-
-// Pages that exist only at the root (no /en or /pt twin under src/pages/[lang])
-const UNLOCALIZED_PATHS = ['/privacy', '/login'];
+import { isPublicPath, PREFIXED_LOCALES, UNLOCALIZED_PATHS } from './lib/routes';
 
 const i18nMiddleware = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect } = context;
@@ -33,7 +9,7 @@ const i18nMiddleware = defineMiddleware(async (context, next) => {
   // Supported locales
   const locales = ['es', 'en', 'pt'];
   const defaultLocale = 'es';
-  const prefixedLocales = ['en', 'pt'];
+  const prefixedLocales = PREFIXED_LOCALES;
 
   // 1. Skip middleware for API, internal routes, assets, auth pages and unlocalized pages
   if (
@@ -78,7 +54,7 @@ export const onRequest = sequence(
   clerkMiddleware((auth, context, next) => {
     const { userId, redirectToSignIn } = auth();
 
-    if (!userId && !isPublicRoute(context.request)) {
+    if (!userId && !isPublicPath(new URL(context.request.url).pathname)) {
       return redirectToSignIn({ returnBackUrl: context.request.url });
     }
     return next();
