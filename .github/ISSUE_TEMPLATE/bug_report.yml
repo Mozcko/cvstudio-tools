@@ -1,0 +1,63 @@
+name: 🐛 Bug report
+description: Something on the site or in the editor behaves incorrectly
+title: "[BUG] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not report security problems here.** Use *Security → Report a vulnerability* instead (see SECURITY.md).
+        Remove personal data (your CV content, emails) from anything you paste or screenshot.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where?
+      options:
+        - Editor (form, Markdown, preview)
+        - PDF download
+        - Dashboard / saving
+        - AI tools
+        - Sign-in / account
+        - Pricing / payment
+        - Landing / other pages
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: e.g. Firefox 131 on Windows, Safari on iPhone
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Site language
+      options: [Español, English, Português]
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console errors
+      description: Open the developer tools (F12) → Console, and paste any red lines.
+      render: text

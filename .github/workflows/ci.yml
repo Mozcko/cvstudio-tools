@@ -1,46 +1,122 @@
-name: CI Quality Check
+name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
+
+# A newer push to the same branch or pull request replaces the run in progress
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Astro requires Node >= 22.12
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10'
 
 jobs:
-  build-and-lint:
-    name: 🛡️ Frontend Build & Lint
+  lint:
+    name: 🧹 Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
         with:
-          version: 10
-
-      # Astro 6 requires Node >= 22.12
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
         with:
-          node-version: '22'
-          cache: 'pnpm'
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
 
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+  typecheck:
+    name: 🔤 Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
 
-      - name: Run Linter
-        run: pnpm lint
+  unit:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
 
-      - name: Type Check
-        run: pnpm typecheck
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
 
-      - name: Unit Tests
-        run: pnpm test
+  # Reports known vulnerabilities in production dependencies. Informational for now
+  # (not part of "CI passed"): make it blocking once the report is clean.
+  audit:
+    name: 🔒 Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Audit production dependencies
+        run: |
+          if ! pnpm audit --prod; then
+            echo "::warning::pnpm audit reports known vulnerabilities in production dependencies (see this job's log)."
+          fi
 
-      - name: Build Project
-        run: pnpm build
+  # End-to-end tests (tests/*.spec.ts) are not run yet: Playwright still has to be added
+  # and configured. See docs/known-issues.md.
 
-# The backend has its own repository (cvstudio-tools-backend) and its own workflow.
-# End-to-end tests (tests/*.spec.ts) are not run here yet: Playwright still has to be
-# added as a dependency and configured. See docs/known-issues.md.
+  # Single status to require in branch protection: green only if every required job is green.
+  ci-passed:
+    name: ✅ CI passed
+    if: always()
+    needs: [lint, typecheck, unit, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "::error::At least one CI job did not succeed"
+              exit 1
+            fi
+          done

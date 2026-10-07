@@ -34,9 +34,9 @@ content height (`usePrintPreview.ts`); the print engine decides the real breaks 
 
 ## Build, CI and tests
 
-### 4. CI does not run end-to-end tests — Read
-`.github/workflows/ci.yml` runs lint, type-check, unit tests and the build on Node 22 for pushes
-and pull requests to `main` and `master`. The Playwright job was removed until item 5 is done.
+### 4. CI does not run end-to-end tests, and the dependency audit is informational — Read
+`ci.yml` runs lint, type-check, unit tests and the build. Browser tests are missing until item 5
+is done, and `pnpm audit --prod` only reports (it does not block merging).
 
 ### 5. Playwright is not installed or configured — Read
 `pnpm test:e2e` runs `playwright test`, but `@playwright/test` is not a dependency and there is no
@@ -51,9 +51,7 @@ most intricate code in the repo — has no automated test.
 
 | Item | Status |
 | :--- | :--- |
-| Root `README.md` | Still describes v1 (Supabase, OpenAI key, Node 18, a `CONTRIBUTING.md` that does not exist). Use [development.md](./development.md) |
 | Theme id `hardvard` | Typo, but stored with every CV — do not rename without a data migration |
-| `master` vs `main` | Two long-lived branches that are merged into each other; pick one |
 
 ## Design limitations to keep in mind
 
