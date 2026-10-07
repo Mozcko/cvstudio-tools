@@ -122,6 +122,17 @@ export const api = {
       body: JSON.stringify(params),
     }),
 
+  // Text of an existing resume → structured CV (free users get a limited number)
+  importCV: (
+    params: { text: string; source: 'pdf' | 'structured'; language: CVLang },
+    token: string | null
+  ) =>
+    apiRequest<{ cv: Record<string, unknown>; remaining_free_imports: number | null }>(
+      '/ai/import',
+      token,
+      { method: 'POST', body: JSON.stringify(params) }
+    ),
+
   simulateATS: (
     cv_content: CVData,
     job_description: string,

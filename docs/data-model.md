@@ -66,6 +66,7 @@ defeat caching.
 | `updateCV(id)` | `PUT /cvs/{id}` | any of `{ title, content, language, theme }` | `CVRecord` |
 | `deleteCV(id)` | `DELETE /cvs/{id}` | — | 204 |
 | `rewriteCV` | `POST /ai/rewrite` | `{ cv_content, action, target_language, job_description? }` | `{ cv }` |
+| `importCV` | `POST /ai/import` | `{ text, source, language }` | `{ cv, remaining_free_imports }` |
 | `simulateATS` | `POST /ai/ats` | `{ cv_content, job_description, language }` | `ATSResult` |
 | `generateCoverLetter` | `POST /ai/cover-letter` | `{ cv_content, job_description, language }` | `{ cover_letter }` |
 | `createCheckoutSession` | `POST /billing/create-checkout-session` | `{ plan_type: '7' \| '30' \| 'lifetime' }` | `{ url }` |

@@ -108,6 +108,7 @@ pnpm exec playwright test --ui            # interactive runner
 | `tests/public-pages.spec.ts` | Landing in three locales, `/login`, protected dashboard, locale redirect keeps `?id=`, `/privacy` in three locales, `<html lang>` |
 | `tests/guest-editor.spec.ts` | Typing → preview, undo/redo, draft survives reload, themes, form ↔ Markdown, lossy Markdown refused, dates in es/en/pt, no Spanish in the English interface, sign-in prompts |
 | `tests/privacy.spec.ts` | Cookie banner and privacy page, in Spanish and translated |
+| `tests/import.spec.ts` | Importing as a guest: JSON / YAML / TOML, LinkedIn ZIP, PDF text extraction and sign-in prompt, rejected files, no markup injection |
 
 Notes for writing tests: the React islands only hydrate after Clerk has initialised, so wait with
 `waitForEditor(page)` from `tests/helpers.ts`; read the sheet with `sheetText` (themes upper-case

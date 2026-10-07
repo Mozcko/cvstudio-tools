@@ -68,6 +68,9 @@ React components themselves — form, modals, preview — have no automated test
   *defaults* to the URL locale the first time. See [i18n.md](./i18n.md).
 - **Translations of the privacy policy** (`src/i18n/privacy.ts`, en and pt) were written from
   the Spanish original and have not had a legal review.
+- **Import has limits by design.** Scanned PDFs (no OCR) and DOCX are not read; XML and unknown
+  data files always go through the AI; the signed-in AI path has no browser test until the
+  Clerk development keys exist. See [import.md](./import.md).
 - **Browser dialogs** (`alert`, `confirm`) are still used for delete/reset confirmations and
   dashboard errors.
 - **`personal.role`** is collected by the form but not printed in the CV document.

@@ -12,6 +12,7 @@ import AuthRequiredModal from '../AuthRequiredModal';
 import GuestBanner from '../GuestBanner';
 import OptimizeModal from '../OptimizeModal';
 import AIChoiceModal from '../AIChoiceModal';
+import ImportModal from '../ImportModal';
 import Toast from '../../ui/Toast';
 
 const AUTOSAVE_DELAY_MS = 3000;
@@ -21,6 +22,7 @@ export default function CVBuilder() {
   const safeLang = lang as 'es' | 'en' | 'pt';
   const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
   const [isMounted, setIsMounted] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const cvLogic = useCVLogic(t, safeLang);
   const {
@@ -52,6 +54,8 @@ export default function CVBuilder() {
     setIsChoiceModalOpen,
     handleChoiceApplied,
     handleGenerateCoverLetter,
+    handleImport,
+    getAuthToken,
     handleUndo,
     handleRedo,
     canUndo,
@@ -130,6 +134,7 @@ export default function CVBuilder() {
           lang={safeLang}
           toggleLang={toggleLang}
           onReset={handleReset}
+          onImport={() => setIsImportOpen(true)}
           onPrint={handlePrint}
           isAiProcessing={isAiProcessing}
           onAiAction={(action) => {
@@ -200,6 +205,16 @@ export default function CVBuilder() {
         onClose={() => setIsChoiceModalOpen(false)}
         onChoice={handleChoiceApplied}
         t={t}
+      />
+
+      <ImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        t={t}
+        lang={safeLang}
+        getToken={getAuthToken}
+        onImported={handleImport}
+        replacesContent
       />
 
       <AuthRequiredModal
