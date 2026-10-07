@@ -5,6 +5,8 @@ import { locales } from '../../../../../i18n/locales';
 import { ApiError, api } from '../../../../../lib/api';
 import { readDraft, writeDraft, type CVDraft } from '../../../../../lib/cvDraft';
 import { initialCVData, type CVData } from '../../../../../types/cv';
+import type { ImportResult } from '../../../../../lib/import';
+import { normalizeImported } from '../../../../../lib/import/normalize';
 import { useCVLogic } from '../useCVLogic';
 
 // ── Test doubles ────────────────────────────────────────────────────────────
@@ -367,6 +369,58 @@ describe('saving', () => {
     // The next edit resumes autosave; undo brings the previous CV back
     act(() => result.current.handleDataChange(withName(result.current.cvData, 'After reset')));
     expect(result.current.shouldAutosave).toBe(true);
+  });
+});
+
+// ── Import ──────────────────────────────────────────────────────────────────
+
+describe('import', () => {
+  const imported = (missing: ImportResult['missing'] = []): ImportResult => ({
+    data: normalizeImported({
+      personal: { name: 'Imported Person' },
+      experience: [{ company: 'Acme', role: 'Dev', startDate: '2020-01', isCurrent: true }],
+    }).data,
+    source: 'json-resume',
+    missing,
+  });
+
+  it('replaces the CV, marks it dirty, and one undo brings the previous CV back', async () => {
+    const { result } = await setup();
+    act(() => result.current.setEditMode('code'));
+
+    act(() => result.current.handleImport(imported(), 'resume.json'));
+
+    expect(result.current.cvData.personal.name).toBe('Imported Person');
+    expect(result.current.cvData.experience).toHaveLength(1);
+    expect(result.current.editMode).toBe('form');
+    expect(result.current.isDirty).toBe(true);
+    expect(result.current.resumeTitle).toBe('Imported Person');
+    expect(result.current.toasts.map((toast) => toast.message)).toEqual([t.import.success]);
+
+    act(() => result.current.handleUndo());
+    expect(result.current.cvData.personal.name).toBe(initialCVData.personal.name);
+    expect(result.current.cvData.experience).toHaveLength(initialCVData.experience.length);
+  });
+
+  it('keeps a title the user already chose and says what was not found', async () => {
+    const { result } = await setup();
+    act(() => result.current.setResumeTitle('My title'));
+
+    act(() => result.current.handleImport(imported(['education', 'skills']), 'resume.json'));
+
+    expect(result.current.resumeTitle).toBe('My title');
+    expect(result.current.toasts.at(-1)?.message).toContain(
+      `${t.import.missing.education}, ${t.import.missing.skills}`
+    );
+  });
+
+  it('only hands out a token to signed-in users', async () => {
+    const signedIn = await setup();
+    expect(await signedIn.result.current.getAuthToken()).toBe('token');
+
+    auth.userId = null;
+    const guest = await setup();
+    expect(await guest.result.current.getAuthToken()).toBeNull();
   });
 });
 

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAuth } from '@clerk/astro/react';
 import { api, isApiError, type CVRecord, type RewriteAction } from '../../../../lib/api';
+import type { ImportResult } from '../../../../lib/import';
+import { importedTitle, missingNotice } from '../../../../lib/import/messages';
 import {
   migrateLegacyDraft,
   readDraft,
@@ -699,6 +701,25 @@ export function useCVLogic(t: Translation, lang: CVLang) {
     }
   };
 
+  // ── Import ───────────────────────────────────────────────────────────────
+  /** Token for calls made outside this hook; null for guests. */
+  const getAuthToken = useCallback(
+    async (): Promise<string | null> => (isGuest ? null : getToken()),
+    [isGuest, getToken]
+  );
+
+  /** Replaces the open CV with imported data. One undo step brings the previous CV back. */
+  const handleImport = (result: ImportResult, fileName: string) => {
+    pushImmediateHistory(rawData);
+    setRawData(result.data);
+    setEditMode('form');
+    if (!resumeTitle.trim()) setResumeTitle(importedTitle(t, result, fileName));
+    markEdited();
+    showToast(t.import.success);
+    const notice = missingNotice(t, result);
+    if (notice) showToast(notice, 'info');
+  };
+
   const handleAtsAnalysis = async (jd: string) => {
     if (!canUseAi()) return null;
     try {
@@ -760,6 +781,8 @@ export function useCVLogic(t: Translation, lang: CVLang) {
     setIsChoiceModalOpen,
     handleChoiceApplied,
     handleGenerateCoverLetter,
+    handleImport,
+    getAuthToken,
     handleUndo,
     handleRedo,
     canUndo: past.length > 0,

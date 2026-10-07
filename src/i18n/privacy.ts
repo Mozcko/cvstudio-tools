@@ -7,7 +7,7 @@ export const privacy = {
     title: 'Política de Privacidad',
     collection: {
       title: '1. Recopilación de Datos',
-      body: 'En CVStudio, recopilamos información necesaria para brindarte un servicio de creación de currículums de alta calidad. Esto incluye los datos que introduces en tus currículums (experiencia laboral, educación, habilidades) y datos de contacto básicos.',
+      body: 'En CVStudio, recopilamos información necesaria para brindarte un servicio de creación de currículums de alta calidad. Esto incluye los datos que introduces en tus currículums (experiencia laboral, educación, habilidades) y datos de contacto básicos. Si importas un currículum existente, el archivo se lee en tu navegador y no se sube a nuestros servidores; cuando hace falta IA para interpretarlo (por ejemplo, un PDF) solo se envía su texto, con los correos electrónicos, teléfonos y enlaces enmascarados.',
     },
     processors: {
       title: '2. Procesamiento por Terceros',
@@ -46,13 +46,13 @@ export const privacy = {
       title: '5. Cookies',
       body: 'Utilizamos cookies técnicas esenciales para mantener tu sesión activa y cookies de análisis para entender cómo mejorar nuestra herramienta. Puedes gestionar tu consentimiento a través de nuestro banner informativo.',
     },
-    updated: 'Última actualización: 6 de junio de 2026',
+    updated: 'Última actualización: 6 de octubre de 2026',
   },
   en: {
     title: 'Privacy Policy',
     collection: {
       title: '1. Data We Collect',
-      body: 'At CVStudio we collect the information needed to give you a high-quality resume building service. This includes the data you enter in your resumes (work experience, education, skills) and basic contact details.',
+      body: 'At CVStudio we collect the information needed to give you a high-quality resume building service. This includes the data you enter in your resumes (work experience, education, skills) and basic contact details. If you import an existing resume, the file is read in your browser and is not uploaded to our servers; when AI is needed to interpret it (a PDF, for example) only its text is sent, with e-mail addresses, phone numbers and links masked.',
     },
     processors: {
       title: '2. Third-Party Processing',
@@ -91,13 +91,13 @@ export const privacy = {
       title: '5. Cookies',
       body: 'We use essential technical cookies to keep your session active and analytics cookies to understand how to improve our tool. You can manage your consent through our information banner.',
     },
-    updated: 'Last updated: 6 June 2026',
+    updated: 'Last updated: 6 October 2026',
   },
   pt: {
     title: 'Política de Privacidade',
     collection: {
       title: '1. Coleta de Dados',
-      body: 'No CVStudio, coletamos as informações necessárias para oferecer um serviço de criação de currículos de alta qualidade. Isso inclui os dados que você insere em seus currículos (experiência profissional, formação, habilidades) e dados básicos de contato.',
+      body: 'No CVStudio, coletamos as informações necessárias para oferecer um serviço de criação de currículos de alta qualidade. Isso inclui os dados que você insere em seus currículos (experiência profissional, formação, habilidades) e dados básicos de contato. Se você importar um currículo existente, o arquivo é lido no seu navegador e não é enviado aos nossos servidores; quando a IA é necessária para interpretá-lo (um PDF, por exemplo), apenas o texto é enviado, com e-mails, telefones e links mascarados.',
     },
     processors: {
       title: '2. Processamento por Terceiros',
@@ -136,7 +136,7 @@ export const privacy = {
       title: '5. Cookies',
       body: 'Utilizamos cookies técnicos essenciais para manter sua sessão ativa e cookies de análise para entender como melhorar nossa ferramenta. Você pode gerenciar seu consentimento por meio do nosso banner informativo.',
     },
-    updated: 'Última atualização: 6 de junho de 2026',
+    updated: 'Última atualização: 6 de outubro de 2026',
   },
 };
 

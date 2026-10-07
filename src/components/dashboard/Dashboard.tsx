@@ -11,6 +11,9 @@ import useFitScale from '../../hooks/useFitScale';
 import { localePrefixFromPath } from '../../i18n/utils';
 import { locales, type Translation } from '../../i18n/locales';
 import useProStatus from '../../hooks/useProStatus';
+import ImportModal from '../editor/ImportModal';
+import type { ImportResult } from '../../lib/import';
+import { importedTitle } from '../../lib/import/messages';
 
 type Resume = CVRecord;
 
@@ -151,6 +154,8 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
   });
 
   const loading = loadingResumes || loadingPro;
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const cvLang = (['es', 'en', 'pt'].includes(lang) ? lang : 'es') as CVLang;
 
   const loadResumes = useCallback(async () => {
     if (!userId) return;
@@ -183,17 +188,48 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
     return () => window.removeEventListener('cvstudio:cv-created', reload);
   }, [loadResumes]);
 
-  const handleCreate = async () => {
-    if (!userId) return;
+  const pricingUrl = `${localePrefixFromPath()}/pricing`;
+  const limitMessage = t.dashboard.limitReached;
 
-    const pricingUrl = `${localePrefixFromPath()}/pricing`;
-    const limitMessage = t.dashboard.limitReached;
+  /** Free plan: tells the user and sends them to pricing when they cannot add another CV. */
+  const atCvLimit = () => {
+    if (isPro || resumes.length < 3) return false;
+    alert(limitMessage);
+    window.location.href = pricingUrl;
+    return true;
+  };
 
-    if (!isPro && resumes.length >= 3) {
-      alert(limitMessage);
-      window.location.href = pricingUrl;
-      return;
+  const handleOpenImport = () => {
+    // Checked first so nobody spends an import on a CV they cannot save
+    if (!userId || atCvLimit()) return;
+    setIsImportOpen(true);
+  };
+
+  const handleImported = async (result: ImportResult, fileName: string) => {
+    const token = await getToken();
+    try {
+      const created = await api.createCV(
+        {
+          title: importedTitle(t, result, fileName),
+          content: result.data,
+          language: result.data.language || lang.toUpperCase(),
+          theme: DEFAULT_THEME_ID,
+        },
+        token
+      );
+      window.location.href = `${localePrefixFromPath()}/app/editor?id=${created.id}`;
+    } catch (err: unknown) {
+      if (isApiError(err, 403)) {
+        alert(limitMessage);
+        window.location.href = pricingUrl;
+        return;
+      }
+      throw err;
     }
+  };
+
+  const handleCreate = async () => {
+    if (!userId || atCvLimit()) return;
 
     const initialData: CVData = {
       personal: {
@@ -260,12 +296,21 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
             <p className="text-slate-400">{t.dashboard.subtitle}</p>
           </div>
 
-          <button
-            onClick={handleCreate}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-bold text-white transition-colors hover:bg-blue-500"
-          >
-            {t.dashboard.create}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleOpenImport}
+              data-testid="import-open"
+              className="flex items-center gap-2 rounded-lg border border-slate-600 px-4 py-2 font-bold text-slate-200 transition-colors hover:border-slate-400 hover:text-white"
+            >
+              {t.import.dashboardButton}
+            </button>
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-bold text-white transition-colors hover:bg-blue-500"
+            >
+              {t.dashboard.create}
+            </button>
+          </div>
         </div>
 
         {isPro && showProBanner && (
@@ -306,6 +351,15 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
           </div>
         )}
       </div>
+
+      <ImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        t={t}
+        lang={cvLang}
+        getToken={getToken}
+        onImported={handleImported}
+      />
     </>
   );
 }
