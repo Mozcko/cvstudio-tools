@@ -186,8 +186,9 @@ Conventions visible in the code:
 - Dependabot: npm weekly (max 10 open PRs), GitHub Actions monthly.
 - Issue templates: bug report and feature request; blank issues are disabled.
 - CI (`.github/workflows/ci.yml`): lint, type-check, unit tests and build on every pull request
-  and push to `main`; `✅ CI passed` is the check required to merge. A dependency audit runs as an
-  informational job. `security.yml` adds CodeQL; `deploy.yml` deploys `main` to Railway after CI,
+  and push to `main`; `✅ CI passed` is the check required to merge. The dependency audit is part of
+  it: a known high or critical vulnerability in a production dependency blocks the merge; lower
+  severities and development-only packages are only reported. `security.yml` adds CodeQL; `deploy.yml` deploys `main` to Railway after CI,
   with approval. The contributor workflow and one-time setup are in
   [`CONTRIBUTING.md`](../CONTRIBUTING.md).
 
