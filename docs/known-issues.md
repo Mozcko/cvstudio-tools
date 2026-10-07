@@ -69,13 +69,12 @@ React components themselves — form, modals, preview — have no automated test
 - **Translations of the privacy policy** (`src/i18n/privacy.ts`, en and pt) were written from
   the Spanish original and have not had a legal review.
 - **Import has limits by design.** Scanned PDFs (no OCR) and DOCX are not read; XML and unknown
-  data files always go through the AI; the signed-in AI path has no browser test until the
-  Clerk development keys exist. See [import.md](./import.md).
+  data files always go through the AI. See [import.md](./import.md).
 - **The mock interview has not been exercised with a real voice.** Its logic is tested with the
   provider, the microphone and audio playback faked. See [interview.md](./interview.md).
-- **Browser tests do not run in CI yet.** The job is skipped until a Clerk development instance
-  exists, and nothing behind login has a browser test. Tracked in
-  [#106](https://github.com/Mozcko/cvstudio-tools/issues/106).
+- **Not covered by a browser test:** the PDF download (it ends in the browser's print dialog),
+  real payments, and anything that needs a real AI answer — those requests are answered by the
+  tests themselves.
 - **Browser dialogs** (`alert`, `confirm`) are still used for delete/reset confirmations and
   dashboard errors.
 

@@ -72,5 +72,8 @@ stated in the privacy policy (`src/i18n/privacy.ts`, section 3).
   typed interview through to the report, history, three languages.
 - `tests/public-pages.spec.ts` — signed-out visitors are sent to sign in.
 
-Not covered by any automated test: real microphone capture, real audio playback, and the page
-in a real browser as a signed-in premium user.
+- `tests/signed-in/account.spec.ts` — in a real browser: the upgrade screen for a free user and
+  a typed interview through to the report, with the interview API answered by the test.
+
+Not covered by any automated test: real microphone capture, real audio playback, and a real
+answer from the AI provider.

@@ -108,6 +108,7 @@ pnpm exec playwright test --ui            # interactive runner
 | `tests/public-pages.spec.ts` | Landing in three locales, `/login`, protected dashboard, locale redirect keeps `?id=`, `/privacy` in three locales, `<html lang>` |
 | `tests/guest-editor.spec.ts` | Typing → preview, undo/redo, draft survives reload, themes, form ↔ Markdown, lossy Markdown refused, dates in es/en/pt, no Spanish in the English interface, sign-in prompts |
 | `tests/privacy.spec.ts` | Cookie banner and privacy page, in Spanish and translated |
+| `tests/signed-in/` | Everything behind sign-in, against the real backend (see below) |
 | `tests/import.spec.ts` | Importing as a guest: JSON / YAML / TOML, LinkedIn ZIP, PDF text extraction and sign-in prompt, rejected files, no markup injection |
 
 Notes for writing tests: the React islands only hydrate after Clerk has initialised, so wait with
@@ -115,12 +116,49 @@ Notes for writing tests: the React islands only hydrate after Clerk has initiali
 headings, so `innerText` lies); use the `data-testid`s `mode-form`, `mode-code` and `lang-toggle`
 for controls whose label changes with the language.
 
-In CI the `🎭 End-to-End` job runs when the repository variable `E2E_CLERK_PUBLISHABLE_KEY` exists
-(with the secret `E2E_CLERK_SECRET_KEY`, which must also be added as a Dependabot secret so
-Dependabot pull requests can run it). Until then the job is **skipped**, and shows as skipped on
-the pull request: `✅ CI passed` accepts that, but never a failure. Both keys come from a Clerk
-*development* instance; development keys also work on localhost, so put the same two in `.env`
-to run the suite locally.
+### Signed-in tests
+
+`tests/signed-in/` covers what is behind sign-in, against the **real backend**:
+
+| File | What it does |
+| :--- | :--- |
+| `auth.setup.ts` | Signs the test user in once (through `@clerk/testing`, with a one-time ticket) and stores the session in `playwright/.auth/user.json`. Creates the user in the Clerk development instance if it does not exist. Refuses to run with a production key |
+| `account.ts` | Helpers: call the backend as the test user, empty the account, seed a CV |
+| `account.spec.ts` | Dashboard (empty state, create, delete, free-plan limit, import), editor (autosave, save as new, missing CV), the free AI allowance and the Pro locks, the mock interview (upgrade screen, a typed interview to the report), and a guest's draft becoming a CV after sign-in |
+
+Rules the suite follows:
+
+- **One shared user on the free plan.** The tests run in order and each one empties the account
+  first, so they do not depend on each other.
+- **No AI provider is ever called.** Where a test needs an AI answer (`/ai/rewrite`, the whole
+  `/interviews` API) it answers the request itself with `page.route`. Everything else — CVs, the
+  profile, plan checks, quotas — goes to the real backend. A premium plan is simulated by
+  rewriting the `/users/me` response; the server-side gate is checked separately with real calls.
+- **Checked on the server, not only on screen.** After an action the test reads the CV back
+  through the API.
+
+They are part of `pnpm test:e2e` when `E2E_USER_EMAIL` is set; without it only the guest suite
+runs. To run them locally you need, besides the two Clerk development keys:
+
+```bash
+# .env of the frontend
+E2E_USER_EMAIL=e2e+clerk_test@example.com
+PUBLIC_API_URL=http://127.0.0.1:8000/api/v1
+
+# the backend, pointing at the same Clerk instance and allowing the test origin
+CLERK_ISSUER=https://<your-instance>.clerk.accounts.dev
+FRONTEND_URL=http://127.0.0.1:4399
+```
+
+### In CI
+
+The `🎭 End-to-End` job runs when the repository variable `E2E_CLERK_PUBLISHABLE_KEY` exists
+(with the secret `E2E_CLERK_SECRET_KEY`, which must also be a Dependabot secret). Until then the
+job is **skipped**, and shows as skipped on the pull request: `✅ CI passed` accepts that, but
+never a failure. With the variable `E2E_USER_EMAIL` it also runs the signed-in tests: the job
+starts Postgres, checks out the backend's `main` branch, applies its migrations and runs it next
+to the built site, with `CLERK_ISSUER` derived from the publishable key. So a backend change
+that breaks the frontend shows up on the next frontend pull request.
 
 ## Code style
 
