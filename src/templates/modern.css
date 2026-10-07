@@ -16,6 +16,17 @@
     padding-bottom: 10px;
 }
 
+/* Role / title under the name */
+.cv-preview-content .cv-role {
+    font-size: 1.05em;
+    font-weight: 600;
+    color: #3b82f6;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 0.5em;
+    margin-bottom: 0.4em;
+}
+
 /* Links de contacto */
 .cv-preview-content p:first-of-type {
     margin-bottom: 2rem;

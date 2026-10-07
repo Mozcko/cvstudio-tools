@@ -34,6 +34,14 @@
     color: #000;
 }
 
+/* Role / title under the name */
+.cv-preview-content .cv-role {
+    text-align: center;
+    font-size: 11pt;
+    font-style: italic;
+    margin-bottom: 6px;
+}
+
 .cv-preview-content p:first-of-type {
     text-align: center;
     font-size: 10pt;
