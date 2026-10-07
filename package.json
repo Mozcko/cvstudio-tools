@@ -38,6 +38,7 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.2.43",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "@testing-library/dom": "^10.4.2",
