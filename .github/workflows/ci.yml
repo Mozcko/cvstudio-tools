@@ -108,6 +108,8 @@ jobs:
     name: 🎭 End-to-End
     if: vars.E2E_CLERK_PUBLISHABLE_KEY != ''
     runs-on: ubuntu-latest
+    # Normally about three minutes. A stuck download must fail, not hold the pull request
+    timeout-minutes: 20
     env:
       PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.E2E_CLERK_PUBLISHABLE_KEY }}
       CLERK_SECRET_KEY: ${{ secrets.E2E_CLERK_SECRET_KEY }}
@@ -162,12 +164,18 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      # The system packages come from a package mirror that occasionally hangs: give each
+      # attempt a few minutes and try once more before giving up
       - name: Install the browser
         if: steps.browser-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
+        run: |
+          timeout 300 pnpm exec playwright install --with-deps chromium \
+            || timeout 300 pnpm exec playwright install --with-deps chromium
       - name: Install the browser's system libraries
         if: steps.browser-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
+        run: |
+          timeout 240 pnpm exec playwright install-deps chromium \
+            || timeout 240 pnpm exec playwright install-deps chromium
       - name: Build
         run: pnpm build
 
