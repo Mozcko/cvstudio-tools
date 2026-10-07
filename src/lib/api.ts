@@ -103,6 +103,39 @@ export interface UserProfile {
   };
 }
 
+// ── Public links ─────────────────────────────────────────────────────────────
+
+export interface PublicLink {
+  cv_id: string;
+  slug: string;
+  is_active: boolean;
+  /** Switched on, but offline because the plan allows fewer links. */
+  paused: boolean;
+  show_email: boolean;
+  show_phone: boolean;
+  indexable: boolean;
+  views_total: number;
+  /** Views since the owner last looked. */
+  views_new: number;
+  created_at: string;
+}
+
+export interface PublicLinkSettings {
+  slug: string;
+  is_active: boolean;
+  show_email: boolean;
+  show_phone: boolean;
+  indexable: boolean;
+}
+
+export interface LinkStats {
+  views_total: number;
+  visitors_total: number;
+  /** Pro only. */
+  daily: { day: string; views: number }[] | null;
+  referrers: { host: string | null; views: number }[] | null;
+}
+
 // ── Mock interview ───────────────────────────────────────────────────────────
 
 export interface InterviewTurn {
@@ -224,6 +257,31 @@ export const api = {
         body: JSON.stringify(params),
       }
     ),
+
+  // Public links
+  listLinks: (token: string | null) => apiRequest<PublicLink[]>(`/links?_t=${Date.now()}`, token),
+
+  checkSlug: (slug: string, cvId: string, token: string | null) =>
+    apiRequest<{ slug: string; available: boolean; reason: string | null }>(
+      `/links/check?slug=${encodeURIComponent(slug)}&cv_id=${encodeURIComponent(cvId)}`,
+      token
+    ),
+
+  saveLink: (cvId: string, settings: PublicLinkSettings, token: string | null) =>
+    apiRequest<PublicLink>(`/cvs/${cvId}/link`, token, {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    }),
+
+  deleteLink: (cvId: string, token: string | null) =>
+    apiRequest<void>(`/cvs/${cvId}/link`, token, { method: 'DELETE' }),
+
+  linkStats: (cvId: string, token: string | null) =>
+    apiRequest<LinkStats>(`/cvs/${cvId}/link/stats?_t=${Date.now()}`, token),
+
+  /** The owner has seen the current view counts. */
+  markLinksSeen: (token: string | null) =>
+    apiRequest<void>('/links/seen', token, { method: 'POST' }),
 
   // Mock interview (premium plans)
   startInterview: (

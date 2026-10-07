@@ -366,6 +366,200 @@ test.describe('Mock interview', () => {
   });
 });
 
+test.describe('Public links', () => {
+  /** Removes whatever link the test user still has, so names and the free limit start clean. */
+  const clearLinks = async (page: Page) => {
+    for (const link of (await backend(page, '/links')).data) {
+      await backend(page, `/cvs/${link.cv_id}/link`, { method: 'DELETE' });
+    }
+  };
+  // Unique per run: link names are global, and a local database keeps old ones
+  const unique = (base: string) => `${base}-${Date.now().toString(36)}`;
+
+  test('publish from the dashboard, read it signed out, see the view counted, switch it off', async ({
+    page,
+    browser,
+  }) => {
+    await clearLinks(page);
+    await seedCv(page, 'CV público');
+    const slug = unique('e2e-publico');
+    await page.reload();
+
+    await page.getByTestId('share-open').click();
+    await expect(page.getByTestId('share-modal')).toBeVisible();
+    await page.getByLabel('Nombre del enlace').fill(slug);
+    await expect(page.getByTestId('share-name-state')).toHaveText('Disponible');
+    await page.getByTestId('share-save').click();
+    await expect(page.getByTestId('share-url')).toContainText(`/u/${slug}`);
+
+    // Someone else, with no session, opens the link
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const visitor = await context.newPage();
+    const response = await visitor.goto(`/u/${slug}`);
+    expect(response?.status()).toBe(200);
+    const sheet = visitor.getByTestId('public-cv');
+    await expect(sheet.getByRole('heading', { name: 'Seeded Person' })).toBeVisible();
+    await expect(sheet).toContainText('Seeded summary.');
+    // E-mail shown, and the page tells search engines to stay away by default
+    await expect(sheet).toContainText('seed@example.com');
+    await expect(visitor.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+    await expect(visitor.locator('html')).toHaveAttribute('lang', 'es');
+    // Free plan: the badge is there
+    await expect(visitor.getByTestId('public-cv-badge')).toBeVisible();
+    // The theme's stylesheet arrived with the page
+    await expect
+      .poll(() =>
+        visitor.evaluate(
+          () => getComputedStyle(document.querySelector('.cv-preview-content h1')!).textAlign
+        )
+      )
+      .toBe('center');
+
+    // The visit is counted a moment later, once
+    await expect
+      .poll(async () => (await backend(page, '/links')).data[0]?.views_total, { timeout: 20_000 })
+      .toBe(1);
+    await visitor.reload();
+    await visitor.waitForTimeout(3500);
+    expect((await backend(page, '/links')).data[0].views_total).toBe(1);
+
+    // The owner sees it on the dashboard
+    await openDashboard(page);
+    await expect(page.getByTestId('link-status')).toContainText('1 visitas');
+    await expect(page.getByTestId('new-views')).toHaveText('+1 nuevas');
+
+    // Switched off: the page is gone for everyone
+    await page.getByTestId('share-open').click();
+    await page.getByLabel('Enlace público activo').uncheck();
+    await page.getByTestId('share-save').click();
+    await expect(page.getByTestId('share-message')).toContainText('Enlace guardado');
+    await expect
+      .poll(async () => (await visitor.goto(`/u/${slug}?${Date.now()}`))?.status(), {
+        timeout: 90_000,
+      })
+      .toBe(404);
+    await context.close();
+  });
+
+  test('the owner looking at their own page is not a view, and the phone stays private', async ({
+    page,
+  }) => {
+    await clearLinks(page);
+    const id = await backend(page, '/cvs/', {
+      method: 'POST',
+      body: {
+        title: 'Con teléfono',
+        language: 'EN',
+        theme: 'minimal',
+        content: {
+          personal: { name: 'Phone Owner', email: 'owner@example.com', phone: '+52 55 1234 5678' },
+          experience: [],
+        },
+      },
+    });
+    const slug = unique('e2e-telefono');
+    const saved = await backend(page, `/cvs/${id.data.id}/link`, { method: 'PUT', body: { slug } });
+    expect(saved.status).toBe(200);
+    // The dashboard is where the browser learns which links are the user's own
+    await openDashboard(page);
+    await expect(page.getByTestId('link-status')).toBeVisible();
+
+    await page.goto(`/u/${slug}`);
+    const sheet = page.getByTestId('public-cv');
+    await expect(sheet.getByRole('heading', { name: 'Phone Owner' })).toBeVisible();
+    await expect(sheet).not.toContainText('1234 5678');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await page.waitForTimeout(3500);
+
+    expect((await backend(page, '/links')).data[0].views_total).toBe(0);
+  });
+
+  test('a published CV cannot run or load anything in the visitor browser', async ({
+    page,
+    browser,
+  }) => {
+    await clearLinks(page);
+    const hostile = {
+      personal: {
+        name: 'Mallory<script>window.__pwned = true</script>',
+        role: 'Dev<img src=x onerror="window.__pwned = true">',
+        email: '',
+        phone: '',
+        city: '',
+        summary:
+          'Visible text <iframe src="https://example.com"></iframe>' +
+          '<a href="javascript:window.__pwned=true">click me</a>' +
+          '<div style="position:fixed;inset:0" onclick="window.__pwned = true">overlay</div>',
+        socials: [
+          { id: '1', network: 'Site', username: 'x', url: 'javascript:window.__pwned=true' },
+        ],
+      },
+      experience: [],
+      education: [],
+      skills: [],
+      certifications: [],
+      languages: '',
+      interests: '',
+    };
+    const created = await backend(page, '/cvs/', {
+      method: 'POST',
+      body: { title: 'Hostil', content: hostile, language: 'ES' },
+    });
+    const slug = unique('e2e-hostil');
+    await backend(page, `/cvs/${created.data.id}/link`, { method: 'PUT', body: { slug } });
+
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const visitor = await context.newPage();
+    await visitor.goto(`/u/${slug}`);
+    const sheet = visitor.getByTestId('public-cv');
+
+    await expect(sheet).toContainText('Mallory');
+    await expect(sheet).toContainText('Visible text');
+    await expect(sheet.locator('script, img, iframe, form, [style], [onclick]')).toHaveCount(0);
+    await expect(sheet.locator('a[href^="javascript"]')).toHaveCount(0);
+    await sheet.getByText('overlay').click();
+    await sheet.getByText('click me').click();
+    expect(await visitor.evaluate(() => (window as { __pwned?: boolean }).__pwned)).toBeUndefined();
+    await context.close();
+  });
+
+  test('the free plan shares one CV; unknown and badly named links are plain 404s', async ({
+    page,
+    request,
+  }) => {
+    await clearLinks(page);
+    const first = await seedCv(page, 'Primero');
+    const second = await seedCv(page, 'Segundo');
+    const one = await backend(page, `/cvs/${first}/link`, {
+      method: 'PUT',
+      body: { slug: unique('e2e-uno') },
+    });
+    expect(one.status).toBe(200);
+    await page.reload();
+
+    // The second CV's share button is the second one on the page (newest first)
+    await page.getByTestId('share-open').first().click();
+    await page.getByLabel('Nombre del enlace').fill(unique('e2e-dos'));
+    await expect(page.getByTestId('share-name-state')).toHaveText('Disponible');
+    await page.getByTestId('share-save').click();
+    await expect(page.getByTestId('share-message')).toContainText(
+      'El plan gratuito incluye un enlace público'
+    );
+    expect((await backend(page, '/links')).data).toHaveLength(1);
+    expect(second).toBeTruthy();
+
+    for (const path of [
+      '/u/no-existe-este-enlace',
+      '/u/admin',
+      '/u/x',
+      '/u/UPPER_case!',
+      '/en/u/whatever',
+    ]) {
+      expect((await request.get(path, { maxRedirects: 0 })).status(), path).toBe(404);
+    }
+  });
+});
+
 test.describe('Signing in with work in progress', () => {
   test('what a guest wrote becomes a CV in their account', async ({ page, browser }) => {
     // A second browser with no session: the visitor before they sign in. The empty storage

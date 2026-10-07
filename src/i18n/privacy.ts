@@ -50,6 +50,10 @@ export const privacy = {
       title: '5. Cookies',
       body: 'Utilizamos cookies técnicas esenciales para mantener tu sesión activa y cookies de análisis para entender cómo mejorar nuestra herramienta. Puedes gestionar tu consentimiento a través de nuestro banner informativo.',
     },
+    publicLinks: {
+      title: '6. Enlaces públicos y estadísticas de visitas',
+      body: 'Si publicas un currículum con un enlace público, cualquier persona que tenga la dirección podrá verlo; tú decides si se muestran tu correo y tu teléfono, puedes desactivar el enlace en cualquier momento y, por defecto, pedimos a los buscadores que no lo indexen. Para mostrarte cuántas visitas recibe, registramos cada visita con un identificador anónimo que cambia cada día y el sitio web desde el que llegó el visitante. No guardamos direcciones IP ni usamos cookies para ello.',
+    },
     updated: 'Última actualización: 7 de octubre de 2026',
   },
   en: {
@@ -99,6 +103,10 @@ export const privacy = {
       title: '5. Cookies',
       body: 'We use essential technical cookies to keep your session active and analytics cookies to understand how to improve our tool. You can manage your consent through our information banner.',
     },
+    publicLinks: {
+      title: '6. Public Links and View Statistics',
+      body: 'If you publish a resume with a public link, anyone who has the address can see it; you decide whether your email address and phone number are shown, you can switch the link off at any time and, by default, we ask search engines not to index it. To show you how many visits it gets, we record each visit with an anonymous identifier that changes every day and the website the visitor came from. We do not store IP addresses or use cookies for this.',
+    },
     updated: 'Last updated: 7 October 2026',
   },
   pt: {
@@ -147,6 +155,10 @@ export const privacy = {
     cookies: {
       title: '5. Cookies',
       body: 'Utilizamos cookies técnicos essenciais para manter sua sessão ativa e cookies de análise para entender como melhorar nossa ferramenta. Você pode gerenciar seu consentimento por meio do nosso banner informativo.',
+    },
+    publicLinks: {
+      title: '6. Links Públicos e Estatísticas de Visitas',
+      body: 'Se você publicar um currículo com um link público, qualquer pessoa que tenha o endereço poderá vê-lo; você decide se o seu e-mail e o seu telefone são exibidos, pode desativar o link a qualquer momento e, por padrão, pedimos aos buscadores que não o indexem. Para mostrar quantas visitas ele recebe, registramos cada visita com um identificador anônimo que muda a cada dia e o site de onde o visitante veio. Não armazenamos endereços IP nem usamos cookies para isso.',
     },
     updated: 'Última atualização: 7 de outubro de 2026',
   },

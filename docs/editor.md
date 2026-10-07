@@ -161,6 +161,7 @@ panel width (`useFitScale`), and downloading works from either tab.
 | Undo / redo | `handleUndo` / `handleRedo` | |
 | AI menu | `handleAiAction`, modal openers | See [auth-billing-ai.md](./auth-billing-ai.md) |
 | Save | `handleSave` | |
+| Share | `ShareModal` | Only for a saved CV of a signed-in user. See [sharing.md](./sharing.md) |
 | Import | `ImportModal` → `handleImport` | Replaces the open CV as one undo step. See [import.md](./import.md) |
 | Reset | `handleReset` | `confirm()`, restores the sample CV and default theme, pauses autosave |
 | Download PDF | `handlePrint` → `usePrintPreview.print()` | Requires sign-in; opens the print dialog |

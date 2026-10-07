@@ -87,6 +87,7 @@ Spanish is the default locale and has no URL prefix; English and Portuguese live
 | `/app/dashboard` | `/[lang]/app/dashboard` | signed-in | `Dashboard` |
 | `/app/interview` | `/[lang]/app/interview` | signed-in (premium plans use it; others see an upgrade screen) | `InterviewApp` |
 | `/privacy` | `/[lang]/privacy` | public | Static policy (`PrivacyPolicy.astro`) |
+| `/u/<name>` | — | public | A published CV, rendered on the server (`PublicCvSheet`). See [sharing.md](./sharing.md) |
 | `/login` | — | public | Redirects to `/sign-in` |
 | anything else | | public | `404.astro`, status 404. A `[lang]` page asked for with an unknown locale (`/fr/…`) rewrites to it |
 

@@ -1,6 +1,6 @@
 import { clerkMiddleware } from '@clerk/astro/server';
 import { defineMiddleware, sequence } from 'astro/middleware';
-import { PREFIXED_LOCALES, requiresSignIn, UNLOCALIZED_PATHS } from './lib/routes';
+import { PREFIXED_LOCALES, PUBLIC_CV, requiresSignIn, UNLOCALIZED_PATHS } from './lib/routes';
 
 const i18nMiddleware = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect } = context;
@@ -19,6 +19,7 @@ const i18nMiddleware = defineMiddleware(async (context, next) => {
     pathname.startsWith('/sign-in') ||
     pathname.startsWith('/sign-up') ||
     pathname === '/404' ||
+    PUBLIC_CV.test(pathname) ||
     UNLOCALIZED_PATHS.includes(pathname.replace(/\/$/, ''))
   ) {
     return next();

@@ -13,6 +13,7 @@ import GuestBanner from '../GuestBanner';
 import OptimizeModal from '../OptimizeModal';
 import AIChoiceModal from '../AIChoiceModal';
 import ImportModal from '../ImportModal';
+import ShareModal from '../../share/ShareModal';
 import Toast from '../../ui/Toast';
 
 const AUTOSAVE_DELAY_MS = 3000;
@@ -23,6 +24,7 @@ export default function CVBuilder() {
   const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
   const [isMounted, setIsMounted] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
 
   const cvLogic = useCVLogic(t, safeLang);
   const {
@@ -137,6 +139,7 @@ export default function CVBuilder() {
           toggleLang={toggleLang}
           onReset={handleReset}
           onImport={() => setIsImportOpen(true)}
+          onShare={resumeId && !isGuest ? () => setIsShareOpen(true) : undefined}
           onPrint={handlePrint}
           isAiProcessing={isAiProcessing}
           onAiAction={(action) => {
@@ -210,6 +213,19 @@ export default function CVBuilder() {
         onChoice={handleChoiceApplied}
         t={t}
       />
+
+      {resumeId && (
+        <ShareModal
+          isOpen={isShareOpen}
+          onClose={() => setIsShareOpen(false)}
+          t={t}
+          cvId={resumeId}
+          personName={cvData.personal.name || resumeTitle}
+          isMarkdown={editMode === 'code'}
+          isPro={isPro}
+          getToken={getAuthToken}
+        />
+      )}
 
       <ImportModal
         isOpen={isImportOpen}
