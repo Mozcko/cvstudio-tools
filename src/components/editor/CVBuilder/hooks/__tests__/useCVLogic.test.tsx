@@ -349,10 +349,47 @@ describe('saving', () => {
     expect(result.current.shouldAutosave).toBe(true);
   });
 
-  it('never autosaves a CV that has not been saved yet, nor for guests', async () => {
+  it('never autosaves a CV that has not been saved yet', async () => {
     const { result } = await setup();
     act(() => result.current.handleDataChange(withName(result.current.cvData, 'Jane')));
     expect(result.current.shouldAutosave).toBe(false);
+  });
+
+  // Issue #35: autosave used to fire for guests and open the sign-in prompt every few seconds
+  it('never autosaves for a guest, with or without a CV id, and never prompts on its own', async () => {
+    auth.userId = null;
+    for (const search of ['', '?id=cv-1']) {
+      setUrl(search);
+      const { result, unmount } = await setup();
+      // Opening someone's link as a guest asks once to sign in; dismiss that
+      act(() => result.current.setIsAuthModalOpen(false));
+
+      for (const name of ['J', 'Ja', 'Jane']) {
+        act(() => result.current.handleDataChange(withName(result.current.cvData, name)));
+      }
+
+      expect(result.current.isGuest, search).toBe(true);
+      expect(result.current.isDirty, search).toBe(true);
+      expect(result.current.shouldAutosave, search).toBe(false);
+      expect(result.current.isAuthModalOpen, search).toBe(false);
+      unmount();
+    }
+    expect(mocked.createCV).not.toHaveBeenCalled();
+    expect(mocked.updateCV).not.toHaveBeenCalled();
+  });
+
+  it('while sign-in state is still loading, a save attempt does nothing', async () => {
+    auth.userId = null;
+    auth.isLoaded = false;
+    const { result } = renderHook(() => useCVLogic(t, 'es'));
+    act(() => result.current.handleDataChange(withName(result.current.cvData, 'Jane')));
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    expect(result.current.isAuthModalOpen).toBe(false);
+    expect(mocked.createCV).not.toHaveBeenCalled();
   });
 
   it('Reset restores the sample CV but does not autosave it over the cloud copy', async () => {
