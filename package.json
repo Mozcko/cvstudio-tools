@@ -17,11 +17,11 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@astrojs/node": "^10.1.4",
-    "@astrojs/react": "^5.0.7",
-    "@clerk/astro": "^3.4.6",
+    "@astrojs/node": "^11.1.7",
+    "@astrojs/react": "^7.0.1",
+    "@clerk/astro": "^4.1.10",
     "@tailwindcss/vite": "^4.3.1",
-    "astro": "^6.4.8",
+    "astro": "^7.3.6",
     "prismjs": "^1.30.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
