@@ -1,24 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/astro/react';
-import { api } from '../lib/api';
+import { api, type Plan, type UserProfile } from '../lib/api';
 
+/** The signed-in user's plan. Everything is "free" until the profile has loaded. */
 export default function useProStatus() {
   const { userId, getToken, isLoaded } = useAuth();
-  const [isPro, setIsPro] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStatus = async () => {
       if (!isLoaded || !userId) {
-        setIsPro(false);
+        setProfile(null);
         setLoading(false);
         return;
       }
 
       try {
         const token = await getToken();
-        const profile = await api.getUserProfile(token);
-        setIsPro(profile.is_pro);
+        setProfile(await api.getUserProfile(token));
       } catch (error) {
         console.error('Error fetching pro status:', error);
       } finally {
@@ -29,5 +29,14 @@ export default function useProStatus() {
     fetchStatus();
   }, [userId, isLoaded, getToken]);
 
-  return { isPro, loading };
+  const isPro = profile?.is_pro ?? false;
+  const plan: Plan = profile?.plan ?? (isPro ? 'sprint' : 'free');
+
+  return {
+    isPro,
+    plan,
+    isPremium: profile?.is_premium ?? false,
+    usage: profile?.usage ?? null,
+    loading,
+  };
 }

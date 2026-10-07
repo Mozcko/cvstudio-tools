@@ -25,6 +25,8 @@ import { DEFAULT_THEME_ID, getThemeById, themes } from '../../../../templates';
 import type { Translation } from '../../../../i18n/locales';
 import { localePrefixFromPath } from '../../../../i18n/utils';
 
+// Rewrite actions a free user may try a few times a week (the backend enforces the number)
+const FREE_AI_ACTIONS: RewriteAction[] = ['enhance', 'optimize'];
 const HISTORY_LIMIT = 50;
 const HISTORY_DEBOUNCE_MS = 800;
 
@@ -79,6 +81,11 @@ export function useCVLogic(t: Translation, lang: CVLang) {
   const [autosavePaused, setAutosavePaused] = useState(false);
   const [isInitializing, setIsInitializing] = useState(!!initial.urlId);
   const [isPro, setIsPro] = useState(false);
+  // Enhance / Optimize runs a non-Pro user has left this week (0 until the profile loads)
+  const [freeAi, setFreeAi] = useState<{ remaining: number; resetsAt: string | null }>({
+    remaining: 0,
+    resetsAt: null,
+  });
   const [isAiProcessing, setIsAiProcessing] = useState(false);
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -227,6 +234,8 @@ export function useCVLogic(t: Translation, lang: CVLang) {
         const token = await getToken();
         const profile = await api.getUserProfile(token);
         setIsPro(profile.is_pro);
+        const quota = profile.usage?.free_ai;
+        setFreeAi({ remaining: quota?.remaining ?? 0, resetsAt: quota?.resets_at ?? null });
       } catch (err: unknown) {
         console.error(err);
       }
@@ -554,24 +563,46 @@ export function useCVLogic(t: Translation, lang: CVLang) {
   ]);
 
   // ── AI ───────────────────────────────────────────────────────────────────
-  /** Returns false (after telling the user why) when AI cannot be used. */
-  const canUseAi = (): boolean => {
+  /** Message for a free user who has no Enhance / Optimize runs left this week. */
+  const freeAiUsedUpMessage = (resetsAt: string | null): string => {
+    const date = resetsAt ? new Date(resetsAt) : null;
+    return date && !Number.isNaN(date.getTime())
+      ? t.messages.freeAiUsedUpUntil.replace(
+          '{date}',
+          date.toLocaleDateString(lang, { weekday: 'long', day: 'numeric', month: 'long' })
+        )
+      : t.messages.freeAiUsedUp;
+  };
+
+  /**
+   * Returns false (after telling the user why) when AI cannot be used. Enhance and Optimize
+   * have a small weekly allowance for free users; everything else needs Pro.
+   */
+  const canUseAi = (action?: RewriteAction): boolean => {
     if (isGuest) {
       triggerAuthModal(t.messages.authTitle, t.messages.authDescription);
       return false;
     }
-    if (!isPro) {
-      triggerAuthModal(t.messages.upgradeTitle, t.messages.upgradeDescription, 'upgrade');
-      return false;
-    }
-    return true;
+    if (isPro) return true;
+
+    const hasFreeAllowance = action !== undefined && FREE_AI_ACTIONS.includes(action);
+    if (hasFreeAllowance && freeAi.remaining > 0) return true;
+
+    triggerAuthModal(
+      t.messages.upgradeTitle,
+      hasFreeAllowance ? freeAiUsedUpMessage(freeAi.resetsAt) : t.messages.upgradeDescription,
+      'upgrade'
+    );
+    return false;
   };
 
   const reportAiError = (error: unknown, fallbackMessage: string) => {
     console.error(error);
     if (isApiError(error, 403)) {
-      // The server is the authority on Pro status (a pass may have just expired)
+      // The server is the authority on Pro status (a pass may have just expired) and on
+      // the free allowance (it may have been used from another tab)
       setIsPro(false);
+      setFreeAi((current) => ({ ...current, remaining: 0 }));
       triggerAuthModal(t.messages.upgradeTitle, t.messages.upgradeDescription, 'upgrade');
     } else if (isApiError(error, 429)) {
       showToast(t.messages.aiRateLimited, 'error');
@@ -581,7 +612,7 @@ export function useCVLogic(t: Translation, lang: CVLang) {
   };
 
   const handleAiAction = async (action: RewriteAction, providedJd?: string) => {
-    if (!canUseAi()) return;
+    if (!canUseAi(action)) return;
     setIsAiProcessing(true);
     try {
       const token = await getToken();
@@ -597,6 +628,11 @@ export function useCVLogic(t: Translation, lang: CVLang) {
       const aiData = response.cv as Partial<CVData>;
       if (!aiData || typeof aiData.personal !== 'object' || aiData.personal === null) {
         throw new Error('Invalid AI response');
+      }
+      if (typeof response.free_remaining === 'number') {
+        const remaining = response.free_remaining;
+        setFreeAi((current) => ({ ...current, remaining }));
+        showToast(t.messages.freeAiLeft.replace('{n}', String(remaining)), 'info');
       }
 
       // Merge defensively: anything the model dropped or emptied keeps the user's value
@@ -789,6 +825,7 @@ export function useCVLogic(t: Translation, lang: CVLang) {
     canRedo: future.length > 0,
     isGuest,
     isPro,
+    freeAiRemaining: isPro ? null : freeAi.remaining,
     isAuthModalOpen,
     setIsAuthModalOpen,
     triggerAuthModal,
