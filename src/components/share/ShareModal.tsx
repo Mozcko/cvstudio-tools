@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   api,
   isApiError,
@@ -8,13 +8,7 @@ import {
 } from '../../lib/api';
 import type { Translation } from '../../i18n/locales';
 import { localePrefixFromPath } from '../../i18n/utils';
-import {
-  normalizeSlug,
-  publicUrl,
-  slugProblem,
-  suggestSlug,
-  type SlugProblem,
-} from '../../lib/publicLinks';
+import { normalizeSlug, publicUrl, slugProblem, suggestSlug } from '../../lib/publicLinks';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -30,8 +24,6 @@ interface ShareModalProps {
   /** Called with the link after every change (null when it was deleted). */
   onChanged?: (link: PublicLink | null) => void;
 }
-
-type NameState = 'idle' | 'checking' | 'available' | SlugProblem;
 
 const toggleRow =
   'flex cursor-pointer items-center justify-between gap-3 py-2 text-sm text-slate-200';
@@ -57,13 +49,11 @@ export default function ShareModal({
     show_phone: false,
     indexable: false,
   });
-  const [nameState, setNameState] = useState<NameState>('idle');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: 'ok' | 'error' | 'limit'; text: string } | null>(
     null
   );
   const [copied, setCopied] = useState(false);
-  const checkRef = useRef(0);
 
   // Load the CV's link (if it has one) each time the dialog opens
   useEffect(() => {
@@ -95,7 +85,6 @@ export default function ShareModal({
                 indexable: false,
               }
         );
-        setNameState('idle');
         if (own) {
           const loaded = await api.linkStats(cvId, token);
           if (!cancelled) setStats(loaded);
@@ -113,38 +102,15 @@ export default function ShareModal({
     };
   }, [isOpen, cvId, personName, getToken, t]);
 
-  // Tell the user about the name while they type, without asking the server on every key
-  useEffect(() => {
-    if (!isOpen || loading) return;
-    const slug = normalizeSlug(form.slug);
-    const ticket = ++checkRef.current;
-    const timer = setTimeout(async () => {
-      const problem = slugProblem(slug);
-      if (problem) return setNameState(problem);
-      if (link && slug === link.slug) return setNameState('idle');
-      setNameState('checking');
-      try {
-        const result = await api.checkSlug(slug, cvId, await getToken());
-        if (ticket !== checkRef.current) return;
-        setNameState(result.available ? 'available' : ((result.reason as SlugProblem) ?? 'taken'));
-      } catch {
-        if (ticket === checkRef.current) setNameState('idle');
-      }
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [form.slug, isOpen, loading, link, cvId, getToken]);
-
   if (!isOpen) return null;
 
   const slug = normalizeSlug(form.slug);
-  const nameProblem = ['length', 'format', 'reserved', 'taken'].includes(nameState)
-    ? (nameState as SlugProblem)
-    : null;
-  const url = link ? publicUrl(link.slug) : '';
+  const nameProblem = slugProblem(slug);
+  const url = link ? publicUrl(link) : '';
   const online = !!link && link.is_active && !link.paused;
 
   const save = async () => {
-    if (slugProblem(slug) || saving) return;
+    if (nameProblem || saving) return;
     setSaving(true);
     setMessage(null);
     try {
@@ -152,14 +118,12 @@ export default function ShareModal({
       const saved = await api.saveLink(cvId, { ...form, slug }, token);
       setLink(saved);
       setForm((current) => ({ ...current, slug: saved.slug }));
-      setNameState('idle');
       setMessage({ kind: 'ok', text: t.share.saved });
       onChanged?.(saved);
       if (!stats) setStats(await api.linkStats(cvId, token));
     } catch (error) {
       if (isApiError(error, 403)) setMessage({ kind: 'limit', text: t.share.limit });
-      else if (isApiError(error, 409)) setNameState('taken');
-      else if (isApiError(error, 422)) setNameState('format');
+      else if (isApiError(error, 422)) setMessage({ kind: 'error', text: t.share.problems.format });
       else setMessage({ kind: 'error', text: t.share.error });
     } finally {
       setSaving(false);
@@ -288,16 +252,10 @@ export default function ShareModal({
                 />
               </div>
               <p
-                className={`mt-1 text-xs ${nameProblem ? 'text-red-400' : nameState === 'available' ? 'text-emerald-400' : 'text-slate-500'}`}
+                className={`mt-1 text-xs ${nameProblem ? 'text-red-400' : 'text-slate-500'}`}
                 data-testid="share-name-state"
               >
-                {nameProblem
-                  ? t.share.problems[nameProblem]
-                  : nameState === 'checking'
-                    ? t.share.checking
-                    : nameState === 'available'
-                      ? t.share.available
-                      : t.share.nameHint}
+                {nameProblem ? t.share.problems[nameProblem] : t.share.nameHint}
               </p>
             </div>
 
@@ -337,7 +295,7 @@ export default function ShareModal({
               <button
                 type="button"
                 onClick={save}
-                disabled={saving || !!nameProblem || nameState === 'checking'}
+                disabled={saving || !!nameProblem}
                 data-testid="share-save"
                 className="rounded-lg bg-blue-600 px-5 py-2.5 font-bold text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
               >

@@ -2,16 +2,18 @@
 import Layout from '../../layouts/Layout.astro';
 import PublicCvSheet from '../../components/share/PublicCvSheet';
 import { locales } from '../../i18n/locales';
-import { slugProblem } from '../../lib/publicLinks';
+import { parsePublicRef, publicRef } from '../../lib/publicLinks';
 
 /**
  * A published CV. Rendered on the server from what the backend is willing to show to anyone;
  * the page itself runs no application code, only a few lines to count the visit.
  */
 const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-const slug = (Astro.params.slug || '').toLowerCase();
+// The address is /u/<name>-<key>: the key finds the CV, the name is there to be read
+const ref = parsePublicRef(Astro.params.slug || '');
 
 interface PublicCV {
+  key: string;
   slug: string;
   title: string;
   language: string;
@@ -21,15 +23,15 @@ interface PublicCV {
   indexable: boolean;
 }
 
-// Names that cannot exist are not worth a request
-if (slugProblem(slug) !== null) {
+// An address without a valid key cannot exist: not worth a request
+if (!ref) {
   return Astro.rewrite('/404');
 }
 
 let cv: PublicCV | null = null;
 let unavailable = false;
 try {
-  const response = await fetch(`${API_URL}/public/cv/${encodeURIComponent(slug)}`, {
+  const response = await fetch(`${API_URL}/public/cv/${ref.key}`, {
     headers: { Accept: 'application/json' },
     signal: AbortSignal.timeout(10_000),
   });
@@ -39,6 +41,13 @@ try {
 } catch {
   unavailable = true;
 }
+
+// One address per CV: an old name, a missing name or odd casing goes to the current one
+if (cv && Astro.params.slug !== publicRef(cv)) {
+  return Astro.redirect(`/u/${publicRef(cv)}${Astro.url.search}`, 301);
+}
+const address = cv ? publicRef(cv) : ref.key;
+const key = ref.key;
 
 const lang = (
   ['es', 'en', 'pt'].includes((cv?.language || '').toLowerCase())
@@ -66,7 +75,7 @@ const robots = cv?.indexable ? 'index, follow' : 'noindex, nofollow';
     <meta property="og:type" content="profile" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={new URL(`/u/${slug}`, Astro.url).href} />
+    <meta property="og:url" content={new URL(`/u/${address}`, Astro.url).href} />
     <meta property="og:site_name" content="CVStudio" />
     <meta name="twitter:card" content="summary" />
   </Fragment>
@@ -115,7 +124,7 @@ const robots = cv?.indexable ? 'index, follow' : 'noindex, nofollow';
     )}
   </div>
 
-  {cv && <script is:inline define:vars={{ slug, apiUrl: API_URL }}>
+  {cv && <script is:inline define:vars={{ key, apiUrl: API_URL }}>
     document.getElementById('public-cv-print')?.addEventListener('click', () => window.print());
 
     // Count the visit: not for the owner, not for previews, and only once the page was really looked at
@@ -123,13 +132,13 @@ const robots = cv?.indexable ? 'index, follow' : 'noindex, nofollow';
       if (new URLSearchParams(location.search).has('preview')) return;
       try {
         const own = JSON.parse(localStorage.getItem('cvstudio:own-links') || '[]');
-        if (Array.isArray(own) && own.includes(slug)) return;
+        if (Array.isArray(own) && own.includes(key)) return;
       } catch {
         // No storage: count it
       }
       const send = () => {
         if (document.visibilityState !== 'visible') return;
-        fetch(`${apiUrl}/public/cv/${encodeURIComponent(slug)}/view`, {
+        fetch(`${apiUrl}/public/cv/${key}/view`, {
           method: 'POST',
           keepalive: true,
           headers: { 'Content-Type': 'application/json' },
