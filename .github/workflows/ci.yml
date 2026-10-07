@@ -85,7 +85,6 @@ jobs:
   audit:
     name: 🔒 Dependency Audit
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
@@ -94,7 +93,11 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: pnpm audit --prod
+      - name: Audit production dependencies
+        run: |
+          if ! pnpm audit --prod; then
+            echo "::warning::pnpm audit reports known vulnerabilities in production dependencies (see this job's log)."
+          fi
 
   # End-to-end tests (tests/*.spec.ts) are not run yet: Playwright still has to be added
   # and configured. See docs/known-issues.md.
