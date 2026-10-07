@@ -76,8 +76,3 @@ Statistics in the dialog: totals for everyone; for Pro a 30-day bar chart and th
 Cards of published CVs show a "Público" tag, the view count and a `+N nuevas` badge. After the
 list is loaded the dashboard calls `POST /links/seen`, so the badge shows views since the
 previous visit. A failure to load links never hides the CVs.
-
-## Custom domains (not built)
-
-Issue #11. Every public lookup in the backend goes through `find_public_link(slug=…)`, which is
-where a lookup by host would go. The blocker is infrastructure, not code: see the issue.
