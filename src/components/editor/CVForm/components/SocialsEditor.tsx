@@ -25,7 +25,7 @@ export const SocialsEditor = ({ items, onUpdate, t }: SocialsEditorProps) => {
     <div className="mt-4 space-y-3">
       <div className="mb-1 flex items-center justify-between">
         <span className="block text-xs font-bold tracking-wider text-gray-400 uppercase">
-          Links / Socials
+          {t.form.links}
         </span>
         <button
           onClick={addItem}

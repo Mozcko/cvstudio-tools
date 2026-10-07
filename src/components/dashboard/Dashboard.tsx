@@ -9,7 +9,7 @@ import { DEFAULT_THEME_ID, getThemeById } from '../../templates';
 import { isMarkdownContent, type CVData, type CVLang } from '../../types/cv';
 import useFitScale from '../../hooks/useFitScale';
 import { localePrefixFromPath } from '../../i18n/utils';
-import { locales } from '../../i18n/locales';
+import { locales, type Translation } from '../../i18n/locales';
 import useProStatus from '../../hooks/useProStatus';
 
 type Resume = CVRecord;
@@ -17,11 +17,11 @@ type Resume = CVRecord;
 const ResumeCard = ({
   cv,
   onDelete,
-  lang,
+  t,
 }: {
   cv: Resume;
   onDelete: (id: string) => void;
-  lang: string;
+  t: Translation;
 }) => {
   const { containerRef, scale } = useFitScale<HTMLDivElement>(undefined, { initialScale: 0.22 });
 
@@ -76,12 +76,7 @@ const ResumeCard = ({
         <div className="text-xs text-slate-500">{new Date(cv.updated_at).toLocaleDateString()}</div>
       </div>
       <h3 className="mb-1 truncate text-xl font-bold text-white">
-        {cv.title ||
-          (lang === 'es'
-            ? 'Mi CV Sin Título'
-            : lang === 'pt'
-              ? 'Meu CV Sem Título'
-              : 'Untitled Resume')}
+        {cv.title || t.dashboard.untitled}
       </h3>
 
       <div
@@ -113,12 +108,12 @@ const ResumeCard = ({
           href={`${localePrefixFromPath()}/app/editor?id=${cv.id}`}
           className="flex flex-1 items-center justify-center rounded-lg bg-slate-700 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-slate-600"
         >
-          {lang === 'es' ? 'Editar' : lang === 'pt' ? 'Editar' : 'Edit'}
+          {t.dashboard.edit}
         </a>
         <button
           onClick={() => onDelete(cv.id)}
           className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-700 hover:text-red-400"
-          title={lang === 'es' ? 'Eliminar' : lang === 'pt' ? 'Excluir' : 'Delete'}
+          title={t.dashboard.delete}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -146,7 +141,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
   const [error, setError] = useState<string | null>(null);
   const { getToken, userId } = useAuth();
   const { isPro, loading: loadingPro } = useProStatus();
-  const t = locales[lang as keyof typeof locales]?.ui.nav || locales.es.ui.nav;
+  const t: Translation = locales[lang as keyof typeof locales] || locales.es;
 
   const [showProBanner, setShowProBanner] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -166,18 +161,11 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
     } catch (err: unknown) {
       console.error(err);
       if (err instanceof Error) setError(err.message);
-      else
-        setError(
-          lang === 'es'
-            ? 'Error al cargar los CVs'
-            : lang === 'pt'
-              ? 'Erro ao carregar CVs'
-              : 'Error loading CVs'
-        );
+      else setError(t.dashboard.loadError);
     } finally {
       setLoadingResumes(false);
     }
-  }, [getToken, userId, lang]);
+  }, [getToken, userId, t]);
 
   useEffect(() => {
     if (userId) {
@@ -199,12 +187,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
     if (!userId) return;
 
     const pricingUrl = `${localePrefixFromPath()}/pricing`;
-    const limitMessage =
-      lang === 'es'
-        ? 'Has alcanzado el límite de CVs del plan gratuito'
-        : lang === 'pt'
-          ? 'Você atingiu o limite de CVs do plano gratuito'
-          : 'You have reached the CV limit of the free plan';
+    const limitMessage = t.dashboard.limitReached;
 
     if (!isPro && resumes.length >= 3) {
       alert(limitMessage);
@@ -214,14 +197,9 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
 
     const initialData: CVData = {
       personal: {
-        name: lang === 'es' ? 'Tu Nombre' : lang === 'pt' ? 'Seu Nome' : 'Your Name',
-        role: lang === 'es' ? 'Tu Rol' : lang === 'pt' ? 'Seu Cargo' : 'Your Role',
-        summary:
-          lang === 'es'
-            ? 'Resumen profesional...'
-            : lang === 'pt'
-              ? 'Resumo profissional...'
-              : 'Professional summary...',
+        name: t.dashboard.newResume.name,
+        role: t.dashboard.newResume.role,
+        summary: t.dashboard.newResume.summary,
         email: '',
         phone: '',
         city: '',
@@ -239,8 +217,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
       const token = await getToken();
       const data = await api.createCV(
         {
-          title:
-            lang === 'es' ? 'Nuevo Currículum' : lang === 'pt' ? 'Novo Currículo' : 'New Resume',
+          title: t.dashboard.newResume.title,
           content: initialData,
           language: lang.toUpperCase(),
           theme: DEFAULT_THEME_ID,
@@ -262,7 +239,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(lang === 'es' ? '¿Eliminar?' : 'Delete?')) return;
+    if (!confirm(t.dashboard.confirmDelete)) return;
 
     try {
       const token = await getToken();
@@ -279,17 +256,15 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
       <div>
         <div className="mb-8 flex items-end justify-between">
           <div>
-            <h1 className="mb-2 text-3xl font-bold text-white">{t.dashboard}</h1>
-            <p className="text-slate-400">
-              {lang === 'es' ? 'Gestiona tus documentos.' : 'Manage documents.'}
-            </p>
+            <h1 className="mb-2 text-3xl font-bold text-white">{t.ui.nav.dashboard}</h1>
+            <p className="text-slate-400">{t.dashboard.subtitle}</p>
           </div>
 
           <button
             onClick={handleCreate}
             className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-bold text-white transition-colors hover:bg-blue-500"
           >
-            {lang === 'es' ? 'Crear Nuevo' : 'Create New'}
+            {t.dashboard.create}
           </button>
         </div>
 
@@ -297,7 +272,7 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
           <div className="animate-in fade-in slide-in-from-top-2 relative mb-8 flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 duration-300">
             <span className="text-xl">💎</span>
             <div className="flex-1">
-              <p className="text-sm font-bold text-amber-500">Pro Account</p>
+              <p className="text-sm font-bold text-amber-500">{t.dashboard.proAccount}</p>
             </div>
             <button
               onClick={() => {
@@ -305,6 +280,8 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
                 localStorage.setItem('hide-pro-banner', 'true');
               }}
               className="p-1 text-amber-500/50 transition-colors hover:text-amber-500"
+              title={t.dashboard.dismiss}
+              aria-label={t.dashboard.dismiss}
             >
               ✕
             </button>
@@ -312,19 +289,19 @@ export default function Dashboard({ lang = 'es' }: { lang?: string }) {
         )}
 
         {loading ? (
-          <div className="animate-pulse py-10 text-center text-slate-500">Cargando...</div>
+          <div className="animate-pulse py-10 text-center text-slate-500">{t.messages.loading}</div>
         ) : error ? (
           <div className="rounded-lg border border-red-900/50 bg-red-900/10 py-10 text-center text-red-400">
             {error}
           </div>
         ) : resumes.length === 0 ? (
           <div className="col-span-full flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-700 p-10 text-slate-500">
-            <p className="mb-4">{lang === 'es' ? 'No tienes currículums.' : 'No resumes.'}</p>
+            <p className="mb-4">{t.dashboard.empty}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {resumes.map((cv) => (
-              <ResumeCard key={cv.id} cv={cv} onDelete={handleDelete} lang={lang} />
+              <ResumeCard key={cv.id} cv={cv} onDelete={handleDelete} t={t} />
             ))}
           </div>
         )}

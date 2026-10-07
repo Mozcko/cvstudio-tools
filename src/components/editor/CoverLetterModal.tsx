@@ -103,12 +103,12 @@ export default function CoverLetterModal({
             // STATE 2: RESULT
             <div className="flex h-full flex-col space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-green-400">✨ Generada exitosamente</p>
+                <p className="text-sm font-medium text-green-400">✨ {t.ai.coverLetter.success}</p>
                 <button
                   onClick={() => setResult('')}
                   className="text-xs text-slate-500 underline hover:text-slate-300"
                 >
-                  Generar nueva
+                  {t.ai.coverLetter.regenerate}
                 </button>
               </div>
 

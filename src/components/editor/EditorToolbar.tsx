@@ -57,7 +57,7 @@ export default function EditorToolbar({
         <a
           href={`${langPrefix}/app/dashboard`}
           className="flex items-center gap-2 transition-opacity hover:opacity-80"
-          title="Volver al Dashboard"
+          title={t.toolbar.backToDashboard}
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-lg shadow-blue-900/20">
             <svg
@@ -83,14 +83,14 @@ export default function EditorToolbar({
             htmlFor="resume-title"
             className="mb-0.5 hidden text-[10px] font-bold tracking-wider text-slate-500 uppercase sm:block"
           >
-            Nombre del Archivo
+            {t.toolbar.fileName}
           </label>
           <input
             id="resume-title"
             type="text"
             value={resumeTitle}
             onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="Nombre del CV (ej. Full Stack Google)"
+            placeholder={t.toolbar.fileNamePlaceholder}
             className="w-32 truncate border-b border-slate-700 bg-transparent text-sm font-bold text-white placeholder-slate-600 transition-colors outline-none hover:border-blue-500 focus:w-64 focus:border-blue-500 sm:w-48 lg:w-64"
           />
         </div>
@@ -100,13 +100,7 @@ export default function EditorToolbar({
           onClick={toggleLang}
           data-testid="lang-toggle"
           className="relative flex w-20 cursor-pointer items-center justify-between rounded-full border border-slate-600 bg-slate-800 p-1 shadow-inner transition-all hover:border-slate-500"
-          title={
-            lang === 'es'
-              ? 'Cambiar a Inglés'
-              : lang === 'en'
-                ? 'Mudar para Português'
-                : 'Cambiar a Español'
-          }
+          title={t.toolbar.switchLanguage}
         >
           <div
             className={`absolute left-1 h-6 w-6 transform rounded-full bg-slate-600 shadow-md transition-all duration-300 ease-out ${

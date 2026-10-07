@@ -49,7 +49,7 @@ src/
 │   ├── pricing.astro                                 ├── [lang]/pricing.astro
 │   ├── sign-in.astro, sign-up.astro                  ├── [lang]/sign-in.astro, sign-up.astro
 │   ├── app/dashboard.astro, app/editor.astro         └── [lang]/app/dashboard.astro, editor.astro
-│   ├── privacy.astro        Privacy policy (es only)
+│   ├── privacy.astro        Privacy policy           ├── [lang]/privacy.astro
 │   └── login.astro          Legacy redirect to /sign-in
 ├── components/
 │   ├── auth/                GuestSync, UserMenu
@@ -84,7 +84,7 @@ Spanish is the default locale and has no URL prefix; English and Portuguese live
 | `/sign-in`, `/sign-up` | `/[lang]/sign-in`, `/[lang]/sign-up` | public | Clerk `<SignIn>` / `<SignUp>` |
 | `/app/editor` | `/[lang]/app/editor` | **public** (guest mode) | `CVBuilder` |
 | `/app/dashboard` | `/[lang]/app/dashboard` | signed-in | `Dashboard` |
-| `/privacy` | — | public | Static policy |
+| `/privacy` | `/[lang]/privacy` | public | Static policy (`PrivacyPolicy.astro`) |
 | `/login` | — | public | Redirects to `/sign-in` |
 
 The editor takes one query parameter: `/app/editor?id=<cv uuid>` loads that CV from the backend.
@@ -100,7 +100,7 @@ Two middlewares run in sequence on every request:
    anonymous visitors.
 2. **Locale redirect** — skipped for `/api`, `/_astro`, any path containing a `.`,
    `/sign-in` / `/sign-up`, and pages that have no `/en` or `/pt` twin (`UNLOCALIZED_PATHS`:
-   `/privacy`, `/login`). Otherwise it picks a preferred locale (cookie `cvstudio_locale` →
+   `/login`). Otherwise it picks a preferred locale (cookie `cvstudio_locale` →
    browser `Accept-Language` → `es`) and, if the URL has no locale prefix but the preference is
    `en` or `pt`, issues a `302` to the prefixed path, keeping the query string.
 

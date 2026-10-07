@@ -104,13 +104,13 @@ export default function CVForm({ data, onChange, t, isReordering, onReorderFinis
         ...data.experience,
         {
           id: Date.now().toString(),
-          company: 'Company',
-          role: 'Role',
-          location: 'Remote',
+          company: t.form.defaults.company,
+          role: t.form.defaults.role,
+          location: t.form.defaults.location,
           startDate: new Date().toISOString().slice(0, 7),
           endDate: null,
           isCurrent: true,
-          description: ['Responsibility 1'],
+          description: [t.form.defaults.responsibility],
         },
       ],
     });
@@ -133,8 +133,8 @@ export default function CVForm({ data, onChange, t, isReordering, onReorderFinis
         ...data.education,
         {
           id: Date.now().toString(),
-          institution: 'University',
-          degree: 'Degree',
+          institution: t.form.defaults.institution,
+          degree: t.form.defaults.degree,
           startDate: new Date().toISOString().slice(0, 7),
           endDate: null,
           isCurrent: true,
@@ -160,8 +160,8 @@ export default function CVForm({ data, onChange, t, isReordering, onReorderFinis
         ...safeProjects,
         {
           id: Date.now().toString(),
-          name: 'Project Name',
-          role: 'Role',
+          name: t.form.defaults.project,
+          role: t.form.defaults.role,
           startDate: '',
           endDate: '',
           url: '',
@@ -221,12 +221,14 @@ export default function CVForm({ data, onChange, t, isReordering, onReorderFinis
             value={data.personal.name}
             onChange={(v) => updatePersonal('name', v)}
             required
+            requiredTitle={t.form.required}
           />
           <Input
             label={t.labels.role}
             value={data.personal.role}
             onChange={(v) => updatePersonal('role', v)}
             required
+            requiredTitle={t.form.required}
           />
           <Input
             label={t.labels.email}
@@ -266,15 +268,13 @@ export default function CVForm({ data, onChange, t, isReordering, onReorderFinis
         <div className="animate-in fade-in slide-in-from-bottom-4 space-y-3 duration-300">
           <div className="mb-2 flex items-center justify-between border-b border-slate-700 pb-2">
             <h3 className="text-sm font-bold tracking-wider text-blue-400 uppercase">
-              Reordenar Secciones
+              {t.form.reorderTitle}
             </h3>
             <button onClick={onReorderFinish} className="text-xs text-slate-400 hover:text-white">
               {t.actions.close}
             </button>
           </div>
-          <p className="mb-4 text-xs text-slate-500">
-            Arrastra y suelta una sección para cambiar su posición.
-          </p>
+          <p className="mb-4 text-xs text-slate-500">{t.form.reorderHint}</p>
           {sectionOrder.map((sectionId: string, index: number) => (
             <div
               key={sectionId}

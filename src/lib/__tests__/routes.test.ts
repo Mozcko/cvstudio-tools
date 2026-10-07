@@ -20,6 +20,8 @@ describe('isPublicPath', () => {
     '/en/app/editor',
     '/privacy',
     '/privacy/',
+    '/en/privacy',
+    '/pt/privacy/',
     '/login',
   ])('%s is public', (path) => {
     expect(isPublicPath(path)).toBe(true);
@@ -33,7 +35,8 @@ describe('isPublicPath', () => {
     '/app/editorial',
     '/app/editor-admin',
     '/pricing/secret',
-    '/en/privacy',
+    '/fr/privacy',
+    '/en/login',
     '/fr',
     '/fr/pricing',
     '/sign-insider',

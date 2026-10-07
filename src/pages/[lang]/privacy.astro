@@ -1,0 +1,11 @@
+---
+import PrivacyPolicy from '../../components/ui/PrivacyPolicy.astro';
+
+const { lang } = Astro.params;
+
+if (lang !== 'en' && lang !== 'pt') {
+  return Astro.redirect('/404');
+}
+---
+
+<PrivacyPolicy lang={lang} />

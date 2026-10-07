@@ -38,12 +38,38 @@ test.describe('Public pages and routing', () => {
     expect(response.headers()['location']).toMatch(/\/en\/app\/editor\?id=abc-123$/);
   });
 
-  test('/privacy has no localized twin and is not redirected', async ({ request }) => {
-    const response = await request.get('/privacy', {
+  test('/privacy is public in every locale and follows the browser language', async ({
+    request,
+  }) => {
+    for (const path of ['/privacy', '/en/privacy', '/pt/privacy']) {
+      expect((await request.get(path, { maxRedirects: 0 })).status(), path).toBe(200);
+    }
+    const redirected = await request.get('/privacy', {
       maxRedirects: 0,
       headers: { 'Accept-Language': 'en-US,en;q=0.9' },
     });
-    expect(response.status()).toBe(200);
+    expect(redirected.status()).toBe(302);
+    expect(redirected.headers()['location']).toMatch(/\/en\/privacy$/);
+  });
+
+  test('/login has no localized twin and is not locale-redirected', async ({ request }) => {
+    const response = await request.get('/login', {
+      maxRedirects: 0,
+      headers: { 'Accept-Language': 'en-US,en;q=0.9' },
+    });
+    expect(response.headers()['location']).not.toContain('/en/login');
+  });
+
+  test('the document language matches the route', async ({ page }) => {
+    for (const [path, lang] of [
+      ['/', 'es'],
+      ['/en/', 'en'],
+      ['/pt/', 'pt'],
+      ['/en/app/editor', 'en'],
+    ]) {
+      await page.goto(path);
+      await expect(page.locator('html'), path).toHaveAttribute('lang', lang);
+    }
   });
 
   test('the editor is reachable without an account in every locale', async ({ request }) => {

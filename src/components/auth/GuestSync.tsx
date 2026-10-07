@@ -4,6 +4,8 @@ import { api } from '../../lib/api';
 import { readDraft, removeDraft, writeDraft } from '../../lib/cvDraft';
 import { DEFAULT_THEME_ID, getThemeById } from '../../templates';
 import { initialCVData } from '../../types/cv';
+import { locales } from '../../i18n/locales';
+import { getLangFromPath } from '../../i18n/utils';
 
 /**
  * Promotes what a visitor wrote as a guest (the `new` local draft) to a cloud CV right
@@ -34,7 +36,10 @@ export default function GuestSync() {
 
         const created = await api.createCV(
           {
-            title: draft.title || draft.data.personal?.role || 'Mi CV',
+            title:
+              draft.title ||
+              draft.data.personal?.role ||
+              locales[getLangFromPath()].dashboard.untitled,
             content:
               draft.mode === 'code' ? { mode: 'markdown', markdown: draft.markdown } : draft.data,
             language: draft.data.language || 'ES',

@@ -23,6 +23,22 @@ test.describe('Data Privacy E2E Tests', () => {
     expect(consent).toBe('true');
   });
 
+  test('Cookie banner and privacy policy are translated', async ({ page }) => {
+    await page.goto('/en/');
+    await expect(page.getByText('We respect your privacy')).toBeVisible({ timeout: 5000 });
+    await page.getByRole('link', { name: 'privacy policy' }).click();
+
+    await expect(page).toHaveURL(/\/en\/privacy$/);
+    await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible();
+    await expect(page.getByText('automatic anonymisation')).toBeVisible();
+
+    await page.goto('/pt/privacy');
+    await expect(page.getByRole('heading', { name: 'Política de Privacidade' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Entendi', exact: true })).toBeVisible({
+      timeout: 5000,
+    });
+  });
+
   test('Privacy policy page accessibility', async ({ page }) => {
     await page.goto('/privacy');
 
@@ -31,7 +47,7 @@ test.describe('Data Privacy E2E Tests', () => {
     await expect(header).toBeVisible();
 
     // Verify critical sections are present
-    await expect(page.locator('text=Anonimización automática')).toBeVisible();
+    await expect(page.getByText('anonimización automática')).toBeVisible();
     await expect(page.locator('text=Derecho al Olvido')).toBeVisible();
   });
 });
