@@ -108,7 +108,7 @@ Triggers:
 | Save button, `Ctrl/Cmd + S` | `EditorToolbar`, `CVBuilder.tsx` |
 | Autosave | `CVBuilder.tsx` — 3 s after the last change |
 
-Autosave only runs when **all** hold: the CV has an id, the user is signed in, it is dirty,
+The hook exposes the decision as `shouldAutosave`; `CVBuilder` only runs the timer. Autosave only runs when **all** hold: the CV has an id, the user is signed in, it is dirty,
 `saveStatus` is `idle`, and autosave is not paused. So:
 
 - the first save of a new CV is always manual;

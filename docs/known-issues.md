@@ -43,9 +43,10 @@ is done, and `pnpm audit --prod` only reports (it does not block merging).
 `playwright.config.*`. Because of that, `tests/` is excluded from `tsconfig.json`; remove the
 exclusion when Playwright is set up.
 
-### 6. No component or hook tests — Read
-Vitest covers pure utilities only (Markdown round trip, dates, draft storage). `useCVLogic` — the
-most intricate code in the repo — has no automated test.
+### 6. No component tests — Read
+Vitest covers the utilities (Markdown round trip, dates, drafts, public routes) and the editor's
+state hook `useCVLogic` (loading, saving, autosave rules, undo, mode switching, AI gating). The
+React components themselves — form, modals, preview — have no automated test.
 
 ## Stale or unused
 

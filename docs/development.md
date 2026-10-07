@@ -78,8 +78,17 @@ Production values for both services are in [`PROD-ENV-CHECKLIST.md`](../PROD-ENV
 pnpm check    # lint, type-check, unit tests, build
 ```
 
-Unit tests cover pure utilities only: the Markdown generator/parser round trip in three languages,
-date parsing, and local draft storage (including migration of the old keys).
+Unit tests (`src/**/*.test.{ts,tsx}`):
+
+| File | Covers |
+| :--- | :--- |
+| `utils/__tests__/markdownRoundTrip.test.ts` | Generator ↔ parser in three languages and every month; date parsing |
+| `lib/__tests__/cvDraft.test.ts` | Per-CV draft storage and migration of the old keys |
+| `lib/__tests__/routes.test.ts` | Which paths are public |
+| `components/editor/CVBuilder/hooks/__tests__/useCVLogic.test.tsx` | The editor's state: load matrix, save/create/update, autosave rules, undo, form ↔ Markdown, AI gating and error mapping |
+
+The hook test runs in jsdom (`// @vitest-environment jsdom` at the top of the file) with Clerk's
+`useAuth` and the `api` client mocked. Copy its `setup()` helper for new cases.
 
 ## Code style
 
