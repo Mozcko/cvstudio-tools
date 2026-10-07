@@ -85,6 +85,7 @@ Spanish is the default locale and has no URL prefix; English and Portuguese live
 | `/sign-in`, `/sign-up` | `/[lang]/sign-in`, `/[lang]/sign-up` | public | Clerk `<SignIn>` / `<SignUp>` |
 | `/app/editor` | `/[lang]/app/editor` | **public** (guest mode) | `CVBuilder` |
 | `/app/dashboard` | `/[lang]/app/dashboard` | signed-in | `Dashboard` |
+| `/app/interview` | `/[lang]/app/interview` | signed-in (premium plans use it; others see an upgrade screen) | `InterviewApp` |
 | `/privacy` | `/[lang]/privacy` | public | Static policy (`PrivacyPolicy.astro`) |
 | `/login` | — | public | Redirects to `/sign-in` |
 | anything else | | public | `404.astro`, status 404. A `[lang]` page asked for with an unknown locale (`/fr/…`) rewrites to it |

@@ -28,13 +28,11 @@ const p = privacy[lang];
           <h2 class="text-2xl font-bold text-white">{p.processors.title}</h2>
           <p>{p.processors.body}</p>
           <ul class="list-disc space-y-2 pl-6">
-            {
-              p.processors.items.map((item) => (
-                <li>
-                  <strong class="text-white">{item.name}</strong> {item.text}
-                </li>
-              ))
-            }
+            {p.processors.items.map((item) => (
+              <li>
+                <strong class="text-white">{item.name}</strong> {item.text}
+              </li>
+            ))}
           </ul>
         </section>
 
@@ -42,13 +40,19 @@ const p = privacy[lang];
           <h2 class="mb-2 text-2xl font-bold text-white">{p.ai.title}</h2>
           <p>
             {p.ai.before}
-            <strong class="text-blue-400">{p.ai.highlight}</strong>{p.ai.after}
+            <strong class="text-blue-400">{p.ai.highlight}</strong>
+            {p.ai.after}
           </p>
+          {p.ai.paragraphs.map((text) => (
+            <p class="mt-3">{text}</p>
+          ))}
         </section>
 
         <section>
           <h2 class="text-2xl font-bold text-white">{p.rights.title}</h2>
-          {p.rights.paragraphs.map((text) => <p>{text}</p>)}
+          {p.rights.paragraphs.map((text) => (
+            <p>{text}</p>
+          ))}
         </section>
 
         <section>

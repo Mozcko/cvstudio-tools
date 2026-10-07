@@ -28,6 +28,8 @@ interface EditorToolbarProps {
   canRedo: boolean;
   isPro: boolean;
   freeAiRemaining?: number | null;
+  /** Id of the saved CV being edited, if any. */
+  resumeId?: string | null;
 }
 
 export default function EditorToolbar({
@@ -51,6 +53,7 @@ export default function EditorToolbar({
   canRedo,
   isPro,
   freeAiRemaining = null,
+  resumeId = null,
 }: EditorToolbarProps) {
   const langPrefix = lang === 'es' ? '' : `/${lang}`;
 
@@ -188,6 +191,7 @@ export default function EditorToolbar({
           onCoverLetter={onCoverLetter}
           isPro={isPro}
           freeAiRemaining={freeAiRemaining}
+          interviewHref={`${langPrefix}/app/interview${resumeId ? `?cv=${encodeURIComponent(resumeId)}` : ''}`}
         />
 
         {/* 4. Acciones: Reset & Download */}

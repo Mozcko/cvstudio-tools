@@ -23,6 +23,7 @@ its own knowledge base at `../cvstudio-tools-backend/docs/`.
 | [architecture.md](./architecture.md) | Understand the stack, folder layout, routes, middleware and how the pieces talk |
 | [editor.md](./editor.md) | Change anything in the CV editor: state, saving, undo/redo, form, modals |
 | [import.md](./import.md) | Importing an existing CV: formats, flow, limits |
+| [interview.md](./interview.md) | Voice mock interview: page, state machine, recording |
 | [data-model.md](./data-model.md) | Know the shape of a CV, the backend API contract, and what is kept in the browser |
 | [markdown-pdf-themes.md](./markdown-pdf-themes.md) | Touch Markdown generation/parsing, the PDF pipeline, or add a theme |
 | [auth-billing-ai.md](./auth-billing-ai.md) | Work on sign-in, guest mode, Pro gating, Stripe checkout or the AI tools |

@@ -95,7 +95,87 @@ export interface UserProfile {
   is_premium?: boolean;
   premium_until?: string | null;
   /** What a non-Pro user has left. */
-  usage?: { free_ai: Quota; free_imports: Quota };
+  usage?: {
+    free_ai: Quota;
+    free_imports: Quota;
+    interviews_daily?: Quota;
+    interviews_monthly?: Quota;
+  };
+}
+
+// ── Mock interview ───────────────────────────────────────────────────────────
+
+export interface InterviewTurn {
+  index: number;
+  role: 'recruiter' | 'candidate';
+  kind: 'question' | 'follow_up' | 'answer' | 'closing';
+  /** Which prepared question this turn belongs to. */
+  question: number;
+  text: string;
+  at: string;
+}
+
+export interface InterviewAnswerFeedback {
+  question: number;
+  score: number; // 0-10
+  went_well: string;
+  improve: string;
+  sample_answer: string;
+}
+
+export interface InterviewReport {
+  overall_score: number; // 0-100
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  tips: string[];
+  answers: InterviewAnswerFeedback[];
+}
+
+export interface InterviewSummary {
+  id: string;
+  title: string;
+  language: string;
+  status: 'active' | 'completed';
+  question_count: number;
+  overall_score: number | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface InterviewSession extends InterviewSummary {
+  /** Index of the question being asked; equals question_count once the interview is over. */
+  current_question: number;
+  /** The recruiter has said goodbye; only the report is left. */
+  done: boolean;
+  /** The questions asked so far, as prepared. */
+  questions: string[];
+  turns: InterviewTurn[];
+  report: InterviewReport | null;
+}
+
+export interface InterviewAnswerResult {
+  answer: InterviewTurn;
+  reply: InterviewTurn;
+  current_question: number;
+  done: boolean;
+}
+
+/** Like apiRequest, for endpoints that answer with a file. */
+async function apiBlob(endpoint: string, token: string | null): Promise<Blob> {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    const detail = typeof errorBody.detail === 'string' ? errorBody.detail : 'API Request Failed';
+    throw new ApiError(
+      detail,
+      response.status,
+      Number(response.headers.get('Retry-After')) || undefined
+    );
+  }
+  return response.blob();
 }
 
 export const api = {
@@ -144,6 +224,51 @@ export const api = {
         body: JSON.stringify(params),
       }
     ),
+
+  // Mock interview (premium plans)
+  startInterview: (
+    params: {
+      cv_content: CVData;
+      job_description: string;
+      language: CVLang;
+      question_count: number;
+    },
+    token: string | null
+  ) =>
+    apiRequest<InterviewSession>('/interviews', token, {
+      method: 'POST',
+      body: JSON.stringify(params),
+    }),
+
+  listInterviews: (token: string | null) =>
+    apiRequest<InterviewSummary[]>(`/interviews?_t=${Date.now()}`, token),
+
+  getInterview: (id: string, token: string | null) =>
+    apiRequest<InterviewSession>(`/interviews/${id}?_t=${Date.now()}`, token),
+
+  deleteInterview: (id: string, token: string | null) =>
+    apiRequest<void>(`/interviews/${id}`, token, { method: 'DELETE' }),
+
+  /** A spoken answer: the recording is the request body. */
+  answerInterviewAudio: (id: string, recording: Blob, token: string | null) =>
+    apiRequest<InterviewAnswerResult>(`/interviews/${id}/answer`, token, {
+      method: 'POST',
+      body: recording,
+      headers: { 'Content-Type': recording.type || 'audio/webm' },
+    }),
+
+  answerInterviewText: (id: string, text: string, token: string | null) =>
+    apiRequest<InterviewAnswerResult>(`/interviews/${id}/answer`, token, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    }),
+
+  /** Speech (MP3) for something the recruiter said. */
+  getInterviewAudio: (id: string, turnIndex: number, token: string | null) =>
+    apiBlob(`/interviews/${id}/turns/${turnIndex}/audio`, token),
+
+  finishInterview: (id: string, token: string | null) =>
+    apiRequest<InterviewSession>(`/interviews/${id}/finish`, token, { method: 'POST' }),
 
   // Text of an existing resume → structured CV (free users get a limited number)
   importCV: (
