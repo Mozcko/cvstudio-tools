@@ -115,8 +115,12 @@ Notes for writing tests: the React islands only hydrate after Clerk has initiali
 headings, so `innerText` lies); use the `data-testid`s `mode-form`, `mode-code` and `lang-toggle`
 for controls whose label changes with the language.
 
-In CI the `🎭 End-to-End` job runs when the repository variable `E2E_CLERK_PUBLISHABLE_KEY` and the
-secret `E2E_CLERK_SECRET_KEY` exist; otherwise it passes with a warning.
+In CI the `🎭 End-to-End` job runs when the repository variable `E2E_CLERK_PUBLISHABLE_KEY` exists
+(with the secret `E2E_CLERK_SECRET_KEY`, which must also be added as a Dependabot secret so
+Dependabot pull requests can run it). Until then the job is **skipped**, and shows as skipped on
+the pull request: `✅ CI passed` accepts that, but never a failure. Both keys come from a Clerk
+*development* instance; development keys also work on localhost, so put the same two in `.env`
+to run the suite locally.
 
 ## Code style
 
