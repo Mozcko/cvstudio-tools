@@ -1,5 +1,5 @@
 /**
- * Public link addresses: /u/<name>-<key>, e.g. /u/juan-perez-k7f2m9qx.
+ * Public link addresses: /u/<key>/<name>, e.g. /u/k7f2m9qx/juan-perez.
  *
  * The key (8 random characters, given by the backend) identifies the link. The name is chosen
  * by the owner so the address reads well; it does not have to be unique. The backend is the
@@ -37,24 +37,26 @@ export function suggestSlug(name: string, fallback = 'mi-cv'): string {
   return slugProblem(slug) === null ? slug : fallback;
 }
 
-/** What follows /u/ for a link: "<name>-<key>". */
+/** What follows /u/ for a link: "<key>/<name>". */
 export const publicRef = (link: { slug: string; key: string }): string =>
-  `${link.slug}-${link.key}`;
+  `${link.key}/${link.slug}`;
 
 /** The address a link is reachable at. */
 export const publicUrl = (link: { slug: string; key: string }, origin?: string): string =>
   `${origin ?? (typeof window !== 'undefined' ? window.location.origin : '')}/u/${publicRef(link)}`;
 
+export const isLinkKey = (value: string): boolean => KEY_RE.test(value);
+
 /**
- * Splits what follows /u/ into the name and the key. Returns null when there is no valid key,
- * which means the address cannot exist. The name may be empty ("/u/<key>").
+ * The key in the first part of an address. Normally that part *is* the key; the shape
+ * "<name>-<key>", used briefly before, is still understood so such an address can be redirected.
+ * Returns null when there is no valid key, which means the address cannot exist.
  */
-export function parsePublicRef(ref: string): { name: string; key: string } | null {
-  const value = ref.trim().toLowerCase();
-  const cut = value.lastIndexOf('-');
-  const key = value.slice(cut + 1);
-  if (!KEY_RE.test(key)) return null;
-  return { name: cut === -1 ? '' : value.slice(0, cut), key };
+export function keyFromAddress(firstSegment: string): string | null {
+  const value = firstSegment.trim().toLowerCase();
+  if (KEY_RE.test(value)) return value;
+  const tail = value.slice(value.lastIndexOf('-') + 1);
+  return value.includes('-') && KEY_RE.test(tail) ? tail : null;
 }
 
 // The keys of the owner's own links, so their visits are not counted as views

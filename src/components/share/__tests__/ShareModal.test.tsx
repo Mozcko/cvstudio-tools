@@ -95,10 +95,10 @@ describe('ShareModal', () => {
     ]);
     // The address carries the key the server assigned
     expect((await screen.findByTestId('share-url')).textContent).toContain(
-      '/u/ada-lovelace-k7f2m9qx'
+      '/u/k7f2m9qx/ada-lovelace'
     );
     expect(screen.getByTestId('share-url').getAttribute('href')).toContain(
-      '/u/ada-lovelace-k7f2m9qx?preview=1'
+      '/u/k7f2m9qx/ada-lovelace?preview=1'
     );
     expect(onChanged).toHaveBeenCalledWith(expect.objectContaining({ slug: 'ada-lovelace' }));
     expect(screen.getByTestId('share-message').textContent).toContain(t.share.saved);
@@ -118,7 +118,7 @@ describe('ShareModal', () => {
     open();
 
     expect((await screen.findByTestId('share-url')).textContent).toContain(
-      '/u/ada-lovelace-k7f2m9qx'
+      '/u/k7f2m9qx/ada-lovelace'
     );
     expect(nameInput().value).toBe('ada-lovelace');
     expect((screen.getByLabelText(t.share.showPhone) as HTMLInputElement).checked).toBe(true);

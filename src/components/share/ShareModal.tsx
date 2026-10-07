@@ -237,7 +237,9 @@ export default function ShareModal({
                 {t.share.name}
               </label>
               <div className="flex items-center rounded-lg border border-slate-600 bg-slate-950 focus-within:border-blue-500">
-                <span className="pl-3 text-sm text-slate-500">/u/</span>
+                <span className="pl-3 text-sm whitespace-nowrap text-slate-500">
+                  /u/{link ? link.key : '…'}/
+                </span>
                 <input
                   id="share-slug"
                   className="w-full bg-transparent px-1 py-2 text-sm text-white outline-none"

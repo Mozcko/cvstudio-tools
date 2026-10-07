@@ -373,8 +373,8 @@ test.describe('Public links', () => {
       await backend(page, `/cvs/${link.cv_id}/link`, { method: 'DELETE' });
     }
   };
-  /** What follows /u/ for a link the backend returned: "<name>-<key>". */
-  const addressOf = (link: { slug: string; key: string }) => `${link.slug}-${link.key}`;
+  /** What follows /u/ for a link the backend returned: "<key>/<name>". */
+  const addressOf = (link: { slug: string; key: string }) => `${link.key}/${link.slug}`;
   const publish = async (page: Page, cvId: string, slug: string) => {
     const saved = await backend(page, `/cvs/${cvId}/link`, { method: 'PUT', body: { slug } });
     expect(saved.status, JSON.stringify(saved.data)).toBe(200);
@@ -395,7 +395,7 @@ test.describe('Public links', () => {
     await expect(page.getByLabel('Nombre del enlace')).toHaveValue('seeded-person');
     await page.getByLabel('Nombre del enlace').fill('juan-perez');
     await page.getByTestId('share-save').click();
-    await expect(page.getByTestId('share-url')).toContainText(/\/u\/juan-perez-[a-z0-9]{8}$/);
+    await expect(page.getByTestId('share-url')).toContainText(/\/u\/[a-z0-9]{8}\/juan-perez$/);
     const address = addressOf((await backend(page, '/links')).data[0]);
 
     // Someone else, with no session, opens the link
@@ -456,12 +456,13 @@ test.describe('Public links', () => {
     const first = await publish(page, id, 'nombre-viejo');
     const renamed = await publish(page, id, 'nombre-nuevo');
     expect(renamed.key).toBe(first.key);
-    const current = `/u/nombre-nuevo-${first.key}`;
+    const current = `/u/${first.key}/nombre-nuevo`;
 
     for (const old of [
-      `/u/nombre-viejo-${first.key}`,
-      `/u/${first.key}`,
-      `/u/NOMBRE-NUEVO-${first.key.toUpperCase()}`,
+      `/u/${first.key}/nombre-viejo`, // the name it had before
+      `/u/${first.key}`, // the key alone
+      `/u/${first.key.toUpperCase()}/NOMBRE-NUEVO`,
+      `/u/nombre-viejo-${first.key}`, // the shape used briefly before
     ]) {
       const response = await request.get(old, { maxRedirects: 0 });
       expect(response.status(), old).toBe(301);
@@ -469,7 +470,7 @@ test.describe('Public links', () => {
     }
     expect((await request.get(current, { maxRedirects: 0 })).status()).toBe(200);
     // The preview flag survives the redirect, so the owner's preview is still not counted
-    const preview = await request.get(`/u/nombre-viejo-${first.key}?preview=1`, {
+    const preview = await request.get(`/u/${first.key}/nombre-viejo?preview=1`, {
       maxRedirects: 0,
     });
     expect(preview.headers()['location']).toBe(`${current}?preview=1`);
@@ -591,10 +592,11 @@ test.describe('Public links', () => {
 
     for (const path of [
       '/u/juan-perez', // a name without a key
-      '/u/juan-perez-aaaaaaaa', // a key nobody has
+      '/u/aaaaaaaa/juan-perez', // a key nobody has
       '/u/aaaaaaaa',
       '/u/x',
-      '/u/UPPER_case!',
+      '/u/UPPER_case!/juan-perez',
+      `/u/${one.key}/e2e-uno/extra`,
       `/en/u/${addressOf(one)}`,
     ]) {
       expect((await request.get(path, { maxRedirects: 0 })).status(), path).toBe(404);

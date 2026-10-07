@@ -1,8 +1,8 @@
 # Public links and view statistics
 
-A CV can be published at `/u/<name>-<key>`, e.g. `/u/juan-perez-k7f2m9qx`. The **key** (8 random
+A CV can be published at `/u/<key>/<name>`, e.g. `/u/k7f2m9qx/juan-perez`. The **key** (8 random
 characters from the backend) identifies the link; the **name** is chosen by the owner so the
-address reads well and does not have to be unique. Code: the page `src/pages/u/[slug].astro`, the renderer
+address reads well and does not have to be unique. Code: the page `src/pages/u/[key]/[...name].astro`, the renderer
 `src/components/share/PublicCvSheet.tsx`, the dialog `src/components/share/ShareModal.tsx`, name
 rules in `src/lib/publicLinks.ts`. Backend: the `/public`, `/links` and `/cvs/{id}/link` routes
 (the backend's `docs/api-reference.md`).
@@ -23,11 +23,14 @@ Rendered **on the server** from `GET /public/cv/{key}`, which already has the hi
 details removed. No React runs in the visitor's browser.
 
 ```
-/u/<name>-<key>  →  no valid key?             → 404 page (no request made)
-                 →  backend says 404           → 404 page
-                 →  backend unreachable/error  → 503 with a short message
-                 →  name is not the current one → 301 to /u/<current name>-<key>
-                 →  otherwise                  → the CV, in the CV's own language and theme
+/u/<key>/<name>  →  no valid key?              → 404 page (no request made)
+                 →  backend says 404            → 404 page
+                 →  backend unreachable/error   → 503 with a short message
+                 →  not the current address     → 301 to /u/<key>/<current name>
+                 →  otherwise                   → the CV, in the CV's own language and theme
+
+"Not the current address" covers a name the link used to have, the key alone (`/u/<key>`),
+different casing, and the shape `<name>-<key>` that existed briefly.
 ```
 
 The page is not localized by URL: `<html lang>`, the button texts and the section headings follow

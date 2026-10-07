@@ -493,7 +493,7 @@ export const locales = {
       active: 'Enlace público activo',
       name: 'Nombre del enlace',
       nameHint:
-        'De 3 a 40 caracteres: letras minúsculas, números y guiones. Añadimos un código único al final, así que puedes usar el nombre que quieras.',
+        'De 3 a 40 caracteres: letras minúsculas, números y guiones. Tu dirección lleva un código único delante, así que puedes usar el nombre que quieras.',
       problems: {
         length: 'Debe tener entre 3 y 40 caracteres.',
         format: 'Usa solo letras minúsculas, números y guiones sueltos.',
@@ -1083,7 +1083,7 @@ export const locales = {
       active: 'Public link active',
       name: 'Link name',
       nameHint:
-        '3 to 40 characters: lowercase letters, numbers and hyphens. We add a unique code at the end, so you can use any name you like.',
+        '3 to 40 characters: lowercase letters, numbers and hyphens. Your address has a unique code in front, so you can use any name you like.',
       problems: {
         length: 'It must be between 3 and 40 characters.',
         format: 'Use only lowercase letters, numbers and single hyphens.',
@@ -1662,7 +1662,7 @@ export const locales = {
       active: 'Link público ativo',
       name: 'Nome do link',
       nameHint:
-        'De 3 a 40 caracteres: letras minúsculas, números e hifens. Adicionamos um código único no final, então você pode usar o nome que quiser.',
+        'De 3 a 40 caracteres: letras minúsculas, números e hifens. Seu endereço leva um código único na frente, então você pode usar o nome que quiser.',
       problems: {
         length: 'Deve ter entre 3 e 40 caracteres.',
         format: 'Use apenas letras minúsculas, números e hifens isolados.',
